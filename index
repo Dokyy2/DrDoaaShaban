@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title> المساعد الذكى - عيادة النساء والتوليد</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --primary-color: #2563eb;
+    --accent-color: #3b82f6;
+    --danger-color: #ef4444;
+    --glass-bg: rgba(255, 255, 255, 0.95);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0; direction: rtl; font-family: 'Cairo', sans-serif;
+    background: linear-gradient(-45deg, #0f172a, #1e293b, #2563eb, #1e293b);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    display: flex; align-items: center; justify-content: center;
+    height: 100vh; overflow: hidden;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.chat-container {
+    width: 100%; max-width: 450px; height: 90vh;
+    background: var(--glass-bg); backdrop-filter: blur(15px);
+    border-radius: 30px; display: flex; flex-direction: column;
+    overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.header {
+    padding: 20px; text-align: center; background: white;
+    border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: 700;
+    color: #1e293b; font-size: 1.1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.chat-area {
+    flex: 1; overflow-y: auto; padding: 20px;
+    display: flex; flex-direction: column; gap: 15px;
+    background: rgba(248, 250, 252, 0.4);
+    scroll-behavior: smooth;
+}
+
+.msg {
+    max-width: 85%; padding: 14px 18px; border-radius: 20px;
+    line-height: 1.6; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    animation: slideIn 0.4s ease-out forwards;
+}
+
+.about-card, .welcome-special {
+    background: #e0f2fe !important; 
+    border: 2px solid #3b82f6 !important;
+    border-radius: 25px !important;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.15) !important;
+    color: #0c4a6e !important;
+    font-weight: 600;
+    line-height: 1.8 !important;
+    text-align: center;
+    animation: specialPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes specialPop {
+    from { opacity: 0; transform: translateY(30px) scale(0.9); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.bot-msg { background: white; color: #334155; align-self: flex-start; border-bottom-right-radius: 5px; border: 1px solid #f1f5f9; }
+.user-msg { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; align-self: flex-end; border-bottom-left-radius: 5px; }
+
+.btn-link {
+    display: block; margin: 12px 0; background: white; color: var(--primary-color);
+    text-decoration: none; padding: 12px; border-radius: 15px; text-align: center;
+    font-weight: 700; border: 2px solid var(--primary-color); transition: 0.3s;
+}
+.btn-link:hover { background: var(--primary-color); color: white; transform: scale(1.02); }
+
+.option-btn {
+    margin: 6px 0; padding: 12px 15px; border-radius: 15px;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    background: white; color: #1e293b; cursor: pointer;
+    font-family: 'Cairo'; font-weight: 600; transition: 0.3s;
+    width: 100%; text-align: right;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+}
+.option-btn:hover {
+    background: #f0f7ff; border-color: var(--primary-color);
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.3); transform: translateX(-5px);
+}
+
+.all-services-btn {
+    margin-top: 15px; padding: 14px; border-radius: 18px; border: none;
+    background: linear-gradient(135deg, #f87171, #ef4444, #b91c1c);
+    color: white; cursor: pointer; font-family: 'Cairo'; font-weight: 700;
+    width: 100%; text-align: center; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    transition: 0.3s; animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.input-group { display: flex; padding: 20px; background: white; gap: 12px; }
+input { flex: 1; padding: 14px 20px; border-radius: 15px; border: 2px solid #f1f5f9; outline: none; font-family: inherit; }
+button#sendBtn { background: var(--primary-color); color: white; border: none; border-radius: 15px; padding: 0 25px; cursor: pointer; font-weight: 700; }
+
+.typing { display: flex; gap: 4px; padding: 15px 20px !important; }
+.dot { width: 6px; height: 6px; background: #94a3b8; border-radius: 50%; animation: blink 1.4s infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="header">🤖 المساعد الذكي - عيادة الدكتورة</div>
+    
+    <div id="chatArea" class="chat-area">
+        </div>
+
+    <div class="input-group">
+        <input id="userInput" 
+               placeholder="مثال: عايزة أحجز ميعاد" 
+               autocomplete="off">
+        <button id="sendBtn" onclick="handleSend()">إرسال</button>
+    </div>
+</div>
+
+<script>
+    const services = {
+    "اعرفني": {
+        keywords: [
+            "اعرفني", "من انت", "مين انت", "بتعمل ايه", 
+            "بتساعد في ايه", "انت ايه", "انت مين", 
+            "عن المساعد", "مين اللي عاملك", "انت تبع مين"
+        ],
+        link: null,
+        msg: `أنا دليلك في عيادة النساء والتوليد 🤍<br>
+اتعملت علشان أسهّل عليكِ حجز المواعيد ومعرفة الخدمات المتاحة<br>
+سواء حجز كشف، متابعة حمل، أو استفسار عن السونار<br><br>
+
+تم تطويري بواسطة<br>
+<span 
+    onclick="showContact()" 
+    style="
+        color:#2563eb;
+        font-weight:700;
+        cursor:pointer;
+        text-decoration:underline;
+    "
+>
+    <br>باسم أشرف (للتواصـل)<br>
+</span>
+<br>
+اكتبي اللي محتاجاه وأنا هساعدك فورًا 👇`
+    },
+
+    "حجز موعد": {
+        keywords: ["حجز", "احجز", "ميعاد", "كشف", "عايزه اكشف", "تذكره", "موعد"],
+        link: null,
+        msg: `أهلاً بكِ في عيادة الدكتورة.. للحجز يرجى ملء البيانات التالية:<br><br>
+        <div id="bookingForm" style="display:flex; flex-direction:column; gap:10px;">
+            <input type="text" id="patientName" placeholder="الاسم الثلاثي" style="padding:8px; border-radius:10px; border:1px solid #ccc; font-family:'Cairo';">
+            <input type="tel" id="patientPhone" placeholder="رقم الهاتف" style="padding:8px; border-radius:10px; border:1px solid #ccc; font-family:'Cairo';">
+            <input type="date" id="bookDate" style="padding:8px; border-radius:10px; border:1px solid #ccc; font-family:'Cairo';">
+            <button onclick="submitBooking()" style="background:#2563eb; color:white; border:none; padding:10px; border-radius:10px; cursor:pointer; font-weight:700; font-family:'Cairo';">تأكيد الحجز الآن</button>
+        </div>`
+    },
+
+    "دليل الخدمات الكامل": {
+        keywords: [
+            "دليل", "خدمات", "قائمة", "كتيب", "الكامل", "اجراءات", "فهرس", "كل الخدمات", 
+            "بتعملوا ايه", "بتقدموا ايه", "عايز اعرف الخدمات", "نشاطكم", "الخدمات"
+        ],
+        link: "https://drive.google.com/file/d/12kUdRnz4KD0hCCRb5V7SzZ7ejhWp6tqf/view?usp=sharing",
+        msg: "هنا هتلاقي دليل كامل بكل الخدمات الطبية المتاحة في العيادة 👇"
+    },
+
+    "تسجيل المواليد": {
+        keywords: [
+            "ميلاد", "مولود", "الولادة", "الولاده", "طفل", "نونو", "بيبي", "شهادة ميلاد"
+        ],
+        link: "https://drive.google.com/file/d/1_wcg5FHGzxzuaglEK0c_13QXpb8XcBqd/view?usp=drivesdk",
+        msg: `ألف مبروك 🎉 هنا تفاصيل استخراج شهادة الميلاد والتعامل مع مكتب الصحة بعد الولادة:`
+     },
+        
+    "التأمين الصحي": {
+        keywords: ["تأمين", "التأمين", "التأمين الصحي", "علاج", "بطاقة تأمين"],
+        link: null,
+        msg: `💙 <b>خدمات التأمين الصحي</b><br> أنا هنا علشان أوفّر عليكِ المشوار والوقت للوصول لأقرب فرع تأمين.`
+    },
+
+    "تنمية الأسرة": {
+        keywords: [
+            "تنظيم", "تنظيم الأسرة", "الوسيلة", "وسيله", "منع الحمل", "اللولب", "البرشام"
+        ],
+        link: "https://drive.google.com/file/d/1zmk5_-GIrS4wr90iSp1HYLcPs3aw_FFX/view?usp=drive_link",
+        msg: "عيادتنا بتوفر كافة خدمات تنظيم الأسرة بوسائل آمنة وحديثة."
+    },
+
+    "التطعيمات": {
+        keywords: ["تطعيم", "تطعمات", "حقنة", "شلل الأطفال", "تحليل الكعب"],
+        link: "https://drive.google.com/file/d/15E0tyFM-NRSnC9Hsf8iGbL6dnHoKHrBU/view?usp=drivesdk",
+        msg: "هنا جدول التطعيمات الكامل ومواعيد تحليل الغدة للمولود."
+    },
+
+    "خدمات الطوارئ": {
+        keywords: ["طوارئ", "اجازة", "نبطشية", "شغالين النهاردة"],
+        link: "https://sites.google.com/view/wailyemergency",
+        msg: "في حالات الطوارئ خارج مواعيد العيادة، تقدري تعرفي أقرب مكتب نبطشية من هنا 👇"
+    }
+};
+
+function submitBooking() {
+    const name = document.getElementById("patientName").value;
+    const phone = document.getElementById("patientPhone").value;
+    const date = document.getElementById("bookDate").value;
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbxPum5x4RRsrYhOtHp9X7NUdMdVHO-MlHkH96joAmYaUdM2FLKddxunY85rb3hYLkvW/exec";
+
+    if(!name || !phone || !date) {
+        alert("برجاء ملء كافة البيانات");
+        return;
+    }
+
+    showTyping();
+
+    fetch(webAppUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        cache: 'no-cache',
+        body: JSON.stringify({ name, phone, date, time: "محدد لاحقاً", type: "كشف نسا" })
+    }).then(() => {
+        removeTyping();
+        addMessage("تم استلام طلب الحجز بنجاح يا مدام " + name + " 🌸<br> السكرتارية هتتواصل مع حضرتك لتأكيد الساعة.", "bot", "about-card");
+        document.getElementById("bookingForm").innerHTML = "✅ تم الإرسال بنجاح";
+    }).catch(err => {
+        console.error(err);
+        addMessage("عذراً، حدث خطأ.. حاولي مرة أخرى", "bot");
+    });
+}
+    
+function normalize(text) {
+    if (!text) return "";
+    return text.toLowerCase().replace(/[^\u0600-\u06FF\s]/g, "").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
+}
+
+function similarity(a, b) {
+    let matches = 0;
+    for (let i = 0; i < Math.min(a.length, b.length); i++) { if (a[i] === b[i]) matches++; }
+    return matches / Math.max(a.length, b.length);
+}
+
+function showAllServices() {
+    let html = `📋 <b> كل الخدمات المتاحة </b><br><br>`;
+    for (let s in services) {
+        html += `<button class="option-btn" onclick="selectService('${s}', '')">${s}</button>`;
+    }
+    addMessage(html, "bot");
+}
+
+function detectServices(text) {
+    const normText = normalize(text);
+    if (!normText) return [];
+    let results = [];
+    for (let s in services) {
+        let score = 0;
+        let hasExactMatch = false;
+        services[s].keywords.forEach(key => {
+            const normKey = normalize(key);
+            if (normText.includes(normKey)) {
+                score += 100;
+                hasExactMatch = true;
+            }
+            if (!hasExactMatch) {
+                normText.split(" ").forEach(word => {
+                    if (word.length >= 4) {
+                        let sim = similarity(word, normKey);
+                        if (sim > 0.85) score += 10;
+                    }
+                });
+            }
+        });
+        if (score > 0) {
+            results.push({ name: s, score: score });
+        }
+    }
+    results.sort((a, b) => b.score - a.score);
+    return results;
+}
+
+function quickSend(text) {
+    addMessage(text, "user");
+    showTyping();
+    setTimeout(() => {
+        removeTyping();
+        const matches = detectServices(text);
+        if (matches.length > 0) selectService(matches[0].name, text);
+    }, 600);
+}
+
+function handleSend() {
+    let input = document.getElementById("userInput");
+    let text = input.value.trim();
+    if (!text) return;
+    addMessage(text, "user");
+    input.value = "";
+    showTyping();
+    setTimeout(() => {
+        removeTyping();
+        const matches = detectServices(text);
+        if (matches.length > 1) {
+            let html = `🔍 لقيت أكتر من حاجة متعلقة بسؤالك، تحب تختار إيه؟<br><br>`;
+            matches.forEach(m => { 
+                html += `<button class="option-btn" onclick="selectService('${m.name}', '${text}', true)">${m.name}</button>`; 
+            });
+            addMessage(html, "bot");
+        } else if (matches.length === 1) {
+            selectService(matches[0].name, text);
+        } else {
+            addMessage(`👉 "ممكن توضحلي أكتر علشان أساعدك بشكل أدق؟ 🤍" .. <br><button class="all-services-btn" onclick="showAllServices()">📋 اضغط هنا لعرض كل الخدمات</button>`, "bot");
+        }
+    }, 1000);
+}
+
+function selectService(name, originalText, fromButton = false) {
+    if (fromButton) addMessage(name, "user");
+    const s = services[name];
+    showTyping();
+    setTimeout(() => { 
+        removeTyping();
+        let mainResponse = s.msg;
+        if (s.link) mainResponse += `<br><a href="${s.link}" target="_blank" class="btn-link">فتح خدمة ${name}</a>`;
+        let customClass = (name === "اعرفني" || name === "حجز موعد") ? "about-card" : "";
+        addMessage(mainResponse, "bot", customClass); 
+    }, 600);
+}
+    
+function addMessage(text, type, customClass = "") {
+    let chat = document.getElementById("chatArea");
+    let div = document.createElement("div");
+    div.className = "msg " + (type === "user" ? "user-msg" : "bot-msg") + " " + customClass;
+    div.innerHTML = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+    let chat = document.getElementById("chatArea");
+    let div = document.createElement("div");
+    div.id = "typing";
+    div.className = "msg bot-msg typing";
+    div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping() { 
+    let t = document.getElementById("typing"); 
+    if (t) t.remove(); 
+}
+
+function showContact() {
+    const msg = `👨‍💻 <b>التواصل مع المطور</b><br><br>🟢 <a href="https://wa.me/201021708011" target="_blank" style="color:#2563eb; text-decoration:none; font-weight:600;">WhatsApp: 01021708011</a>`;
+    addMessage(msg, "bot", "about-card");
+}
+
+function getWelcomeMessage() {
+    return `👋 أهلاً بكِ في عيادتنا<br><br>أنا المساعد الذكي، موجود هنا علشان أسهّل عليكِ الحجز والاستفسارات 🤍<br><br>
+        ✨ <b>جربي تدوسي هنا للحجز:</b><br>
+        <span onclick="quickSend('عايزة أحجز ميعاد')" style="color:#2563eb; font-weight:700; cursor:pointer; background:#e0f2fe; padding:6px 12px; border-radius:12px; display:inline-block; margin-top:6px; border:1px solid #93c5fd;"> 👉 عايزة أحجز ميعاد </span>`;
+}   
+
+window.onload = function() {
+    setTimeout(() => {
+        showTyping();
+        setTimeout(() => {
+            removeTyping();
+            addMessage(getWelcomeMessage(), "bot", "welcome-special");
+        }, 1500); 
+    }, 1000); 
+};
+
+document.getElementById("userInput").addEventListener("keydown", (e) => { 
+    if (e.key === "Enter") handleSend(); 
+});
+</script>
+</body>
+</html>
