@@ -22,8 +22,9 @@ body {
     background: linear-gradient(-45deg, #0f172a, #1e293b, #2563eb, #1e293b);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: flex-start; justify-content: center; /* تم التعديل لتبدأ من الأعلى قليلاً */
     height: 100vh; overflow: hidden;
+    padding-top: 10px;
 }
 
 @keyframes gradientBG {
@@ -34,21 +35,21 @@ body {
 
 /* 2. حاوية الشات */
 .chat-container {
-    width: 100%; max-width: 450px; height: 90vh;
+    width: 95%; max-width: 450px; height: 95vh; /* تم زيادة الطول لتقليل الفراغ */
     background: var(--glass-bg); backdrop-filter: blur(15px);
-    border-radius: 30px; display: flex; flex-direction: column;
+    border-radius: 25px; display: flex; flex-direction: column;
     overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     border: 1px solid rgba(255,255,255,0.3);
 }
 
 .header {
-    padding: 20px; text-align: center; background: white;
+    padding: 15px; text-align: center; background: white;
     border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: 700;
     color: #1e293b; font-size: 1.1rem;
 }
 
 .chat-area {
-    flex: 1; overflow-y: auto; padding: 20px;
+    flex: 1; overflow-y: auto; padding: 15px;
     display: flex; flex-direction: column; gap: 15px;
     background: rgba(248, 250, 252, 0.4);
     scroll-behavior: smooth;
@@ -92,8 +93,8 @@ body {
 }
 
 /* 5. منطقة الإدخال */
-.input-group { display: flex; padding: 20px; background: white; gap: 10px; }
-input { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #f1f5f9; outline: none; font-family: inherit; }
+.input-group { display: flex; padding: 15px; background: white; gap: 10px; }
+input, select { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #f1f5f9; outline: none; font-family: inherit; }
 button#sendBtn { background: var(--primary-color); color: white; border: none; border-radius: 12px; padding: 0 20px; cursor: pointer; font-weight: 700; }
 
 /* تأثيرات */
@@ -127,9 +128,20 @@ const services = {
         msg: `<div id="bookingForm" style="display:flex; flex-direction:column; gap:10px;">
             <p style="margin:0">أهلاً بكِ في عيادة الدكتورة.. يرجى ملء البيانات التالية:</p>
             <input type="text" id="patientName" placeholder="الاسم الثلاثي" style="padding:8px; border-radius:10px; border:1px solid #ccc; font-family:'Cairo';">
-            <input type="tel" id="patientPhone" placeholder="رقم الهاتف" style="padding:8px; border-radius:10px; border:1px solid #ccc; font-family:'Cairo';">
+            
+            <input type="tel" id="patientPhone" placeholder="رقم الهاتف (يفضل واتساب)" pattern="[0-9]{11}" title="يرجى إدخال رقم هاتف صحيح مكون من 11 رقم" style="padding:8px; border-radius:10px; border:1px solid #ccc; font-family:'Cairo';">
+            
+            <select id="serviceType" style="padding:8px; border-radius:10px; border:1px solid #ccc; font-family:'Cairo'; background:white;">
+                <option value="" disabled selected>اختاري نوع الخدمة</option>
+                <option value="كشف نساء أول مرة">كشف نساء أول مرة</option>
+                <option value="كشف نساء متابعة">كشف نساء متابعة</option>
+                <option value="استشارة">استشارة</option>
+                <option value="ولادة">ولادة</option>
+            </select>
+
             <input type="date" id="bookDate" style="padding:8px; border-radius:10px; border:1px solid #ccc; font-family:'Cairo';">
-            <button onclick="submitBooking()" style="background:#2563eb; color:white; border:none; padding:10px; border-radius:10px; cursor:pointer; font-weight:700; font-family:'Cairo';">تأكيد الحجز الآن</button>
+            
+            <button id="confirmBtn" onclick="submitBooking()" style="background:#2563eb; color:white; border:none; padding:10px; border-radius:10px; cursor:pointer; font-weight:700; font-family:'Cairo';">تأكيد الحجز الآن</button>
         </div>`
     },
     "خدمات الطوارئ": {
@@ -139,65 +151,55 @@ const services = {
     }
 };
 
-// --- دالة إرسال الحجز ومعالجة النجاح ---
 function submitBooking() {
     const name = document.getElementById("patientName").value;
     const phone = document.getElementById("patientPhone").value;
     const date = document.getElementById("bookDate").value;
+    const type = document.getElementById("serviceType").value;
     const webAppUrl = "https://script.google.com/macros/s/AKfycbxPum5x4RRsrYhOtHp9X7NUdMdVHO-MlHkH96joAmYaUdM2FLKddxunY85rb3hYLkvW/exec";
 
-    if(!name || !phone || !date) { alert("برجاء ملء كافة البيانات"); return; }
+    // التحقق من البيانات وحماية رقم الهاتف
+    if(!name || !phone || !date || !type) { alert("برجاء ملء كافة البيانات واختيار نوع الخدمة"); return; }
+    if(phone.length < 11) { alert("برجاء إدخال رقم هاتف صحيح (11 رقم)"); return; }
 
     showTyping();
+    
+    // سكرول فوري للأسفل لرؤية الـ Typing
+    const chat = document.getElementById("chatArea");
+    chat.scrollTop = chat.scrollHeight;
 
     fetch(webAppUrl, {
         method: 'POST',
         mode: 'no-cors',
         cache: 'no-cache',
-        body: JSON.stringify({ name, phone, date, time: "محدد لاحقاً", type: "كشف نسا" })
+        body: JSON.stringify({ name, phone, date, time: "محدد لاحقاً", type: type })
     }).then(() => {
         removeTyping();
         
-        // استبدال محتوى الفورم فوراً برسالة النجاح وستايل الدعاية
         const form = document.getElementById("bookingForm");
         form.style.textAlign = "center";
         form.innerHTML = `
             <b style="color:var(--success-color); font-size:1.1rem;">✅ تم تسجيل طلب الحجز بنجاح</b>
-
-<p style="margin:10px 0; color:#475569;">
-📞 فريق العيادة هيتواصل معاك قريب لتأكيد المعاد المناسب<br>
-🤍 شكراً لثقتك في عيادة دكتورة دعاء شعبان
-</p>
-
-<hr style="margin:10px 0; opacity:0.2;">
-
-<div style="margin-top:10px; padding:15px; border-radius:20px; background:linear-gradient(to bottom, #ffffff, #f0f7ff); border:1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-
-<b style="color:#1e293b; display:block; margin-bottom:10px;">
-✨ تقدر تتواصل معانا فوراً من هنا 👇
-</b>
-
-<a href="https://wa.me/201125337717" target="_blank" class="btn-link" style="background:#25D366; color:white; border:none;">
-💬 تحدث مع السكرتارية الآن
-</a>
-
-<a href="https://www.facebook.com/profile.php?id=100085280501168" target="_blank" class="btn-link" style="background:#1877F2; color:white; border:none;">
-📘 صفحة العيادة على فيسبوك
-</a>
-
-<a href="https://www.tiktok.com/@doaaobgyn?is_from_webapp=1&sender_device=pc" target="_blank" class="btn-link" style="background:linear-gradient(45deg,#f09433,#dc2743,#bc1888); color:white; border:none;">
-🎵 تابعنا على تيك توك
-</a>
-
-</div>
+            <p style="margin:10px 0; color:#475569;">
+            📞 فريق العيادة هيتواصل معاك قريب لتأكيد المعاد المناسب لـ (${type})<br>
+            🤍 شكراً لثقتك في عيادة دكتورة دعاء شعبان
+            </p>
+            <hr style="margin:10px 0; opacity:0.2;">
+            <div style="margin-top:10px; padding:15px; border-radius:20px; background:linear-gradient(to bottom, #ffffff, #f0f7ff); border:1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <b style="color:#1e293b; display:block; margin-bottom:10px;">✨ تقدر تتواصل معانا فوراً من هنا 👇</b>
+            <a href="https://wa.me/201125337717" target="_blank" class="btn-link" style="background:#25D366; color:white; border:none;">💬 تحدث مع السكرتارية الآن</a>
+            <a href="https://www.facebook.com/profile.php?id=100085280501168" target="_blank" class="btn-link" style="background:#1877F2; color:white; border:none;">📘 صفحة العيادة على فيسبوك</a>
+            <a href="https://www.tiktok.com/@doaaobgyn?is_from_webapp=1&sender_device=pc" target="_blank" class="btn-link" style="background:linear-gradient(45deg,#f09433,#dc2743,#bc1888); color:white; border:none;">🎵 تابعنا على تيك توك</a>
+            </div>
         `;
+        // سكرول مرة أخرى للتأكد من رؤية رسالة النجاح كاملة
+        chat.scrollTop = chat.scrollHeight;
     }).catch(() => {
         removeTyping();
         alert("حدث خطأ، يرجى المحاولة مرة أخرى");
     });
 }
 
-// --- وظائف النظام الرئيسية ---
 function normalize(text) {
     if (!text) return "";
     return text.toLowerCase().replace(/[^\u0600-\u06FF\s]/g, "").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
@@ -213,7 +215,7 @@ function handleSend() {
     setTimeout(() => {
         removeTyping();
         const matches = detectServices(text);
-        if (matches.length > 0) selectService(matches[0].name, text);
+        if (matches.length > 0) selectService(matches[0].name);
         else addMessage(`لم أفهم طلبك، يمكنك اختيار خدمة من هنا: <br><button class="all-services-btn" onclick="showAllServices()">عرض الكل</button>`, "bot");
     }, 800);
 }
@@ -249,7 +251,9 @@ function showTyping() {
     let div = document.createElement("div");
     div.id = "typing"; div.className = "msg bot-msg typing";
     div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-    document.getElementById("chatArea").appendChild(div);
+    let chat = document.getElementById("chatArea");
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight; // سكرول تلقائي عند ظهور علامة الكتابة
 }
 
 function removeTyping() { const t = document.getElementById("typing"); if (t) t.remove(); }
@@ -259,10 +263,6 @@ function quickSend(text) { document.getElementById("userInput").value = text; ha
 function getWelcomeMessage() {
     return `👋 أهلاً بكِ في عيادتنا<br><br>
         أنا المساعد الذكي، موجود هنا علشان أسهّل عليكِ الحجز والاستفسارات 🤍<br><br>
-        من النهاردة بقى معاك حد يساعدك 24 ساعة<br>
-        علشان يسهّل عليك الاستعلام والحجز المسبق والتواصل بسرعة<br><br>
-        إحنا هنا علشان نساعدك ونوفرلك تجربة مريحة من أول خطوة<br>
-        تقدر تحجز أو تستفسر بكل سهولة… وإحنا معاك لحد ما تخلص كل حاجة<br><br>
         ✨ <b>جربي تدوسي هنا للحجز:</b><br>
         <span onclick="quickSend('حجز ميعاد')" style="color:#2563eb; font-weight:700; cursor:pointer; background:#e0f2fe; padding:6px 12px; border-radius:12px; display:inline-block; margin-top:6px; border:1px solid #93c5fd;"> 👉 عايزة أحجز ميعاد </span>`;
 }
