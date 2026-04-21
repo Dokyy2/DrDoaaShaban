@@ -22,9 +22,12 @@ body {
     background: linear-gradient(-45deg, #fdf2f8, #fbcfe8, #ec4899, #be185d);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
-    display: flex; align-items: flex-start; justify-content: center;
-    height: 100vh; overflow: hidden;
-    padding-top: 5px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    height: 100vh; 
+    overflow: hidden;
+    padding: 10px;
 }
 
 @keyframes gradientBG {
@@ -34,7 +37,7 @@ body {
 }
 
 .chat-container {
-    width: 100%; max-width: 450px; height: 98vh;
+    width: 100%; max-width: 450px; height: 95vh;
     background: var(--glass-bg); backdrop-filter: blur(15px);
     border-radius: 30px; display: flex; flex-direction: column;
     overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.2);
@@ -130,7 +133,6 @@ const services = {
     }
 };
 
-// إعداد تاريخ "غداً" كحد أدنى للتقويم
 function getTomorrowDate() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -171,10 +173,19 @@ function startBooking(type) {
         return;
     }
     addMessage(formHtml, "bot", "about-card");
+    
+    // 💡 الحل الذكي: جعل الفورم يظهر فوراً أمام عين المستخدم عند الموبايل
+    setTimeout(() => {
+        const chat = document.getElementById("chatArea");
+        chat.scrollTop = chat.scrollHeight;
+    }, 100);
 }
 
 function checkConsultation() {
-    const lastVisit = new Date(document.getElementById("pLastVisit").value);
+    const lastVisitVal = document.getElementById("pLastVisit").value;
+    if(!lastVisitVal) { alert("من فضلك اختاري تاريخ آخر كشف"); return; }
+    
+    const lastVisit = new Date(lastVisitVal);
     const today = new Date();
     const diffTime = Math.abs(today - lastVisit);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -188,17 +199,47 @@ function checkConsultation() {
             <p style="font-size:0.8rem; margin:5px 0">تاريخ الحجز المطلوب:</p>
             <input type="date" id="pDate" min="${minDate}">
             <button class="option-btn" style="background:var(--primary-color); color:white" onclick="submitFinal('استشارة')">تأكيد الحجز الآن</button>`;
+        
+        // سكرول لإظهار زر التأكيد
+        setTimeout(() => { document.getElementById("chatArea").scrollTop = document.getElementById("chatArea").scrollHeight; }, 500);
     }
 }
 
 function submitFinal(bookingType) {
     const name = document.getElementById("pName").value;
     const phone = document.getElementById("pPhone").value;
-    const date = document.getElementById("pDate").value;
-    if(!name || !phone || !date) { alert("برجاء ملء البيانات"); return; }
+    
+    // ⚠️ تعديل الـ Bug الخاص بالتاريخ
+    const dateInput = document.getElementById("pDate");
+    const date = dateInput ? dateInput.value : "";
+
+    if(!name || !phone) { alert("برجاء ملء البيانات الأساسية"); return; }
+    
+    if(!date){
+        addMessage("📅 من فضلك اختاري تاريخ الحجز", "bot");
+        return;
+    }
+
+    // Validation رقم الموبايل
+    if(!/^01[0-9]{9}$/.test(phone)){
+        addMessage("📱 من فضلك اكتبي رقم موبايل صحيح (11 رقم يبدأ بـ 01) عشان نقدر نتواصل معاكي", "bot");
+        return;
+    }
+
+    // تأكيد التاريخ (منع الحجز اليوم)
+    const selectedDate = new Date(date);
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0,0,0,0);
+
+    if(selectedDate < tomorrow){
+        addMessage("📅 الحجز متاح من بكرة فقط 🤍", "bot");
+        return;
+    }
     
     showTyping();
-    // هنا نرسل البيانات لـ Google Script (نفس الرابط السابق)
+    
+    // محاكاة الإرسال
     setTimeout(() => {
         removeTyping();
         finishProcess();
@@ -206,11 +247,15 @@ function submitFinal(bookingType) {
 }
 
 function finishProcess() {
-    addMessage("✅ شكراً لتواصلك معانا، تم تسجيل طلبك وسنقوم بالتواصل معكِ فوراً.", "bot", "welcome-special");
-    addMessage(`هل تريدين حجز آخر؟<br><button class="option-btn" onclick="location.reload()">حجز آخر</button>`, "bot");
-    document.getElementById("userInput").disabled = true;
-    document.getElementById("sendBtn").disabled = true;
-    document.getElementById("inputContainer").style.opacity = "0.5";
+    // ⚠️ تطوير الرسالة بعد الحجز لتكون أكثر ذكاءً وقوة
+    addMessage(`
+    🤍 تم تسجيل طلبك بنجاح<br><br>
+    📞 هنتواصل معاكي قريب جداً لتأكيد المعاد<br><br>
+    ✨ لو حابة تعملي إيه كمان؟ 👇<br>
+    <button class="option-btn" onclick="quickSend('حجز ميعاد')">حجز تاني</button>
+    <button class="option-btn" onclick="quickSend('حاسبة الحمل')">متابعة الحمل</button>
+    <button class="option-btn" onclick="quickSend('اعرفني')">عن العيادة</button>
+    `, "bot", "welcome-special");
 }
 
 function calculatePregnancy() {
@@ -231,7 +276,6 @@ function calculatePregnancy() {
     addMessage(res, "bot", "welcome-special");
 }
 
-// الوظائف الأساسية
 function normalize(text) {
     if (!text) return "";
     return text.toLowerCase().replace(/[^\u0600-\u06FF\s]/g, "").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
@@ -279,12 +323,13 @@ function addMessage(text, type, customClass = "") {
 }
 
 function showTyping() {
+    removeTyping(); 
     let div = document.createElement("div");
     div.id = "typing"; div.className = "msg bot-msg typing";
     div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
     let chat = document.getElementById("chatArea");
     chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
+    chat.scrollTop = chat.scrollHeight; 
 }
 
 function removeTyping() { const t = document.getElementById("typing"); if (t) t.remove(); }
