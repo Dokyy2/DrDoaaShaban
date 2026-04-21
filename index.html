@@ -5,351 +5,248 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>المساعد الذكي - عيادة دكتورة دعاء شعبان</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
 <style>
-/* 1. المتغيرات والأساسيات باللون الوردي */
 :root {
     --primary-color: #ec4899;
     --accent-color: #f472b6;
-    --danger-color: #ef4444;
-    --glass-bg: rgba(255, 255, 255, 0.95);
+    --glass-bg: rgba(255,255,255,0.95);
     --success-color: #059669;
 }
 
-* { box-sizing: border-box; }
+*{box-sizing:border-box;}
 
-body {
-    margin: 0; direction: rtl; font-family: 'Cairo', sans-serif;
-    background: linear-gradient(-45deg, #fdf2f8, #fbcfe8, #ec4899, #be185d);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    height: 100vh; 
-    overflow: hidden;
-    padding: 10px;
+body{
+    margin:0; direction:rtl; font-family:'Cairo';
+    background:linear-gradient(-45deg,#fdf2f8,#fbcfe8,#ec4899,#be185d);
+    background-size:400% 400%;
+    animation:gradientBG 15s ease infinite;
+    display:flex; align-items:center; justify-content:center;
+    height:100vh; padding:10px;
 }
 
-@keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+@keyframes gradientBG{
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
 }
 
-.chat-container {
-    width: 100%; max-width: 450px; height: 95vh;
-    background: var(--glass-bg); backdrop-filter: blur(15px);
-    border-radius: 30px; display: flex; flex-direction: column;
-    overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.3);
+.chat-container{
+    width:100%; max-width:450px; height:95vh;
+    background:var(--glass-bg);
+    border-radius:30px;
+    display:flex; flex-direction:column;
+    overflow:hidden;
 }
 
-.header {
-    padding: 15px; text-align: center; background: white;
-    border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: 700;
-    color: #be185d; font-size: 1.1rem;
+.header{
+    padding:15px; text-align:center;
+    background:white; font-weight:700;
+    color:#be185d;
 }
 
-.chat-area {
-    flex: 1; overflow-y: auto; padding: 20px;
-    display: flex; flex-direction: column; gap: 15px;
-    background: rgba(255, 255, 255, 0.3);
-    scroll-behavior: smooth;
+.chat-area{
+    flex:1; overflow-y:auto; padding:20px;
+    display:flex; flex-direction:column; gap:15px;
 }
 
-.msg {
-    max-width: 85%; padding: 14px 18px; border-radius: 20px;
-    line-height: 1.6; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    animation: slideIn 0.4s ease-out forwards;
+.msg{
+    max-width:85%; padding:14px; border-radius:20px;
 }
 
-.about-card, .welcome-special {
-    background: #fdf2f8 !important; 
-    border: 2px solid var(--accent-color) !important;
-    border-radius: 25px !important;
-    color: #9d174d !important;
-    font-weight: 600; text-align: center;
+.bot-msg{background:white;}
+.user-msg{background:linear-gradient(135deg,#ec4899,#be185d); color:white;}
+
+.option-btn{
+    margin:6px 0; padding:12px;
+    border-radius:12px; border:none;
+    background:#fdf2f8; cursor:pointer;
+    font-family:'Cairo'; width:100%;
 }
 
-.bot-msg { background: white; color: #334155; align-self: flex-start; border-bottom-right-radius: 5px; }
-.user-msg { background: linear-gradient(135deg, #ec4899, #be185d); color: white; align-self: flex-end; border-bottom-left-radius: 5px; }
-
-.btn-link {
-    display: block; margin: 8px 0; background: white; color: var(--primary-color);
-    text-decoration: none; padding: 10px; border-radius: 12px; text-align: center;
-    font-weight: 700; border: 1px solid var(--primary-color); transition: 0.3s;
-}
-.btn-link:hover { background: var(--primary-color); color: white; }
-
-.input-group { display: flex; padding: 15px; background: white; gap: 10px; border-top: 1px solid #fce7f3; }
-input, select { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #f1f5f9; outline: none; font-family: inherit; font-size: 0.9rem; }
-button#sendBtn { background: var(--primary-color); color: white; border: none; border-radius: 12px; padding: 0 20px; cursor: pointer; font-weight: 700; }
-
-.option-btn {
-    margin: 6px 0; padding: 12px; border-radius: 12px; border: 1px solid #fbcfe8;
-    background: white; cursor: pointer; font-family: 'Cairo'; width: 100%; text-align: center; color: #be185d; font-weight: 600;
+.input-group{
+    display:flex; padding:10px; gap:10px;
+    background:white;
 }
 
-@keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-.typing { display: flex; gap: 4px; padding: 15px 20px !important; }
-.dot { width: 6px; height: 6px; background: var(--accent-color); border-radius: 50%; animation: blink 1.4s infinite; }
-.dot:nth-child(2) { animation-delay: 0.2s; }
-.dot:nth-child(3) { animation-delay: 0.4s; }
-@keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+input{
+    flex:1; padding:10px;
+    border-radius:12px; border:1px solid #eee;
+}
+
+button{
+    background:var(--primary-color);
+    color:white; border:none;
+    border-radius:12px;
+    padding:0 15px;
+}
+
+.typing{display:flex; gap:4px;}
+.dot{width:6px;height:6px;background:#ccc;border-radius:50%;animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:.3;}50%{opacity:1;}}
 </style>
 </head>
+
 <body>
 
 <div class="chat-container">
-    <div class="header">👶 المساعد الذكي - عيادة دكتورة دعاء</div>
-    <div id="chatArea" class="chat-area"></div>
-    <div class="input-group" id="inputContainer">
-        <input id="userInput" placeholder="مثال: عايزة أحجز ميعاد" autocomplete="off">
-        <button id="sendBtn" onclick="handleSend()">إرسال</button>
-    </div>
+<div class="header">👶 المساعد الذكي - عيادة دكتورة دعاء</div>
+
+<div id="chatArea" class="chat-area"></div>
+
+<div class="input-group">
+<input id="userInput" placeholder="مثال: عايزة أحجز ميعاد">
+<button onclick="handleSend()">إرسال</button>
+</div>
 </div>
 
 <script>
-const services = {
-    "اعرفني": {
-        keywords: ["اعرفني", "مين انت", "بتعمل ايه", "ساعدني"],
-        msg: `أنا دليلك في عيادة النساء والتوليد 🤍<br>تم تطويري بواسطة باسم أشرف لتسهيل الحجز والاستعلام 24 ساعة.`
-    },
-    "حجز موعد": {
-        keywords: ["حجز", "ميعاد", "كشف", "موعد"],
-        msg: `يرجى اختيار نوع الكشف للبدء:<br>
-            <button class="option-btn" onclick="startBooking('first')">كشف نساء أول مرة</button>
-            <button class="option-btn" onclick="startBooking('follow')">كشف نساء متابعة</button>
-            <button class="option-btn" onclick="startBooking('consult')">استشارة</button>
-            <button class="option-btn" onclick="startBooking('birth')">ولادة</button>`
-    },
-    "حاسبة الحمل": {
-        keywords: ["حمل", "اسبوع", "انا في الكام", "حاسبه"],
-        msg: `<div id="calcForm" style="display:flex; flex-direction:column; gap:10px;">
-            <p style="margin:0">ادخلي تاريخ أول يوم لآخر دورة شهرية:</p>
-            <input type="date" id="lastPeriod" style="padding:8px; border-radius:10px; border:1px solid #ccc;">
-            <button onclick="calculatePregnancy()" style="background:var(--primary-color); color:white; border:none; padding:10px; border-radius:10px; cursor:pointer; font-weight:700;">احسبي لي الآن</button>
-        </div>`
-    }
+const WEB_APP_URL = "PUT_YOUR_SCRIPT_URL";
+
+function addMessage(text,type){
+    let div=document.createElement("div");
+    div.className="msg "+(type==="user"?"user-msg":"bot-msg");
+    div.innerHTML=text;
+    chatArea.appendChild(div);
+    chatArea.scrollTop=chatArea.scrollHeight;
+}
+
+function showTyping(){
+    removeTyping();
+    let div=document.createElement("div");
+    div.id="typing";
+    div.className="msg bot-msg typing";
+    div.innerHTML='<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+    chatArea.appendChild(div);
+}
+
+function removeTyping(){
+    let t=document.getElementById("typing");
+    if(t)t.remove();
+}
+
+/* ----------- الحجز ----------- */
+
+function startBooking(){
+addMessage(`
+اختاري نوع الخدمة 👇
+<button class="option-btn" onclick="showForm('كشف أول مرة')">كشف أول مرة</button>
+<button class="option-btn" onclick="showForm('متابعة')">متابعة</button>
+<button class="option-btn" onclick="showForm('استشارة')">استشارة</button>
+`, "bot");
+}
+
+function showForm(type){
+let tomorrow=new Date();
+tomorrow.setDate(tomorrow.getDate()+1);
+let min=tomorrow.toISOString().split("T")[0];
+
+addMessage(`
+<b>${type}</b><br>
+<input id="name" placeholder="الاسم">
+<input id="phone" placeholder="رقم الموبايل">
+<input id="date" type="date" min="${min}">
+<button class="option-btn" onclick="submit('${type}',this)">تأكيد</button>
+`,"bot");
+}
+
+function submit(type,btn){
+
+let name=document.getElementById("name").value.trim();
+let phone=document.getElementById("phone").value.trim();
+let date=document.getElementById("date").value;
+
+if(name.length<3){
+addMessage("👤 الاسم غير واضح","bot"); return;
+}
+
+let clean=phone.replace(/\D/g,"");
+if(clean.startsWith("20")) clean="0"+clean.slice(2);
+
+if(!/^01[0-9]{9}$/.test(clean)){
+addMessage("📱 رقم غير صحيح","bot"); return;
+}
+
+if(!date){
+addMessage("📅 اختاري تاريخ","bot"); return;
+}
+
+btn.disabled=true;
+btn.innerText="جاري الحجز...";
+
+showTyping();
+
+fetch(WEB_APP_URL,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({name,phone:clean,type,date})
+})
+.finally(()=>{
+removeTyping();
+showSummary(name,clean,type,date);
+});
+}
+
+/* ----------- واتساب ----------- */
+
+function showSummary(name,phone,type,date){
+
+let msg=`حجز جديد%0A${name}%0A${phone}%0A${type}%0A${date}`;
+let link=`https://wa.me/201021708011?text=${msg}`;
+
+addMessage(`
+📲 راجعي بياناتك 👇<br><br>
+👤 ${name}<br>
+📅 ${date}<br>
+📌 ${type}<br><br>
+
+<button class="option-btn" onclick="window.open('${link}','_blank')">
+تأكيد عبر واتساب
+</button>
+`,"bot");
+}
+
+/* ----------- الرسائل ----------- */
+
+function handleSend(){
+let input=userInput.value.trim();
+if(!input) return;
+
+addMessage(input,"user");
+userInput.value="";
+
+showTyping();
+
+setTimeout(()=>{
+removeTyping();
+
+if(input.includes("حجز")||input.includes("ميعاد")){
+startBooking();
+}
+else{
+addMessage(`
+اختاري 👇
+<button class="option-btn" onclick="startBooking()">حجز</button>
+`,"bot");
+}
+
+},600);
+}
+
+/* ----------- init ----------- */
+
+window.onload=()=>{
+addMessage(`
+👋 أهلاً بيكي 🤍<br><br>
+<button class="option-btn" onclick="startBooking()">📅 حجز موعد</button>
+`,"bot");
 };
 
-function getTomorrowDate() {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
-}
-
-function startBooking(type) {
-    let formHtml = "";
-    const minDate = getTomorrowDate();
-
-    if (type === 'first') {
-        formHtml = `<b>كشف نساء أول مرة:</b><br>
-        <input type="text" id="pName" placeholder="الاسم الثلاثي">
-        <input type="tel" id="pPhone" placeholder="رقم الهاتف (واتساب)">
-        <input type="date" id="pDate" min="${minDate}">
-        <input type="text" id="pSource" placeholder="عرفتينا منين؟">
-        <button class="option-btn" style="background:var(--primary-color); color:white" onclick="submitFinal('كشف أول مرة')">تأكيد الحجز</button>`;
-    } else if (type === 'follow') {
-        formHtml = `<b>كشف نساء متابعة:</b><br>
-        <input type="text" id="pName" placeholder="الاسم الثلاثي">
-        <input type="tel" id="pPhone" placeholder="رقم الهاتف (واتساب)">
-        <p style="font-size:0.8rem; margin:0">تاريخ آخر زيارة:</p>
-        <input type="date" id="pLastVisit">
-        <p style="font-size:0.8rem; margin:0">تاريخ الحجز المطلوب:</p>
-        <input type="date" id="pDate" min="${minDate}">
-        <button class="option-btn" style="background:var(--primary-color); color:white" onclick="submitFinal('متابعة')">تأكيد الحجز</button>`;
-    } else if (type === 'consult') {
-        formHtml = `<b>استشارة:</b><br>
-        <input type="text" id="pName" placeholder="الاسم الثلاثي">
-        <input type="tel" id="pPhone" placeholder="رقم الهاتف (واتساب)">
-        <p style="font-size:0.8rem; margin:0">تاريخ آخر كشف:</p>
-        <input type="date" id="pLastVisit">
-        <button class="option-btn" style="background:var(--primary-color); color:white" onclick="checkConsultation()">متابعة</button>
-        <div id="consultDateArea"></div>`;
-    } else if (type === 'birth') {
-        addMessage("لحجز موعد ولادة، يرجى التواصل مباشرة مع السكرتارية لتنسيق الحالة:", "bot");
-        addMessage(`<a href="https://wa.me/201125337717" target="_blank" class="btn-link" style="background:#25D366; color:white; border:none;">💬 تحدث مع السكرتارية الآن</a>`, "bot");
-        return;
-    }
-    addMessage(formHtml, "bot", "about-card");
-    
-    // 💡 الحل الذكي: جعل الفورم يظهر فوراً أمام عين المستخدم عند الموبايل
-    setTimeout(() => {
-        const chat = document.getElementById("chatArea");
-        chat.scrollTop = chat.scrollHeight;
-    }, 100);
-}
-
-function checkConsultation() {
-    const lastVisitVal = document.getElementById("pLastVisit").value;
-    if(!lastVisitVal) { alert("من فضلك اختاري تاريخ آخر كشف"); return; }
-    
-    const lastVisit = new Date(lastVisitVal);
-    const today = new Date();
-    const diffTime = Math.abs(today - lastVisit);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays > 15) {
-        addMessage(`عذراً، لقد تعدت مدة الاستشارة 15 يوم (مر ${diffDays} يوم). يمكنك حجز كشف متابعة أو التواصل مع السكرتارية.`, "bot");
-        addMessage(`<a href="https://wa.me/201125337717" target="_blank" class="btn-link" style="background:#25D366; color:white; border:none;">💬 استفسار من السكرتارية</a>`, "bot");
-    } else {
-        const minDate = getTomorrowDate();
-        document.getElementById("consultDateArea").innerHTML = `
-            <p style="font-size:0.8rem; margin:5px 0">تاريخ الحجز المطلوب:</p>
-            <input type="date" id="pDate" min="${minDate}">
-            <button class="option-btn" style="background:var(--primary-color); color:white" onclick="submitFinal('استشارة')">تأكيد الحجز الآن</button>`;
-        
-        // سكرول لإظهار زر التأكيد
-        setTimeout(() => { document.getElementById("chatArea").scrollTop = document.getElementById("chatArea").scrollHeight; }, 500);
-    }
-}
-
-function submitFinal(bookingType) {
-    const name = document.getElementById("pName").value;
-    const phone = document.getElementById("pPhone").value;
-    
-    // ⚠️ تعديل الـ Bug الخاص بالتاريخ
-    const dateInput = document.getElementById("pDate");
-    const date = dateInput ? dateInput.value : "";
-
-    if(!name || !phone) { alert("برجاء ملء البيانات الأساسية"); return; }
-    
-    if(!date){
-        addMessage("📅 من فضلك اختاري تاريخ الحجز", "bot");
-        return;
-    }
-
-    // Validation رقم الموبايل
-    if(!/^01[0-9]{9}$/.test(phone)){
-        addMessage("📱 من فضلك اكتبي رقم موبايل صحيح (11 رقم يبدأ بـ 01) عشان نقدر نتواصل معاكي", "bot");
-        return;
-    }
-
-    // تأكيد التاريخ (منع الحجز اليوم)
-    const selectedDate = new Date(date);
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0,0,0,0);
-
-    if(selectedDate < tomorrow){
-        addMessage("📅 الحجز متاح من بكرة فقط 🤍", "bot");
-        return;
-    }
-    
-    showTyping();
-    
-    // محاكاة الإرسال
-    setTimeout(() => {
-        removeTyping();
-        finishProcess();
-    }, 1500);
-}
-
-function finishProcess() {
-    // ⚠️ تطوير الرسالة بعد الحجز لتكون أكثر ذكاءً وقوة
-    addMessage(`
-    🤍 تم تسجيل طلبك بنجاح<br><br>
-    📞 هنتواصل معاكي قريب جداً لتأكيد المعاد<br><br>
-    ✨ لو حابة تعملي إيه كمان؟ 👇<br>
-    <button class="option-btn" onclick="quickSend('حجز ميعاد')">حجز تاني</button>
-    <button class="option-btn" onclick="quickSend('حاسبة الحمل')">متابعة الحمل</button>
-    <button class="option-btn" onclick="quickSend('اعرفني')">عن العيادة</button>
-    `, "bot", "welcome-special");
-}
-
-function calculatePregnancy() {
-    const dateVal = document.getElementById("lastPeriod").value;
-    if(!dateVal) return;
-    const lastDate = new Date(dateVal);
-    const today = new Date();
-    const diff = today - lastDate;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const weeks = Math.floor(days / 7);
-    const remainingDays = days % 7;
-    const months = Math.floor(weeks / 4);
-
-    let res = `✨ أنتِ الآن في:<br>
-               <b>الأسابيع:</b> ${weeks} أسبوع و ${remainingDays} يوم<br>
-               <b>الشهر تقريباً:</b> الشهر ${months + 1}<br>
-               ربنا يتمم لك على خير 🤍`;
-    addMessage(res, "bot", "welcome-special");
-}
-
-function normalize(text) {
-    if (!text) return "";
-    return text.toLowerCase().replace(/[^\u0600-\u06FF\s]/g, "").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
-}
-
-function handleSend() {
-    let input = document.getElementById("userInput");
-    let text = input.value.trim();
-    if (!text) return;
-    addMessage(text, "user");
-    input.value = "";
-    showTyping();
-    setTimeout(() => {
-        removeTyping();
-        const matches = detectServices(text);
-        if (matches.length > 0) selectService(matches[0].name);
-        else addMessage(`لم أفهم طلبك، يمكنك الاختيار من هنا: <br>
-            <button class="option-btn" onclick="quickSend('حجز ميعاد')">حجز موعد</button>
-            <button class="option-btn" onclick="quickSend('حاسبة الحمل')">حاسبة الحمل</button>`, "bot");
-    }, 800);
-}
-
-function detectServices(text) {
-    const normText = normalize(text);
-    let results = [];
-    for (let s in services) {
-        if (services[s].keywords.some(key => normalize(key).includes(normText) || normText.includes(normalize(key)))) {
-            results.push({ name: s });
-        }
-    }
-    return results;
-}
-
-function selectService(name) {
-    addMessage(services[name].msg, "bot", (name === "حجز موعد" ? "about-card" : ""));
-}
-
-function addMessage(text, type, customClass = "") {
-    let chat = document.getElementById("chatArea");
-    let div = document.createElement("div");
-    div.className = "msg " + (type === "user" ? "user-msg" : "bot-msg") + " " + customClass;
-    div.innerHTML = text;
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-}
-
-function showTyping() {
-    removeTyping(); 
-    let div = document.createElement("div");
-    div.id = "typing"; div.className = "msg bot-msg typing";
-    div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-    let chat = document.getElementById("chatArea");
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight; 
-}
-
-function removeTyping() { const t = document.getElementById("typing"); if (t) t.remove(); }
-
-function quickSend(text) { document.getElementById("userInput").value = text; handleSend(); }
-
-function getWelcomeMessage() {
-    return `👋 أهلاً بكِ في عيادة الدكتورة دعاء شعبان<br><br>
-        أنا مساعدك الذكي 🤍.. كيف يمكنني مساعدتك اليوم؟<br><br>
-        <button class="option-btn" onclick="quickSend('حجز ميعاد')">📅 حجز موعد جديد</button>
-        <button class="option-btn" onclick="quickSend('حاسبة الحمل')">🤰 أنا في الأسبوع الكام؟</button>
-        <button class="option-btn" onclick="quickSend('اعرفني')">✨ عن المساعد</button>`;
-}
-
-window.onload = function() {
-    setTimeout(() => { showTyping(); setTimeout(() => { removeTyping(); addMessage(getWelcomeMessage(), "bot", "welcome-special"); }, 1000); }, 500);
-};
-
-document.getElementById("userInput").addEventListener("keydown", (e) => { if (e.key === "Enter") handleSend(); });
-
+/* Fix mobile scroll */
+window.addEventListener("resize",()=>{
+chatArea.scrollTop=chatArea.scrollHeight;
+});
 </script>
+
 </body>
 </html>
