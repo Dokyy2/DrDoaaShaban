@@ -212,21 +212,48 @@ function validateAndSubmit(bookingType) {
     const phone = document.getElementById("pPhone").value;
     const date = document.getElementById("pDate") ? document.getElementById("pDate").value : "";
     const lastVisit = document.getElementById("pLastVisit") ? document.getElementById("pLastVisit").value : "";
+    
     const sourceBase = document.getElementById("pSource") ? document.getElementById("pSource").value : "";
     const otherSource = document.getElementById("pOtherSource") ? document.getElementById("pOtherSource").value : "";
     const source = sourceBase === 'أخرى' ? otherSource : sourceBase;
 
-    if (name.trim().split(" ").length < 3) { alert("من فضلكِ اكتبي اسمكِ الثلاثي بشكل صحيح 👤"); return; }
-    if (phone.length < 11) { alert("من فضلكِ أكملي رقم الموبايل (11 رقم) 📱"); return; }
-    if (!date) { alert("من فضلكِ اختاري تاريخ الحجز 📅"); return; }
+    // ✅ التحقق من الاسم
+    if (name.trim().split(" ").length < 3) {
+        alert("من فضلكِ اكتبي اسمكِ الثلاثي بشكل صحيح 👤");
+        return;
+    }
 
+    // ✅ التحقق من رقم الموبايل
+    if (phone.length < 11) {
+        alert("من فضلكِ أكملي رقم الموبايل (11 رقم) 📱");
+        return;
+    }
+
+    // ✅ التحقق من التاريخ
+    if (!date) {
+        alert("من فضلكِ اختاري تاريخ الحجز 📅");
+        return;
+    }
+
+    // ✅🔥 التحقق من "عرفتنا منين"
+    if (!sourceBase || (sourceBase === 'أخرى' && !otherSource.trim())) {
+        alert("من فضلكِ قولي لنا عرفتنا منين ✨");
+        return;
+    }
+
+    // تعطيل الفورم بعد التأكيد
     document.getElementById("activeForm").style.opacity = "0.5";
     document.getElementById("activeForm").style.pointerEvents = "none";
+
     showTyping();
 
     const payload = { name, phone, date, lastVisit, source, type: bookingType };
 
-    fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) })
+    fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(payload)
+    })
     .then(() => {
         setTimeout(() => {
             removeTyping();
