@@ -79,6 +79,36 @@
 
         .input-group { display: flex; padding: 12px; background: white; border-top: 1px solid #fce7f3; flex-shrink: 0; gap: 8px; }
         #userInput { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #eee; font-family: 'Cairo'; font-size: 0.9rem; outline: none; }
+        /* 🔥 Pregnancy Result Premium Style */
+.pregnancy-result {
+    background: linear-gradient(135deg, #fff0f6, #ffe4ec, #fbcfe8);
+    border-radius: 25px;
+    padding: 18px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
+    animation: glowPulse 2.5s infinite ease-in-out;
+}
+
+.pregnancy-result b {
+    font-size: 1.3rem;
+    color: #be185d;
+    text-shadow: 0 0 10px rgba(236, 72, 153, 0.6);
+}
+
+.pregnancy-result .main-number {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #ec4899;
+    text-shadow: 0 0 12px rgba(236, 72, 153, 0.8);
+}
+
+@keyframes glowPulse {
+    0% { box-shadow: 0 0 10px rgba(236,72,153,0.3); }
+    50% { box-shadow: 0 0 25px rgba(236,72,153,0.7); }
+    100% { box-shadow: 0 0 10px rgba(236,72,153,0.3); }
+}
     </style>
 </head>
 <body>
@@ -295,15 +325,41 @@ function calculatePregnancy() {
 }
 
 function doCalc() {
-    const d = document.getElementById("lastPeriod").value; if(!d) return;
-    const diff = new Date() - new Date(d);
+    const d = document.getElementById("lastPeriod").value;
+    if (!d) return;
+
+    const today = new Date();
+    const selectedDate = new Date(d);
+
+    const diff = today - selectedDate;
     const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    // ✅ شرط 42 أسبوع
+    if (totalDays > 294) {
+        addMessage(`
+        <div class="pregnancy-result" style="border:2px solid red;">
+            <b style="color:red;">⚠️ التاريخ غير صحيح</b><br><br>
+            أقصى مدة للحمل هي <span class="main-number">42 أسبوع</span><br>
+            من فضلكِ اختاري تاريخ صحيح 💗
+        </div>
+        `, "bot");
+        return;
+    }
+
     const weeks = Math.floor(totalDays / 7);
     const days = totalDays % 7;
     const months = Math.floor(weeks / 4);
 
-    const res = `✨ أنتِ الآن في:<br><b style="font-size:1.1rem; color:var(--dark-pink);">${weeks} أسبوع و ${days} يوم</b><br>يعني تقريباً في <b style="color:var(--boy-blue);">الشهر ${months + 1}</b> 👶<br>ربنا يتمم لكِ على خير ويرزقكِ طفلاً سليماً 🤍`;
-    addMessage(`<div class="calc-cloud">${res}</div>`, "bot");
+    const res = `
+    <div class="pregnancy-result">
+        ✨ <b>أنتِ الآن في:</b><br><br>
+        <div class="main-number">${weeks} أسبوع و ${days} يوم</div><br>
+        📅 يعني تقريباً في <b>الشهر ${months + 1}</b> 👶<br><br>
+        🤍 ربنا يتمم لكِ على خير ويرزقكِ طفلاً سليماً
+    </div>
+    `;
+
+    addMessage(res, "bot");
 }
 
 function aboutAssistant() {
