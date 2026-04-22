@@ -112,7 +112,7 @@ function showBookingOptions(btn) {
         const msg = `📋 <b style="color:var(--dark-pink);">من فضلكِ اختاري نوع الكشف:</b><br>
         <button class="option-btn sub-opt" onclick="renderForm('first', this)">💖 كشف نساء أول مرة</button>
         <button class="option-btn sub-opt" onclick="renderForm('follow', this)">🔄 كشف نساء متابعة</button>
-        <button class="option-btn sub-opt" onclick="renderForm('consult', this)">📝 استشارة مريضة</button>
+        <button class="option-btn sub-opt" onclick="renderForm('consult', this)">📝 كشف نساء " استشارة "</button>
         <button class="option-btn sub-opt" onclick="renderForm('birth', this)">👶 حجز ولادة</button>`;
         addMessage(msg, "bot");
     }, 800);
@@ -120,6 +120,7 @@ function showBookingOptions(btn) {
 
 function renderForm(type, btn) {
     disableSameLevelButtons('sub-opt', btn);
+    const today = new Date().toISOString().split('T')[0];
     const minDate = new Date();
     minDate.setDate(minDate.getDate() + 1);
     const minDateStr = minDate.toISOString().split('T')[0];
@@ -128,17 +129,18 @@ function renderForm(type, btn) {
     setTimeout(() => {
         removeTyping();
         let fields = "";
-        if (type === 'first') {
-            fields = `<b>📋 بيانات حجز كشف أول مرة</b>
-                <input type="text" id="pName" placeholder="👤 اسمكِ الثلاثي بالكامل" oninput="checkName(this)">
-                <div id="nameErr" class="error-hint">⚠️ يرجى كتابة الاسم ثلاثي على الأقل</div>
-                
-                <input type="tel" id="pPhone" placeholder="📱 موبايلكِ (يفضل واتساب)" maxlength="11" oninput="checkPhone(this)">
-                <div id="phoneErr" class="error-hint">⚠️ يرجى التأكد من الرقم (11 رقم)</div>
+        
+        const baseFields = `
+            <input type="text" id="pName" placeholder="👤 اسمكِ الثلاثي بالكامل" oninput="this.value=this.value.replace(/[^\\u0600-\\u06FF\\s]/g,''); checkName(this)">
+            <div id="nameErr" class="error-hint">⚠️ يرجى كتابة الاسم ثلاثي بالحروف فقط</div>
+            <input type="tel" id="pPhone" placeholder="📱 موبايلكِ (يفضل واتساب)" maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,''); checkPhone(this)">
+            <div id="phoneErr" class="error-hint">⚠️ يرجى التأكد من الرقم (11 رقم فقط)</div>
+        `;
 
-                <p style="font-size:0.8rem; margin:5px 0; color:#666;">📅 اختاري تاريخ الحجز:</p>
+        if (type === 'first') {
+            fields = `<b>📋 بيانات حجز كشف أول مرة</b>${baseFields}
+                <p style="font-size:0.8rem; margin:5px 0; color:#666;">📅 تاريخ الحجز:</p>
                 <input type="date" id="pDate" min="${minDateStr}">
-                
                 <select id="pSource" onchange="toggleOtherSource(this.value)">
                     <option value="">✨ عرفتينا منين؟</option>
                     <option value="فيسبوك">🔵 فيسبوك</option>
@@ -149,9 +151,52 @@ function renderForm(type, btn) {
                 </select>
                 <div id="otherSourceArea"></div>
                 <button class="option-btn" style="background:var(--primary-color); color:white; border:none;" onclick="validateAndSubmit('كشف أول مرة')">تأكيد الحجز الآن ✅</button>`;
+        } else if (type === 'follow') {
+            fields = `<b>🔄 بيانات حجز كشف متابعة</b>${baseFields}
+                <p style="font-size:0.8rem; margin:5px 0; color:#666;">📅 تاريخ آخر زيارة للعيادة:</p>
+                <input type="date" id="pLastVisit" max="${today}">
+                <p style="font-size:0.8rem; margin:5px 0; color:#666;">📅 تاريخ الحجز المطلوب:</p>
+                <input type="date" id="pDate" min="${minDateStr}">
+                <button class="option-btn" style="background:var(--primary-color); color:white; border:none;" onclick="validateAndSubmit('متابعة')">تأكيد حجز المتابعة ✅</button>`;
+        } else if (type === 'consult') {
+            fields = `<b>📝 كشف نساء "استشارة"</b>${baseFields}
+                <p style="font-size:0.8rem; margin:5px 0; color:#666;">📅 تاريخ آخر كشف:</p>
+                <input type="date" id="pLastVisit" max="${today}" onchange="verifyConsultationLimit()">
+                <div id="consultDateArea"></div>`;
+        } else if (type === 'birth') {
+            const birthWaMsg = encodeURIComponent("السلام عليكم دكتورة دعاء، كنت حابة أستفسر وأحجز موعد بخصوص عملية ولادة.. محتاجة أعرف التفاصيل والمواعيد المتاحة، شكراً جداً.");
+            const birthWaUrl = `https://wa.me/201125337717?text=${birthWaMsg}`;
+            addMessage(`لحجز موعد ولادة، يرجى التواصل مباشرة مع السكرتارية لتنسيق الحالة الجراحية والموعد 👶:<br><br><a href="${birthWaUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white;">💬 تواصل واتساب لحجز الولادة</a>`, "bot");
+            return;
         }
         addMessage(`<div class="booking-form" id="activeForm">${fields}</div>`, "bot");
     }, 600);
+}
+
+function verifyConsultationLimit() {
+    const lastVisitVal = document.getElementById("pLastVisit").value;
+    if(!lastVisitVal) return;
+    
+    const lastVisitDate = new Date(lastVisitVal);
+    const today = new Date();
+    const diff = Math.ceil(Math.abs(today - lastVisitDate) / (1000 * 60 * 60 * 24));
+    const area = document.getElementById("consultDateArea");
+    
+    const minBookingDate = new Date();
+    minBookingDate.setDate(minBookingDate.getDate() + 1);
+    
+    if (diff > 15) {
+        area.innerHTML = `<p style="color:red; font-size:0.85rem; margin-top:10px;">عذراً، لقد تعدت مدة الاستشارة 15 يوم (مر ${diff} يوم). يمكنكِ حجز كشف جديد.</p>
+        <button class="option-btn" onclick="quickSend('حجز ميعاد جديد')">📅 حجز كشف جديد</button>`;
+    } else {
+        const remainingDays = 15 - diff;
+        const maxBookingDate = new Date();
+        maxBookingDate.setDate(maxBookingDate.getDate() + remainingDays);
+        
+        area.innerHTML = `<p style="font-size:0.8rem; margin:10px 0 5px 0; color:#666;">📅 الموعد متاح، اختاري تاريخ الاستشارة (خلال الـ ${remainingDays} يوم القادمة):</p>
+            <input type="date" id="pDate" min="${minBookingDate.toISOString().split('T')[0]}" max="${maxBookingDate.toISOString().split('T')[0]}">
+            <button class="option-btn" style="background:var(--primary-color); color:white; border:none;" onclick="validateAndSubmit('استشارة')">تأكيد الاستشارة ✅</button>`;
+    }
 }
 
 function checkName(el) { document.getElementById("nameErr").style.display = el.value.trim().split(" ").length < 3 ? "block" : "none"; }
@@ -165,21 +210,21 @@ function toggleOtherSource(val) {
 function validateAndSubmit(bookingType) {
     const name = document.getElementById("pName").value;
     const phone = document.getElementById("pPhone").value;
-    const date = document.getElementById("pDate").value;
-    const sourceBase = document.getElementById("pSource").value;
+    const date = document.getElementById("pDate") ? document.getElementById("pDate").value : "";
+    const lastVisit = document.getElementById("pLastVisit") ? document.getElementById("pLastVisit").value : "";
+    const sourceBase = document.getElementById("pSource") ? document.getElementById("pSource").value : "";
     const otherSource = document.getElementById("pOtherSource") ? document.getElementById("pOtherSource").value : "";
     const source = sourceBase === 'أخرى' ? otherSource : sourceBase;
 
-    if (name.trim().split(" ").length < 3) { alert("من فضلكِ اكتبي اسمكِ الثلاثي 👤"); return; }
+    if (name.trim().split(" ").length < 3) { alert("من فضلكِ اكتبي اسمكِ الثلاثي بشكل صحيح 👤"); return; }
     if (phone.length < 11) { alert("من فضلكِ أكملي رقم الموبايل (11 رقم) 📱"); return; }
     if (!date) { alert("من فضلكِ اختاري تاريخ الحجز 📅"); return; }
-    if (!source) { alert("من فضلكِ أخبرينا عرفتينا منين ✨"); return; }
 
     document.getElementById("activeForm").style.opacity = "0.5";
     document.getElementById("activeForm").style.pointerEvents = "none";
     showTyping();
 
-    const payload = { name, phone, date, source, type: bookingType };
+    const payload = { name, phone, date, lastVisit, source, type: bookingType };
 
     fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) })
     .then(() => {
@@ -191,7 +236,8 @@ function validateAndSubmit(bookingType) {
 }
 
 function finishProcess(data) {
-    const waMsg = `*قسم الحجوزات المسبقة*%0A------------------%0Aالاسم: *${data.name}*%0Aالهاتف: ${data.phone}%0Aالنوع: ${data.type}%0Aتاريخ الحجز: *${data.date}*`;
+    let waMsg = `*قسم الحجوزات المسبقة*%0A------------------%0Aالاسم: *${data.name}*%0Aالهاتف: ${data.phone}%0Aالنوع: ${data.type}%0Aتاريخ الحجز: *${data.date}*`;
+    if(data.lastVisit) waMsg += `%0Aتاريخ آخر زيارة: *${data.lastVisit}*`;
     const waUrl = `https://wa.me/201125337717?text=${waMsg}`;
 
     addMessage(`<div class="msg bot-msg success-card">🎉 <b>تم تسجيل طلبكِ بنجاح</b><br><br>📞 فريق العيادة هيتواصل معاكِ خلال وقت قصير لتأكيد الميعاد المناسب.<br>🩺 وهنكون معاكِ خطوة بخطوة لحد ما تتم الزيارة بأفضل شكل.</div>`, "bot");
@@ -202,9 +248,19 @@ function finishProcess(data) {
 
     addMessage(`<a href="${waUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white;">💬 إرسال البيانات وتأكيد الحجز الآن</a>`, "bot");
 
+    const socialLinks = `
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+            <p style="font-size:0.9rem; font-weight:700; color:var(--dark-pink); text-align:center;">✨ تقدر تتواصل معانا فوراً من هنا 👇</p>
+            <a href="https://wa.me/201125337717" target="_blank" class="btn-link" style="background:#25D366; color:white; border:none;">💬 تحدث مع السكرتارية الآن</a>
+            <a href="https://www.facebook.com/profile.php?id=100085280501168" target="_blank" class="btn-link" style="background:#1877F2; color:white; border:none;">📘 صفحة العيادة على فيسبوك</a>
+            <a href="https://www.tiktok.com/@doaaobgyn?is_from_webapp=1&sender_device=pc" target="_blank" class="btn-link" style="background:linear-gradient(45deg,#f09433,#dc2743,#bc1888); color:white; border:none;">🎵 تابعنا على تيك توك</a>
+        </div>
+    `;
+    addMessage(socialLinks, "bot");
+
     setTimeout(() => {
         addMessage(`هل تودين حجز ميعاد آخر أو حساب الحمل؟<br><button class="option-btn" onclick="location.reload()">🔄 حجز جديد / حساب الحمل</button>`, "bot");
-    }, 2500);
+    }, 3000);
 }
 
 function calculatePregnancy() {
