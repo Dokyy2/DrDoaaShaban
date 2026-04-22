@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>المساعد الذكي - عيادة دكتورة دعاء شعبان</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -13,64 +13,72 @@
             --glass-bg: rgba(255, 255, 255, 0.98);
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body {
             margin: 0; direction: rtl; font-family: 'Cairo', sans-serif;
             background: linear-gradient(-45deg, #fdf2f8, #fbcfe8, #ec4899, #be185d);
             background-size: 400% 400%; animation: gradientBG 15s ease infinite;
-            display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden;
+            display: flex; align-items: center; justify-content: center; 
+            height: 100vh; height: -webkit-fill-available; overflow: hidden;
         }
 
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
         .chat-container {
-            width: 95%; max-width: 450px; height: 95vh;
+            width: 95%; max-width: 450px; height: 92vh;
             background: var(--glass-bg); border-radius: 30px; display: flex; flex-direction: column;
-            overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.2); position: relative;
         }
 
-        .header { padding: 18px; text-align: center; background: white; color: var(--dark-pink); font-weight: 700; border-bottom: 2px solid #fce7f3; }
-        .chat-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .header { padding: 15px; text-align: center; background: white; color: var(--dark-pink); font-weight: 700; border-bottom: 2px solid #fce7f3; font-size: 1rem; flex-shrink: 0; }
         
-        .msg { max-width: 90%; padding: 14px 18px; border-radius: 20px; font-size: 0.95rem; line-height: 1.6; animation: slideIn 0.4s ease; text-align: center; margin-left: auto; margin-right: auto; }
-        .bot-msg { background: white; align-self: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); color: #334155; }
-        .user-msg { background: linear-gradient(135deg, #ec4899, #be185d); color: white; align-self: flex-end; border-bottom-left-radius: 4px; text-align: right; }
+        .chat-area { 
+            flex: 1; overflow-y: auto; padding: 15px 15px 25px 15px; 
+            display: flex; flex-direction: column; gap: 15px; 
+            scroll-behavior: smooth; background: rgba(255,255,255,0.2);
+        }
         
-        .success-card { border: 2px solid var(--boy-blue); background: #f0f7ff; color: #1e40af; width: 100%; }
+        .msg { max-width: 92%; padding: 12px 16px; border-radius: 20px; font-size: 0.92rem; line-height: 1.6; animation: slideIn 0.4s ease; text-align: center; margin: 0 auto; }
+        .bot-msg { background: white; align-self: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); color: #334155; border: 1px solid #fdf2f8; }
+        .user-msg { background: linear-gradient(135deg, #ec4899, #be185d); color: white; align-self: flex-end; border-bottom-left-radius: 4px; text-align: right; margin-right: 0; margin-left: auto; }
+        
+        .success-card { border: 2px solid var(--boy-blue); background: #f0f7ff; color: #1e40af; width: 100%; font-weight: 700; }
 
         .option-btn {
             background: white; border: 2px solid #fbcfe8; color: var(--dark-pink); 
-            padding: 12px; margin: 6px 0; border-radius: 15px; cursor: pointer; width: 100%; 
-            font-weight: 700; font-family: 'Cairo'; transition: 0.3s;
+            padding: 10px; margin: 5px 0; border-radius: 15px; cursor: pointer; width: 100%; 
+            font-weight: 700; font-family: 'Cairo'; transition: 0.3s; font-size: 0.9rem;
         }
-        .option-btn:disabled { background: #f1f5f9 !important; color: #94a3b8 !important; cursor: not-allowed; opacity: 0.7; }
+        .option-btn:active { transform: scale(0.98); background: #fff1f2; }
+        .option-btn:disabled { background: #f1f5f9 !important; color: #94a3b8 !important; cursor: not-allowed; opacity: 0.8; border-color: #e2e8f0; }
 
         .flash-red {
-            color: #dc2626; font-weight: 800; font-size: 1rem;
+            color: #dc2626; font-weight: 800; font-size: 0.95rem;
             animation: flash 1s infinite; display: block; margin: 10px 0;
         }
-        @keyframes flash { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.05); } }
+        @keyframes flash { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.02); } }
 
-        .booking-form { background: #fffbff; border: 2.5px solid var(--primary-color); border-radius: 25px; padding: 20px; width: 100%; align-self: center; }
-        .booking-form input, .booking-form select { width: 100%; margin: 8px 0; padding: 12px; border-radius: 12px; border: 1.5px solid #eee; font-family: 'Cairo'; outline: none; text-align: center; }
+        .booking-form { background: #fffbff; border: 2.5px solid var(--primary-color); border-radius: 25px; padding: 18px; width: 100%; align-self: center; }
+        .booking-form input, .booking-form select { width: 100%; margin: 8px 0; padding: 10px; border-radius: 12px; border: 1.5px solid #eee; font-family: 'Cairo'; outline: none; text-align: center; font-size: 0.9rem; }
         
-        .error-hint { color: #e11d48; font-size: 0.8rem; font-weight: 600; display: none; margin-top: -5px; }
+        .error-hint { color: #e11d48; font-size: 0.75rem; font-weight: 600; display: none; margin-top: -5px; margin-bottom: 5px; }
 
         .calc-cloud {
             background: #fdf2f8; border: 2px dashed var(--primary-color);
-            border-radius: 30px 30px 5px 30px; padding: 20px; color: #be185d;
-            box-shadow: 0 10px 20px rgba(236, 72, 153, 0.1); position: relative;
+            border-radius: 25px 25px 5px 25px; padding: 15px; color: #be185d;
+            box-shadow: 0 8px 16px rgba(236, 72, 153, 0.1); width: 100%;
         }
 
-        .btn-link { display: block; text-decoration: none; padding: 15px; border-radius: 15px; text-align: center; font-weight: 700; margin: 10px 0; }
+        .btn-link { display: block; text-decoration: none; padding: 12px; border-radius: 15px; text-align: center; font-weight: 700; margin: 8px 0; font-size: 0.95rem; }
 
-        .typing { display: flex; gap: 5px; padding: 15px !important; align-self: center; }
-        .dot { width: 8px; height: 8px; background: var(--primary-color); border-radius: 50%; animation: blink 1.4s infinite; }
+        .typing { display: flex; gap: 4px; padding: 12px !important; align-self: center; width: fit-content; }
+        .dot { width: 7px; height: 7px; background: var(--primary-color); border-radius: 50%; animation: blink 1.4s infinite; }
         @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
-        #inputContainer { display: flex; padding: 15px; background: white; border-top: 1px solid #fce7f3; }
-        #userInput { flex: 1; padding: 12px; border-radius: 15px; border: 1px solid #eee; font-family: 'Cairo'; outline: none; }
+        .input-group { display: flex; padding: 12px; background: white; border-top: 1px solid #fce7f3; flex-shrink: 0; gap: 8px; }
+        #userInput { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #eee; font-family: 'Cairo'; font-size: 0.9rem; outline: none; }
     </style>
 </head>
 <body>
@@ -78,9 +86,9 @@
 <div class="chat-container">
     <div class="header">👶 المساعد الذكي - عيادة دكتورة دعاء</div>
     <div id="chatArea" class="chat-area"></div>
-    <div class="input-group" id="inputContainer">
+    <div class="input-group">
         <input id="userInput" placeholder="اكتبي سؤالك هنا...">
-        <button id="sendBtn" onclick="handleSend()" style="background:var(--primary-color); color:white; border:none; padding:0 20px; border-radius:15px; font-weight:700; cursor:pointer;">إرسال</button>
+        <button onclick="handleSend()" style="background:var(--primary-color); color:white; border:none; padding:0 15px; border-radius:12px; font-weight:700; cursor:pointer;">إرسال</button>
     </div>
 </div>
 
@@ -88,11 +96,11 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVLG7Efe1SQH0rsLZYgALO3n1h8ZsyDMUPOTDt48dZEOy8PM_Eh4wNJdy2drHsORC4/exec";
 
 function getWelcomeMessage() {
-    return `👋 <b style="color:var(--dark-pink); font-size:1.1rem;">أهلاً بكِ في عيادتنا</b><br><br>
-    أنا <span style="color:var(--primary-color); font-weight:700;">مساعدك الذكي</span>، موجود هنا علشان أسهّل عليكِ الحجز والاستفسارات 🤍<br><br>
-    ✨ <b>اختاري كيف يمكنني مساعدتك:</b><br>
+    return `👋 <b style="color:var(--dark-pink); font-size:1.05rem;">أهلاً بكِ في عيادتنا</b><br><br>
+    أنا <span style="color:var(--primary-color); font-weight:700;">مساعدكِ الذكي</span>، موجود هنا علشان أسهّل عليكِ الحجز والاستفسارات 🤍<br><br>
+    ✨ <b>اختاري كيف يمكنني مساعدتكِ:</b><br>
     <button class="option-btn main-opt" onclick="showBookingOptions(this)">📅 حجز ميعاد جديد</button>
-    <button class="option-btn main-opt" onclick="quickSend('حاسبة الحمل')">🤰 احسبي عمر حملك</button>
+    <button class="option-btn main-opt" onclick="quickSend('حاسبة الحمل')">🤰 احسبي عمر حملكِ</button>
     <button class="option-btn main-opt" onclick="quickSend('عن المساعد الذكي')">✨ عن المساعد الذكي</button>`;
 }
 
@@ -101,7 +109,7 @@ function showBookingOptions(btn) {
     showTyping();
     setTimeout(() => {
         removeTyping();
-        const msg = `📋 <b style="color:var(--dark-pink);">من فضلك اختاري نوع الكشف:</b><br>
+        const msg = `📋 <b style="color:var(--dark-pink);">من فضلكِ اختاري نوع الكشف:</b><br>
         <button class="option-btn sub-opt" onclick="renderForm('first', this)">💖 كشف نساء أول مرة</button>
         <button class="option-btn sub-opt" onclick="renderForm('follow', this)">🔄 كشف نساء متابعة</button>
         <button class="option-btn sub-opt" onclick="renderForm('consult', this)">📝 استشارة مريضة</button>
@@ -122,20 +130,20 @@ function renderForm(type, btn) {
         let fields = "";
         if (type === 'first') {
             fields = `<b>📋 بيانات حجز كشف أول مرة</b>
-                <input type="text" id="pName" placeholder="👤 الاسم الثلاثي بالكامل" oninput="checkName(this)">
+                <input type="text" id="pName" placeholder="👤 اسمكِ الثلاثي بالكامل" oninput="checkName(this)">
                 <div id="nameErr" class="error-hint">⚠️ يرجى كتابة الاسم ثلاثي على الأقل</div>
                 
-                <input type="tel" id="pPhone" placeholder="📱 موبايل (يفضل واتساب)" maxlength="11" oninput="checkPhone(this)">
-                <div id="phoneErr" class="error-hint">⚠️ يرجى التأكد من الموبايل (11 رقم)</div>
+                <input type="tel" id="pPhone" placeholder="📱 موبايلكِ (يفضل واتساب)" maxlength="11" oninput="checkPhone(this)">
+                <div id="phoneErr" class="error-hint">⚠️ يرجى التأكد من الرقم (11 رقم)</div>
 
-                <p style="font-size:0.8rem; margin:5px 0; color:#666;">📅 تاريخ الحجز:</p>
+                <p style="font-size:0.8rem; margin:5px 0; color:#666;">📅 اختاري تاريخ الحجز:</p>
                 <input type="date" id="pDate" min="${minDateStr}">
                 
                 <select id="pSource" onchange="toggleOtherSource(this.value)">
                     <option value="">✨ عرفتينا منين؟</option>
                     <option value="فيسبوك">🔵 فيسبوك</option>
                     <option value="تيك توك">⚫ تيك توك</option>
-                    <option value="صديق">👭 ترشيح صديق</option>
+                    <option value="صديقة">👭 ترشيح صديقة</option>
                     <option value="إعلان ممول">📢 إعلان ممول</option>
                     <option value="أخرى">🔍 جهة أخرى</option>
                 </select>
@@ -162,11 +170,10 @@ function validateAndSubmit(bookingType) {
     const otherSource = document.getElementById("pOtherSource") ? document.getElementById("pOtherSource").value : "";
     const source = sourceBase === 'أخرى' ? otherSource : sourceBase;
 
-    // نظام التنبيه الذكي بالترتيب
-    if (name.trim().split(" ").length < 3) { alert("أنتِ نسيتِ كتابة الاسم ثلاثي 👤"); return; }
-    if (phone.length < 11) { alert("أنتِ نسيتِ إكمال رقم التليفون (11 رقم) 📱"); return; }
-    if (!date) { alert("أنتِ نسيتِ اختيار تاريخ الحجز 📅"); return; }
-    if (!source) { alert("أنتِ نسيتِ إخبارنا عرفتينا منين ✨"); return; }
+    if (name.trim().split(" ").length < 3) { alert("من فضلكِ اكتبي اسمكِ الثلاثي 👤"); return; }
+    if (phone.length < 11) { alert("من فضلكِ أكملي رقم الموبايل (11 رقم) 📱"); return; }
+    if (!date) { alert("من فضلكِ اختاري تاريخ الحجز 📅"); return; }
+    if (!source) { alert("من فضلكِ أخبرينا عرفتينا منين ✨"); return; }
 
     document.getElementById("activeForm").style.opacity = "0.5";
     document.getElementById("activeForm").style.pointerEvents = "none";
@@ -184,14 +191,13 @@ function validateAndSubmit(bookingType) {
 }
 
 function finishProcess(data) {
-    // تنسيق الواتساب المطلوب بالضبط
     const waMsg = `*قسم الحجوزات المسبقة*%0A------------------%0Aالاسم: *${data.name}*%0Aالهاتف: ${data.phone}%0Aالنوع: ${data.type}%0Aتاريخ الحجز: *${data.date}*`;
     const waUrl = `https://wa.me/201125337717?text=${waMsg}`;
 
-    addMessage(`<div class="msg bot-msg success-card">🎉 <b>تم تسجيل طلبك بنجاح</b><br><br>📞 فريق العيادة هيتواصل معاكِ خلال وقت قصير لتأكيد الميعاد المناسب.<br>🩺 وهنكون معاكِ خطوة بخطوة لحد ما تتم الزيارة بأفضل شكل.</div>`, "bot");
+    addMessage(`<div class="msg bot-msg success-card">🎉 <b>تم تسجيل طلبكِ بنجاح</b><br><br>📞 فريق العيادة هيتواصل معاكِ خلال وقت قصير لتأكيد الميعاد المناسب.<br>🩺 وهنكون معاكِ خطوة بخطوة لحد ما تتم الزيارة بأفضل شكل.</div>`, "bot");
 
     const flashMsg = `<span class="flash-red">⚠️ خطوة هامة جداً:</span>
-    اضغطي على الزر بالأسفل لإرسال بياناتك للعيادة فوراً لضمان سرعة الرد والتأكيد 👇`;
+    اضغطي على الزر بالأسفل لإرسال بياناتكِ للعيادة فوراً لضمان سرعة الرد والتأكيد 👇`;
     addMessage(flashMsg, "bot");
 
     addMessage(`<a href="${waUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white;">💬 إرسال البيانات وتأكيد الحجز الآن</a>`, "bot");
@@ -213,14 +219,14 @@ function doCalc() {
     const days = totalDays % 7;
     const months = Math.floor(weeks / 4);
 
-    const res = `✨ أنتِ الآن في:<br><b style="font-size:1.1rem; color:var(--dark-pink);">${weeks} أسبوع و ${days} يوم</b><br>يعني تقريباً في <b style="color:var(--boy-blue);">الشهر ${months + 1}</b> 👶<br>ربنا يتمم لك على خير ويرزقك طفل سليم 🤍`;
+    const res = `✨ أنتِ الآن في:<br><b style="font-size:1.1rem; color:var(--dark-pink);">${weeks} أسبوع و ${days} يوم</b><br>يعني تقريباً في <b style="color:var(--boy-blue);">الشهر ${months + 1}</b> 👶<br>ربنا يتمم لكِ على خير ويرزقكِ طفلاً سليماً 🤍`;
     addMessage(`<div class="calc-cloud">${res}</div>`, "bot");
 }
 
 function aboutAssistant() {
     addMessage(`<div class="msg bot-msg" style="border:2px solid var(--boy-blue); color:var(--boy-blue); font-weight:700;">✨ عن المساعد الذكي</div>`, "bot");
     setTimeout(() => {
-        addMessage(`أنا مساعدك الرقمي لعيادة دكتورة دعاء شعبان، تم تطويري لتسهيل الحجز والاستعلام على مدار 24 ساعة لضمان راحتك 🤍`, "bot");
+        addMessage(`أنا مساعدكِ الرقمي لعيادة دكتورة دعاء شعبان، تم تطويري لتسهيل الحجز والاستعلام على مدار 24 ساعة لضمان راحتكِ 🤍`, "bot");
     }, 500);
 }
 
@@ -258,7 +264,7 @@ window.onload = () => { showTyping(); setTimeout(() => { removeTyping(); addMess
 function handleSend() {
     const i = document.getElementById("userInput"); if(!i.value) return;
     addMessage(i.value, "user"); i.value = "";
-    addMessage("من فضلك استخدمي الأزرار المتاحة لتسهيل الحجز 🌸", "bot");
+    addMessage("من فضلكِ استخدمي الأزرار المتاحة لتسهيل الحجز 🌸", "bot");
 }
 </script>
 </body>
