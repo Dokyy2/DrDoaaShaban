@@ -165,7 +165,7 @@ function renderForm(type, btn) {
                 <div id="consultDateArea"></div>`;
         } else if (type === 'birth') {
             const birthWaMsg = encodeURIComponent("السلام عليكم دكتورة دعاء، كنت حابة أستفسر وأحجز موعد بخصوص عملية ولادة.. محتاجة أعرف التفاصيل والمواعيد المتاحة، شكراً جداً.");
-            const birthWaUrl = `https://wa.me/201125337717?text=${birthWaMsg}`;
+            const birthWaUrl = `https://wa.me/201021708011?text=${birthWaMsg}`;
             addMessage(`لحجز موعد ولادة، يرجى التواصل مباشرة مع السكرتارية لتنسيق الحالة الجراحية والموعد 👶:<br><br><a href="${birthWaUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white;">💬 تواصل واتساب لحجز الولادة</a>`, "bot");
             return;
         }
@@ -238,7 +238,7 @@ function validateAndSubmit(bookingType) {
 function finishProcess(data) {
     let waMsg = `*قسم الحجوزات المسبقة*%0A------------------%0Aالاسم: *${data.name}*%0Aالهاتف: ${data.phone}%0Aالنوع: ${data.type}%0Aتاريخ الحجز: *${data.date}*`;
     if(data.lastVisit) waMsg += `%0Aتاريخ آخر زيارة: *${data.lastVisit}*`;
-    const waUrl = `https://wa.me/201125337717?text=${waMsg}`;
+    const waUrl = `https://wa.me/201021708011?text=${waMsg}`;
 
     addMessage(`<div class="msg bot-msg success-card">🎉 <b>تم تسجيل طلبكِ بنجاح</b><br><br>📞 فريق العيادة هيتواصل معاكِ خلال وقت قصير لتأكيد الميعاد المناسب.<br>🩺 وهنكون معاكِ خطوة بخطوة لحد ما تتم الزيارة بأفضل شكل.</div>`, "bot");
 
@@ -251,7 +251,7 @@ function finishProcess(data) {
     const socialLinks = `
         <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
             <p style="font-size:0.9rem; font-weight:700; color:var(--dark-pink); text-align:center;">✨ تقدر تتواصل معانا فوراً من هنا 👇</p>
-            <a href="https://wa.me/201125337717" target="_blank" class="btn-link" style="background:#25D366; color:white; border:none;">💬 تحدث مع السكرتارية الآن</a>
+            <a href="https://wa.me/201021708011" target="_blank" class="btn-link" style="background:#25D366; color:white; border:none;">💬 تحدث مع السكرتارية الآن</a>
             <a href="https://www.facebook.com/profile.php?id=100085280501168" target="_blank" class="btn-link" style="background:#1877F2; color:white; border:none;">📘 صفحة العيادة على فيسبوك</a>
             <a href="https://www.tiktok.com/@doaaobgyn?is_from_webapp=1&sender_device=pc" target="_blank" class="btn-link" style="background:linear-gradient(45deg,#f09433,#dc2743,#bc1888); color:white; border:none;">🎵 تابعنا على تيك توك</a>
         </div>
