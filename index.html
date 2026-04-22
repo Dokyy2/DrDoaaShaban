@@ -81,6 +81,8 @@
         #userInput { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #eee; font-family: 'Cairo'; font-size: 0.9rem; outline: none; }
         /* 🔥 Pregnancy Result Premium Style */
 .pregnancy-result {
+    width: 100%;
+    display: block;
     background: linear-gradient(135deg, #fff0f6, #ffe4ec, #fbcfe8);
     border-radius: 25px;
     padding: 18px;
@@ -98,16 +100,22 @@
 }
 
 .pregnancy-result .main-number {
-    font-size: 1.6rem;
+    font-size: 1.7rem;
     font-weight: 800;
     color: #ec4899;
     text-shadow: 0 0 12px rgba(236, 72, 153, 0.8);
+    animation: glowText 1.5s infinite alternate;
 }
 
 @keyframes glowPulse {
     0% { box-shadow: 0 0 10px rgba(236,72,153,0.3); }
     50% { box-shadow: 0 0 25px rgba(236,72,153,0.7); }
     100% { box-shadow: 0 0 10px rgba(236,72,153,0.3); }
+}
+
+@keyframes glowText {
+    from { text-shadow: 0 0 5px #ec4899; }
+    to { text-shadow: 0 0 20px #ec4899, 0 0 30px #f472b6; }
 }
     </style>
 </head>
@@ -359,7 +367,7 @@ function doCalc() {
     </div>
     `;
 
-    addMessage(res, "bot");
+    addMessage(`<div style="width:100%">${res}</div>`, "bot");
 }
 
 function aboutAssistant() {
