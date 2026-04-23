@@ -278,7 +278,7 @@ function validateAndSubmit(bookingType) {
 function finishProcess(data) {
     let waMsg = `*قسم الحجوزات المسبقة*%0A------------------%0Aالاسم: *${data.name}*%0Aالهاتف: ${data.phone}%0Aالنوع: ${data.type}%0Aتاريخ الحجز: *${data.date}*`;
     if(data.lastVisit) waMsg += `%0Aتاريخ آخر زيارة: *${data.lastVisit}*`;
-    const waUrl = `https://wa.me/201021708011?text=${waMsg}`;
+    const waUrl = `https://wa.me/201125337717?text=${waMsg}`;
     addMessage(`<div class="msg bot-msg success-card">🎉 <b>تم تسجيل طلبكِ بنجاح</b><br><br>📞 فريق العيادة هيتواصل معاكِ خلال وقت قصير لتأكيد الميعاد المناسب.<br>🩺 وهنكون معاكِ خطوة بخطوة لحد ما تتم الزيارة بأفضل شكل.</div>`, "bot");
     addMessage(`<span class="flash-red">⚠️ خطوة هامة جداً:</span>اضغطي على الزر بالأسفل لإرسال بياناتكِ للعيادة فوراً لضمان سرعة الرد والتأكيد 👇`, "bot");
     addMessage(`<a href="${waUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white;">💬 إرسال البيانات وتأكيد الحجز الآن</a>`, "bot");
