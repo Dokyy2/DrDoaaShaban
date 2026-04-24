@@ -53,13 +53,9 @@
         .option-btn:active { transform: scale(0.98); background: #fff1f2; }
         .option-btn:disabled { background: #f1f5f9 !important; color: #94a3b8 !important; cursor: not-allowed; opacity: 0.8; border-color: #e2e8f0; }
 
-        .flash-red {
-            color: #dc2626; font-weight: 800; font-size: 0.95rem;
-            animation: flash 1s infinite; display: block; margin: 10px 0;
-        }
         @keyframes flash { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.02); } }
 
-        .booking-form { background: #fffbff; border: 2.5px solid var(--primary-color); border-radius: 25px; padding: 18px; width: 100%; align-self: center; }
+        .booking-form { background: #fffbff; border: 2.5px solid var(--primary-color); border-radius: 25px; padding: 18px; width: 100%; align-self: center; transition: 0.3s; }
         .booking-form input, .booking-form select { width: 100%; margin: 8px 0; padding: 10px; border-radius: 12px; border: 1.5px solid #eee; font-family: 'Cairo'; outline: none; text-align: center; font-size: 0.9rem; }
         
         .error-hint { color: #e11d48; font-size: 0.75rem; font-weight: 600; display: none; margin-top: -5px; margin-bottom: 5px; }
@@ -70,7 +66,7 @@
             box-shadow: 0 8px 16px rgba(236, 72, 153, 0.1); width: 100%;
         }
 
-        .btn-link { display: block; text-decoration: none; padding: 12px; border-radius: 15px; text-align: center; font-weight: 700; margin: 8px 0; font-size: 0.95rem; }
+        .btn-link { display: block; text-decoration: none; padding: 12px; border-radius: 15px; text-align: center; font-weight: 700; margin: 8px 0; font-size: 0.95rem; transition: 0.3s; }
 
         .typing { display: flex; gap: 4px; padding: 12px !important; align-self: center; width: fit-content; }
         .dot { width: 7px; height: 7px; background: var(--primary-color); border-radius: 50%; animation: blink 1.4s infinite; }
@@ -113,7 +109,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzHQB7NtpaqJ0MhOBhcjGMr7wZppZWdsGa2uVVa1RcDMTF-CMaY58UDOcmZNi3VzIgS/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxv-tw76cO31-keoEeoNWnU0lMAFcd1zGUkB1pTDnYH2h3yoM4rGi0-gWJTzob0Idvm/exec";
 
 function getWelcomeMessage() {
     return `👋 <b style="color:var(--dark-pink); font-size:1.05rem;">أهلاً بكِ في عيادتنا</b><br><br>
@@ -210,19 +206,21 @@ function validateAndSubmit(bookingType) {
 
     const payload = { name, phone, lastVisit, source, type: bookingType };
     
-    // إرسال البيانات للسكريبت (الذي سيقوم بالترقيم والتوقيت التلقائي)
     fetch(SCRIPT_URL, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify(payload)
-})
-.then(res => res.json())
-.then(response => {
-  removeTyping();
-  finishProcess(payload, response);
-    
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(response => {
+        removeTyping();
+        if (response.status !== "success") {
+            alert("حصلت مشكلة في الحجز ❌");
+            document.getElementById("activeForm").style.opacity = "1";
+            document.getElementById("activeForm").style.pointerEvents = "auto";
+            return;
+        }
+        finishProcess(payload, response);
     })
     .catch(() => {
         removeTyping();
@@ -233,7 +231,6 @@ function validateAndSubmit(bookingType) {
 }
 
 function finishProcess(data, response) {
-
     const id = response.id;
     const date = response.date;
     const time = response.time;
@@ -241,7 +238,6 @@ function finishProcess(data, response) {
     addMessage(`
     <div class="msg bot-msg success-card">
     🎉 <b>تم تسجيل طلبكِ بنجاح</b><br><br>
-
     📌 رقمك: <b>${id}</b><br>
     📅 اليوم: <b>${date}</b><br>
     ⏰ الساعة: <b>${time}</b><br>
@@ -249,11 +245,7 @@ function finishProcess(data, response) {
     </div>
     `, "bot");
 
-    const waMsg = encodeURIComponent(`*تأكيد الحجز*
-رقمك: ${id}
-اليوم: ${date}
-الساعة: ${time}`);
-
+    const waMsg = encodeURIComponent(`*تأكيد حجز جديد*\n📌 الرقم: ${id}\n📅 اليوم: ${date}\n⏰ الساعة: ${time}\n👤 الاسم: ${data.name}`);
     const waUrl = `https://wa.me/201125337717?text=${waMsg}`;
 
     addMessage(`
@@ -265,31 +257,36 @@ function finishProcess(data, response) {
         border:2px solid #dc2626;
         background:#fee2e2;
         color:#dc2626;
-        font-weight:700;
+        font-weight:800;
+        animation: flash 1s infinite;
         text-decoration:none;
+        cursor:pointer;
+        box-shadow: 0 0 10px rgba(220,38,38,0.4);
     ">
     ⚠️ الحجز لا يعتبر مؤكد إلا بعد التواصل عبر واتساب
     <br>اضغطي هنا لتأكيد الحجز
     </a>
     `, "bot");
-}
 
-    const waMsg = encodeURIComponent(`*طلب حجز عيادة*\nالاسم: ${data.name}\nالهاتف: ${data.phone}\nالنوع: ${data.type}`);
-    const waUrl = `https://wa.me/201125337717?text=${waMsg}`;
-
-    addMessage(`<a href="${waUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white;">🚀 اضغطي هنا لتأكيد الحجز على واتساب الآن</a>`, "bot");
-
+    // Auto open WhatsApp
     setTimeout(() => { window.open(waUrl, "_blank"); }, 1500);
 
-    const socialLinks = `<div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
-        <p style="font-size:0.9rem; font-weight:700; color:var(--dark-pink); text-align:center;">✨ تقدري تتواصلي معانا فوراً من هنا 👇</p>
-        <a href="https://wa.me/201021708011" target="_blank" class="btn-link" style="background:var(--boy-blue); color:white; border:none;">💬 تحدث مع السكرتارية الآن</a>
-        <a href="https://www.facebook.com/profile.php?id=100085280501168" target="_blank" class="btn-link" style="background:#1877F2; color:white; border:none;">📘 صفحة العيادة على فيسبوك</a>
-        <a href="https://www.tiktok.com/@doaaobgyn" target="_blank" class="btn-link" style="background:black; color:white; border:none;">🎵 تابعنا على تيك توك</a>
-    </div>`;
-    addMessage(socialLinks, "bot");
-    
-    setTimeout(() => { addMessage(`هل تودين حجز ميعاد آخر أو حساب الحمل؟<br><button class="option-btn" onclick="location.reload()">🔄 حجز جديد / حساب الحمل</button>`, "bot"); }, 4000);
+    // Show social links and restart option
+    setTimeout(() => {
+        const socialLinks = `
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+            <p style="font-size:0.9rem; font-weight:700; color:var(--dark-pink); text-align:center;">✨ تقدري تتواصلي معانا فوراً من هنا 👇</p>
+            <a href="https://wa.me/201021708011" target="_blank" class="btn-link" style="background:var(--boy-blue); color:white;">💬 تحدث مع السكرتارية الآن</a>
+            <a href="https://www.facebook.com/profile.php?id=100085280501168" target="_blank" class="btn-link" style="background:#1877F2; color:white;">📘 صفحة العيادة على فيسبوك</a>
+            <a href="https://www.tiktok.com/@doaaobgyn" target="_blank" class="btn-link" style="background:black; color:white;">🎵 تابعنا على تيك توك</a>
+        </div>`;
+        addMessage(socialLinks, "bot");
+        
+        setTimeout(() => {
+            addMessage(`هل تودين حجز ميعاد آخر أو حساب الحمل؟<br>
+            <button class="option-btn" onclick="location.reload()">🔄 حجز جديد / حساب الحمل</button>`, "bot");
+        }, 2000);
+    }, 3000);
 }
 
 function calculatePregnancy() {
@@ -327,11 +324,21 @@ function doCalc() {
         <br>🤍 ربنا يتمم لكِ على خير
     </div>`;
     addMessage(res, "bot");
+
+    setTimeout(() => {
+        addMessage(`هل تحتاجين لمساعدة أخرى؟<br>
+        <button class="option-btn" onclick="location.reload()">🔄 الرجوع للقائمة الرئيسية</button>`, "bot");
+    }, 2000);
 }
 
 function aboutAssistant() {
     addMessage(`<div class="msg bot-msg" style="border:2px solid var(--boy-blue); color:var(--boy-blue); font-weight:700;">✨ عن المساعد الذكي</div>`, "bot");
-    setTimeout(() => { addMessage(`أنا مساعدكِ الرقمي لعيادة دكتورة دعاء شعبان، تم تطويري لتسهيل الحجز والاستعلام على مدار 24 ساعة لضمان راحتكِ 🤍`, "bot"); }, 500);
+    setTimeout(() => { 
+        addMessage(`أنا مساعدكِ الرقمي لعيادة دكتورة دعاء شعبان، تم تطويري لتسهيل الحجز والاستعلام على مدار 24 ساعة لضمان راحتكِ 🤍`, "bot"); 
+        setTimeout(() => {
+            addMessage(`<button class="option-btn" onclick="location.reload()">🔄 العودة للبداية</button>`, "bot");
+        }, 1000);
+    }, 500);
 }
 
 function disableSameLevelButtons(className, clickedBtn) {
@@ -368,8 +375,11 @@ window.onload = () => { showTyping(); setTimeout(() => { removeTyping(); addMess
 
 function handleSend() {
     const i = document.getElementById("userInput"); if(!i.value) return;
-    addMessage(i.value, "user"); i.value = "";
-    addMessage("من فضلكِ استخدمي الأزرار المتاحة لتسهيل الحجز 🌸", "bot");
+    const val = i.value;
+    addMessage(val, "user"); i.value = "";
+    if (val.includes('حمل') || val.includes('احسب')) calculatePregnancy();
+    else if (val.includes('حجز')) showBookingOptions();
+    else addMessage("من فضلكِ استخدمي الأزرار المتاحة لتسهيل الحجز 🌸", "bot");
 }
 </script>
 </body>
