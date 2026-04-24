@@ -143,7 +143,7 @@
 
 <script>
 // الرابط الجديد الخاص بالسكريبت المحدث
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzeV4DIJf0fMqED5sqqD727h6OdgZBxqL2oeNAjxaDjZdqKv0gzXYa1iPZRvSu67Tn8/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwLveyUtS9AhqEO1c4WUwqv-rTdFsYHFUX306abOzQ7nyA1Xm_R-vSSUPJGcG4UqlU/exec";
 
 function getWelcomeMessage() {
     return `👋 <b style="color:var(--dark-pink); font-size:1.05rem;">أهلاً بكِ في عيادتنا</b><br><br>
@@ -275,57 +275,63 @@ function validateAndSubmit(bookingType) {
     // إرسال البيانات للسكريبت
     fetch(SCRIPT_URL, {
   method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
   body: JSON.stringify(payload)
 })
 .then(res => res.json())
 .then(response => {
-  setTimeout(() => {
-    removeTyping();
-    finishProcess(payload, response.id);
-  }, 1200);
+  removeTyping();
+  finishProcess(payload, response);
 })
 .catch(() => {
   removeTyping();
-  alert("حصل مشكلة بسيطة في الحجز، جربي تاني 🌸");
+  alert("حصل مشكلة بسيطة 🌸");
 });
     
 }
 
-function finishProcess(data, id) {
+function finishProcess(data, response) {
 
-    let waMsg = `*قسم الحجوزات المسبقة*%0A------------------%0Aالاسم: *${data.name}*%0Aالهاتف: ${data.phone}%0Aالنوع: ${data.type}%0Aتاريخ الحجز: *${data.date}*`;
+    const id = response.id;
+    const date = response.date;
+    const time = response.time;
 
-    if(data.lastVisit) {
-        waMsg += `%0Aتاريخ آخر زيارة: *${data.lastVisit}*`;
-    }
+    let waMsg = `*قسم الحجوزات المسبقة*%0A------------------
+%0Aالاسم: *${data.name}*
+%0Aالهاتف: ${data.phone}
+%0Aالنوع: ${data.type}
+%0A📅 اليوم: *${date}*
+%0A⏰ الساعة: *${time}*
+%0Aرقم الحجز: *${id}*`;
 
-    // 📱 تجهيز رقم واتساب بشكل صحيح
-    let phone = data.phone.toString().replace(/\s/g, '').replace('+', '');
+    let phone = data.phone.replace(/\s/g, '');
     if (phone.startsWith("0")) {
         phone = "20" + phone.substring(1);
     }
 
     const waUrl = `https://wa.me/201125337717?text=${waMsg}`;
 
-    // 🧠 رسالة النجاح (لكن غير مؤكدة)
     addMessage(`<div class="msg bot-msg success-card">
-    🎉 <b>تم تسجيل طلبكِ مبدئياً</b><br><br>
+    🎉 <b>تم تسجيل طلبكِ</b><br><br>
 
-    📌 رقم حجزك: <b>${id}</b><br><br>
+    📌 رقمك: <b>${id}</b><br>
+    📅 اليوم: <b>${date}</b><br>
+    ⏰ الساعة: <b>${time}</b><br><br>
 
-    ⚠️ <span class="flash-red">الحجز لن يتم تأكيده إلا بعد إرسال البيانات على واتساب</span>
+    ⚠️ الحجز لن يتم تأكيده إلا بعد واتساب
 
     </div>`, "bot");
 
-    // 🔥 زر التأكيد الإجباري
-    addMessage(`<a href="${waUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white; font-size:1rem;">
-    🚀 اضغطي هنا لتأكيد الحجز على واتساب الآن
+    addMessage(`<a href="${waUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white;">
+    🚀 تأكيد الحجز على واتساب
     </a>`, "bot");
 
-    // 🔥 فتح الواتساب تلقائي (اختياري بس مهم)
     setTimeout(() => {
         window.open(waUrl, "_blank");
     }, 1200);
+}
 
     // روابط إضافية
     const socialLinks = `
