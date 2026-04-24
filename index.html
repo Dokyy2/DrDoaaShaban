@@ -313,6 +313,7 @@ function finishProcess(data, response) {
 
     const waUrl = `https://wa.me/201125337717?text=${waMsg}`;
 
+    // رسالة النجاح
     addMessage(`<div class="msg bot-msg success-card">
     🎉 <b>تم تسجيل طلبكِ</b><br><br>
 
@@ -324,6 +325,7 @@ function finishProcess(data, response) {
 
     </div>`, "bot");
 
+    // زر الواتساب
     addMessage(`<a href="${waUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white;">
     🚀 تأكيد الحجز على واتساب
     </a>`, "bot");
@@ -331,6 +333,34 @@ function finishProcess(data, response) {
     setTimeout(() => {
         window.open(waUrl, "_blank");
     }, 1200);
+
+    // روابط إضافية
+    const socialLinks = `
+    <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+        <p style="font-size:0.9rem; font-weight:700; color:var(--dark-pink); text-align:center;">
+        ✨ تقدر تتواصل معانا فوراً من هنا 👇
+        </p>
+
+        <a href="https://wa.me/201021708011" target="_blank" class="btn-link" style="background:#25D366; color:white;">
+        💬 تحدث مع السكرتارية الآن
+        </a>
+
+        <a href="https://www.facebook.com/profile.php?id=100085280501168" target="_blank" class="btn-link" style="background:#1877F2; color:white;">
+        📘 صفحة العيادة على فيسبوك
+        </a>
+
+        <a href="https://www.tiktok.com/@doaaobgyn" target="_blank" class="btn-link" style="background:linear-gradient(45deg,#f09433,#dc2743,#bc1888); color:white;">
+        🎵 تابعنا على تيك توك
+        </a>
+    </div>`;
+
+    addMessage(socialLinks, "bot");
+
+    // إعادة التشغيل
+    setTimeout(() => {
+        addMessage(`هل تودين حجز ميعاد آخر أو حساب الحمل؟<br>
+        <button class="option-btn" onclick="location.reload()">🔄 حجز جديد / حساب الحمل</button>`, "bot");
+    }, 3000);
 }
 
     // روابط إضافية
