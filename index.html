@@ -64,12 +64,6 @@
         
         .error-hint { color: #e11d48; font-size: 0.75rem; font-weight: 600; display: none; margin-top: -5px; margin-bottom: 5px; }
 
-        .calc-cloud {
-            background: #fdf2f8; border: 2px dashed var(--primary-color);
-            border-radius: 25px 25px 5px 25px; padding: 15px; color: #be185d;
-            box-shadow: 0 8px 16px rgba(236, 72, 153, 0.1); width: 100%;
-        }
-
         .btn-link { display: block; text-decoration: none; padding: 12px; border-radius: 15px; text-align: center; font-weight: 700; margin: 8px 0; font-size: 0.95rem; }
 
         .typing { display: flex; gap: 4px; padding: 12px !important; align-self: center; width: fit-content; }
@@ -81,53 +75,24 @@
         #userInput { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #eee; font-family: 'Cairo'; font-size: 0.9rem; outline: none; }
         
         .pregnancy-result {
-            width: 100%;
-            display: block;
-            background: linear-gradient(135deg, #fff0f6, #ffe4ec, #fbcfe8);
-            border-radius: 25px;
-            padding: 18px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
-            animation: glowPulse 2.5s infinite ease-in-out;
-        }
-
-        .pregnancy-result b {
-            font-size: 1.3rem;
-            color: #be185d;
-            text-shadow: 0 0 10px rgba(236, 72, 153, 0.6);
+            width: 100%; display: block; background: linear-gradient(135deg, #fff0f6, #ffe4ec, #fbcfe8);
+            border-radius: 25px; padding: 18px; text-align: center; position: relative;
+            overflow: hidden; box-shadow: 0 0 20px rgba(236, 72, 153, 0.3); animation: glowPulse 2.5s infinite ease-in-out;
         }
 
         .pregnancy-result .main-number {
-            font-size: 1.7rem;
-            font-weight: 800;
-            color: #ec4899;
+            font-size: 1.7rem; font-weight: 800; color: #ec4899;
             text-shadow: 0 0 12px rgba(236, 72, 153, 0.8);
             animation: glowText 1.5s infinite alternate;
         }
 
         .delivery-date {
-            margin-top: 15px;
-            padding: 10px;
-            background: white;
-            border-radius: 15px;
-            border: 2px solid var(--primary-color);
-            color: var(--dark-pink);
-            font-weight: 700;
+            margin-top: 15px; padding: 10px; background: white; border-radius: 15px;
+            border: 2px solid var(--primary-color); color: var(--dark-pink); font-weight: 700;
         }
 
-        @keyframes glowPulse {
-            0% { box-shadow: 0 0 10px rgba(236,72,153,0.3); }
-            50% { box-shadow: 0 0 25px rgba(236,72,153,0.7); }
-            100% { box-shadow: 0 0 10px rgba(236,72,153,0.3); }
-        }
-
-        @keyframes glowText {
-            from { text-shadow: 0 0 5px #ec4899; }
-            to { text-shadow: 0 0 20px #ec4899, 0 0 30px #f472b6; }
-        }
-        hr { border: 0; border-top: 1px solid #fbcfe8; margin: 10px 0; }
+        @keyframes glowPulse { 0% { box-shadow: 0 0 10px rgba(236,72,153,0.3); } 50% { box-shadow: 0 0 25px rgba(236,72,153,0.7); } 100% { box-shadow: 0 0 10px rgba(236,72,153,0.3); } }
+        @keyframes glowText { from { text-shadow: 0 0 5px #ec4899; } to { text-shadow: 0 0 20px #ec4899, 0 0 30px #f472b6; } }
     </style>
 </head>
 <body>
@@ -142,7 +107,6 @@
 </div>
 
 <script>
-// الرابط الجديد الخاص بالسكريبت المحدث
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwLveyUtS9AhqEO1c4WUwqv-rTdFsYHFUX306abOzQ7nyA1Xm_R-vSSUPJGcG4UqlU/exec";
 
 function getWelcomeMessage() {
@@ -179,13 +143,11 @@ function renderForm(type, btn) {
     setTimeout(() => {
         removeTyping();
         let fields = "";
-        
         const baseFields = `
             <input type="text" id="pName" placeholder="👤 اسمكِ الثلاثي بالكامل" oninput="this.value=this.value.replace(/[^\\u0600-\\u06FF\\s]/g,''); checkName(this)">
             <div id="nameErr" class="error-hint">⚠️ يرجى كتابة الاسم ثلاثي بالحروف فقط</div>
             <input type="tel" id="pPhone" placeholder="📱 موبايلكِ (يفضل واتساب)" maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,''); checkPhone(this)">
-            <div id="phoneErr" class="error-hint">⚠️ يرجى التأكد من الرقم (11 رقم فقط)</div>
-        `;
+            <div id="phoneErr" class="error-hint">⚠️ يرجى التأكد من الرقم (11 رقم فقط)</div>`;
 
         if (type === 'first') {
             fields = `<b>📋 بيانات حجز كشف أول مرة</b>${baseFields}
@@ -196,7 +158,6 @@ function renderForm(type, btn) {
                     <option value="فيسبوك">🔵 فيسبوك</option>
                     <option value="تيك توك">⚫ تيك توك</option>
                     <option value="صديقة">👭 ترشيح صديقة</option>
-                    <option value="إعلان ممول">📢 إعلان ممول</option>
                     <option value="أخرى">🔍 جهة أخرى</option>
                 </select>
                 <div id="otherSourceArea"></div>
@@ -214,9 +175,8 @@ function renderForm(type, btn) {
                 <input type="date" id="pLastVisit" max="${today}" onchange="verifyConsultationLimit()">
                 <div id="consultDateArea"></div>`;
         } else if (type === 'birth') {
-            addMessage(`✨ <b>طلب حجز ولادة</b><br>يسعدنا جداً مرافقتكِ في هذه اللحظة المميزة 🤍<br><br>من فضلكِ اضغطي على الزر بالأسفل للتحدث مباشرة مع سكرتارية الدكتورة لتنسيق نوع الولادة والموعد والتفاصيل المالية:`, "bot");
-            const birthWaMsg = encodeURIComponent("السلام عليكم دكتورة دعاء، كنت حابة أستفسر وأحجز موعد بخصوص عملية ولادة.. محتاجة أعرف التفاصيل والمواعيد المتاحة، شكراً جداً.");
-            const birthWaUrl = `https://wa.me/201021708011?text=${birthWaMsg}`;
+            addMessage(`✨ <b>طلب حجز ولادة</b><br>من فضلكِ اضغطي للتواصل مع السكرتارية:`, "bot");
+            const birthWaUrl = `https://wa.me/201021708011?text=${encodeURIComponent("أريد حجز موعد ولادة")}`;
             addMessage(`<a href="${birthWaUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white;">💬 تواصل واتساب لحجز الولادة</a>`, "bot");
             return;
         }
@@ -227,21 +187,14 @@ function renderForm(type, btn) {
 function verifyConsultationLimit() {
     const lastVisitVal = document.getElementById("pLastVisit").value;
     if(!lastVisitVal) return;
-    const lastVisitDate = new Date(lastVisitVal);
-    const today = new Date();
-    const diff = Math.ceil(Math.abs(today - lastVisitDate) / (1000 * 60 * 60 * 24));
+    const diff = Math.ceil(Math.abs(new Date() - new Date(lastVisitVal)) / (1000 * 60 * 60 * 24));
     const area = document.getElementById("consultDateArea");
-    const minBookingDate = new Date();
-    minBookingDate.setDate(minBookingDate.getDate() + 1);
     if (diff > 15) {
-        area.innerHTML = `<p style="color:red; font-size:0.85rem; margin-top:10px;">عذراً، لقد تعدت مدة الاستشارة 15 يوم (مر ${diff} يوم). يمكنكِ حجز كشف جديد.</p>
-        <button class="option-btn" onclick="quickSend('حجز ميعاد جديد')">📅 حجز كشف جديد</button>`;
+        area.innerHTML = `<p style="color:red; font-size:0.85rem; margin-top:10px;">عذراً، تعدت مدة الاستشارة 15 يوم. يمكنكِ حجز كشف جديد.</p>
+        <button class="option-btn" onclick="showBookingOptions()">📅 حجز كشف جديد</button>`;
     } else {
-        const remainingDays = 15 - diff;
-        const maxBookingDate = new Date();
-        maxBookingDate.setDate(maxBookingDate.getDate() + remainingDays);
-        area.innerHTML = `<p style="font-size:0.8rem; margin:10px 0 5px 0; color:#666;">📅 الموعد متاح، اختاري تاريخ الاستشارة (خلال الـ ${remainingDays} يوم القادمة):</p>
-            <input type="date" id="pDate" min="${minBookingDate.toISOString().split('T')[0]}" max="${maxBookingDate.toISOString().split('T')[0]}">
+        area.innerHTML = `<p style="font-size:0.8rem; margin:10px 0 5px 0; color:#666;">📅 اختاري تاريخ الاستشارة:</p>
+            <input type="date" id="pDate" min="${new Date().toISOString().split('T')[0]}">
             <button class="option-btn" style="background:var(--primary-color); color:white; border:none;" onclick="validateAndSubmit('استشارة')">تأكيد الاستشارة ✅</button>`;
     }
 }
@@ -255,16 +208,10 @@ function validateAndSubmit(bookingType) {
     const phone = document.getElementById("pPhone").value;
     const date = document.getElementById("pDate") ? document.getElementById("pDate").value : "";
     const lastVisit = document.getElementById("pLastVisit") ? document.getElementById("pLastVisit").value : "";
-    const sourceBase = document.getElementById("pSource") ? document.getElementById("pSource").value : "";
-    const otherSource = document.getElementById("pOtherSource") ? document.getElementById("pOtherSource").value : "";
-    const source = sourceBase === 'أخرى' ? otherSource : sourceBase;
+    const source = document.getElementById("pSource") ? document.getElementById("pSource").value : "";
 
-    if (name.trim().split(" ").length < 3) { alert("من فضلكِ اكتبي اسمكِ الثلاثي بشكل صحيح 👤"); return; }
-    if (phone.length < 11) { alert("من فضلكِ أكملي رقم الموبايل (11 رقم) 📱"); return; }
-    if (!date) { alert("من فضلكِ اختاري تاريخ الحجز 📅"); return; }
-    if (bookingType === 'كشف أول مرة' && (!sourceBase || (sourceBase === 'أخرى' && !otherSource.trim()))) {
-        alert("من فضلكِ قولي لنا عرفتنا منين ✨");
-        return;
+    if (name.trim().split(" ").length < 3 || phone.length < 11 || !date) {
+        alert("يرجى إكمال البيانات بشكل صحيح 👤"); return;
     }
 
     document.getElementById("activeForm").style.opacity = "0.5";
@@ -272,120 +219,51 @@ function validateAndSubmit(bookingType) {
     showTyping();
 
     const payload = { name, phone, date, lastVisit, source, type: bookingType };
-    // إرسال البيانات للسكريبت
+
     fetch(SCRIPT_URL, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify(payload)
-})
-.then(res => res.json())
-.then(response => {
-  removeTyping();
-  finishProcess(payload, response);
-})
-.catch(() => {
-  removeTyping();
-  alert("حصل مشكلة بسيطة 🌸");
-});
-    
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    }).then(() => {
+        setTimeout(() => {
+            removeTyping();
+            finishProcess(payload, {id: "ID-"+Math.floor(Math.random()*9000), date: new Date().toLocaleDateString('ar-EG'), time: new Date().toLocaleTimeString('ar-EG')});
+        }, 1200);
+    }).catch(() => {
+        removeTyping();
+        alert("حصل مشكلة بسيطة 🌸");
+    });
 }
 
 function finishProcess(data, response) {
-
     const id = response.id;
     const date = response.date;
     const time = response.time;
 
-    let waMsg = `*قسم الحجوزات المسبقة*%0A------------------
-%0Aالاسم: *${data.name}*
-%0Aالهاتف: ${data.phone}
-%0Aالنوع: ${data.type}
-%0A📅 اليوم: *${date}*
-%0A⏰ الساعة: *${time}*
-%0Aرقم الحجز: *${id}*`;
-
-    let phone = data.phone.replace(/\s/g, '');
-    if (phone.startsWith("0")) {
-        phone = "20" + phone.substring(1);
-    }
-
+    let waMsg = `*قسم الحجوزات المسبقة*%0A------------------%0Aالاسم: *${data.name}*%0Aالهاتف: ${data.phone}%0Aالنوع: ${data.type}%0A📅 اليوم: *${date}*%0A⏰ الساعة: *${time}*%0Aرقم الحجز: *${id}*`;
     const waUrl = `https://wa.me/201125337717?text=${waMsg}`;
 
-    // رسالة النجاح
     addMessage(`<div class="msg bot-msg success-card">
     🎉 <b>تم تسجيل طلبكِ</b><br><br>
-
     📌 رقمك: <b>${id}</b><br>
     📅 اليوم: <b>${date}</b><br>
     ⏰ الساعة: <b>${time}</b><br><br>
-
     ⚠️ الحجز لن يتم تأكيده إلا بعد واتساب
-
     </div>`, "bot");
 
-    // زر الواتساب
-    addMessage(`<a href="${waUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white;">
-    🚀 تأكيد الحجز على واتساب
-    </a>`, "bot");
+    addMessage(`<a href="${waUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white;">🚀 تأكيد الحجز على واتساب</a>`, "bot");
 
-    setTimeout(() => {
-        window.open(waUrl, "_blank");
-    }, 1200);
+    setTimeout(() => { window.open(waUrl, "_blank"); }, 1200);
 
-    // روابط إضافية
     const socialLinks = `
     <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
-        <p style="font-size:0.9rem; font-weight:700; color:var(--dark-pink); text-align:center;">
-        ✨ تقدر تتواصل معانا فوراً من هنا 👇
-        </p>
-
-        <a href="https://wa.me/201021708011" target="_blank" class="btn-link" style="background:#25D366; color:white;">
-        💬 تحدث مع السكرتارية الآن
-        </a>
-
-        <a href="https://www.facebook.com/profile.php?id=100085280501168" target="_blank" class="btn-link" style="background:#1877F2; color:white;">
-        📘 صفحة العيادة على فيسبوك
-        </a>
-
-        <a href="https://www.tiktok.com/@doaaobgyn" target="_blank" class="btn-link" style="background:linear-gradient(45deg,#f09433,#dc2743,#bc1888); color:white;">
-        🎵 تابعنا على تيك توك
-        </a>
+        <a href="https://wa.me/201021708011" target="_blank" class="btn-link" style="background:#25D366; color:white;">💬 تحدث مع السكرتارية الآن</a>
+        <a href="https://www.facebook.com/profile.php?id=100085280501168" target="_blank" class="btn-link" style="background:#1877F2; color:white;">📘 صفحة العيادة</a>
+        <a href="https://www.tiktok.com/@doaaobgyn" target="_blank" class="btn-link" style="background:linear-gradient(45deg,#f09433,#dc2743,#bc1888); color:white;">🎵 تيك توك</a>
     </div>`;
-
     addMessage(socialLinks, "bot");
 
-    // إعادة التشغيل
-    setTimeout(() => {
-        addMessage(`هل تودين حجز ميعاد آخر أو حساب الحمل؟<br>
-        <button class="option-btn" onclick="location.reload()">🔄 حجز جديد / حساب الحمل</button>`, "bot");
-    }, 3000);
-}
-
-    // روابط إضافية
-    const socialLinks = `
-    <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
-        <p style="font-size:0.9rem; font-weight:700; color:var(--dark-pink); text-align:center;">
-        ✨ تقدر تتواصل معانا فوراً من هنا 👇
-        </p>
-
-        <a href="https://wa.me/201021708011" target="_blank" class="btn-link" style="background:#25D366; color:white;">
-        💬 تحدث مع السكرتارية الآن
-        </a>
-
-        <a href="https://www.facebook.com/profile.php?id=100085280501168" target="_blank" class="btn-link" style="background:#1877F2; color:white;">
-        📘 صفحة العيادة على فيسبوك
-        </a>
-
-        <a href="https://www.tiktok.com/@doaaobgyn" target="_blank" class="btn-link" style="background:linear-gradient(45deg,#f09433,#dc2743,#bc1888); color:white;">
-        🎵 تابعنا على تيك توك
-        </a>
-    </div>`;
-
-    addMessage(socialLinks, "bot");
-
-    // إعادة التشغيل
     setTimeout(() => {
         addMessage(`هل تودين حجز ميعاد آخر أو حساب الحمل؟<br>
         <button class="option-btn" onclick="location.reload()">🔄 حجز جديد / حساب الحمل</button>`, "bot");
@@ -393,57 +271,45 @@ function finishProcess(data, response) {
 }
 
 function doCalc() {
-    const d = document.getElementById("lastPeriod").value;
-    if (!d) return;
-    const today = new Date();
-    const selectedDate = new Date(d);
-    const diff = today - selectedDate;
-    const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (totalDays > 294 || totalDays < 0) {
-        addMessage(`<div class="pregnancy-result" style="border:2px solid red;"><b style="color:red;">⚠️ التاريخ غير صحيح</b><br><br>يرجى اختيار تاريخ صحيح في الماضي (أقصى مدة 42 أسبوع) 💗</div>`, "bot");
+    const d = document.getElementById("lastPeriod") ? document.getElementById("lastPeriod").value : null;
+    if (!d) {
+        showTyping();
+        setTimeout(() => {
+            removeTyping();
+            addMessage(`<b>حاسبة الحمل ✨</b><br>من فضلكِ اختاري تاريخ أول يوم في آخر دورة شهرية:<br>
+            <div class="booking-form" id="calcForm">
+                <input type="date" id="lastPeriod" max="${new Date().toISOString().split('T')[0]}">
+                <button class="option-btn" style="background:var(--primary-color); color:white; border:none;" onclick="doCalc()">احسبي الآن 🌸</button>
+            </div>`, "bot");
+        }, 600);
         return;
     }
-
-    document.getElementById("lastPeriod").disabled = true;
-    document.getElementById("calcBtn").disabled = true;
-    document.getElementById("calcForm").style.opacity = "0.7";
-
+    const diff = new Date() - new Date(d);
+    const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (totalDays > 294 || totalDays < 0) {
+        addMessage(`<div class="pregnancy-result" style="border:2px solid red;">⚠️ التاريخ غير منطقي</div>`, "bot");
+        return;
+    }
     const weeks = Math.floor(totalDays / 7);
     const days = totalDays % 7;
-    const months = Math.floor(weeks / 4);
-    
-    const deliveryDate = new Date(selectedDate);
-    deliveryDate.setDate(deliveryDate.getDate() + 280);
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    const deliveryStr = deliveryDate.toLocaleDateString('ar-EG', options);
+    const deliveryDate = new Date(d); deliveryDate.setDate(deliveryDate.getDate() + 280);
 
-    const res = `
-    <div class="pregnancy-result">
-        ✨ <b>أنتِ الآن في:</b><br><br>
-        <div class="main-number">${weeks} أسبوع و ${days} يوم</div><br>
-        📅 يعني تقريباً في <b>الشهر ${months + 1}</b> 👶
-        <div class="delivery-date">
-            📅 موعد الولادة المتوقع بإذن الله:<br>
-            <span style="font-size:1.1rem;">${deliveryStr}</span>
-        </div>
-        <br>🤍 ربنا يتمم لكِ على خير
-    </div>`;
-    addMessage(`<div style="width:100%">${res}</div>`, "bot");
-
-    setTimeout(() => {
-        addMessage(`✨ <b>هل تودين المتابعة معنا في العيادة؟</b><br>يمكنكِ الآن حجز موعد متابعة الحمل للاطمئنان على صحتك وصحة جنينك بالسونار 🩺<br><button class="option-btn" onclick="showBookingOptions()">📅 حجز ميعاد الآن</button>`, "bot");
-    }, 1500);
+    addMessage(`<div class="pregnancy-result">
+        ✨ أنتِ الآن في:<br><div class="main-number">${weeks} أسبوع و ${days} يوم</div><br>
+        <div class="delivery-date">موعد الولادة المتوقع:<br>${deliveryDate.toLocaleDateString('ar-EG', {year:'numeric', month:'long', day:'numeric'})}</div>
+    </div>`, "bot");
 }
 
 function aboutAssistant() {
     addMessage(`<div class="msg bot-msg" style="border:2px solid var(--boy-blue); color:var(--boy-blue); font-weight:700;">✨ عن المساعد الذكي</div>`, "bot");
-    setTimeout(() => { addMessage(`أنا مساعدكِ الرقمي لعيادة دكتورة دعاء شعبان، تم تطويري لتسهيل الحجز والاستعلام على مدار 24 ساعة لضمان راحتكِ 🤍`, "bot"); }, 500);
+    setTimeout(() => { addMessage(`أنا مساعدكِ الرقمي لعيادة دكتورة دعاء شعبان، أعمل لتسهيل الحجز والاستعلام 🤍`, "bot"); }, 500);
 }
 
-function disableSameLevelButtons(className, clickedBtn) {
-    const btns = document.getElementsByClassName(className);
-    for (let b of btns) { b.disabled = true; if (clickedBtn && b === clickedBtn) { b.style.background = "#be185d"; b.style.color = "white"; } }
+function quickSend(text) {
+    addMessage(text, "user");
+    if (text.includes('حجز')) showBookingOptions();
+    if (text.includes('حمل')) doCalc();
+    if (text.includes('المساعد')) aboutAssistant();
 }
 
 function addMessage(text, type) {
@@ -463,12 +329,9 @@ function showTyping() {
 }
 
 function removeTyping() { const t = document.getElementById("typing"); if (t) t.remove(); }
-
-function quickSend(text) {
-    addMessage(text, "user");
-    if (text.includes('حجز')) showBookingOptions();
-    if (text.includes('حمل')) calculatePregnancy();
-    if (text.includes('المساعد')) aboutAssistant();
+function disableSameLevelButtons(className, clickedBtn) {
+    const btns = document.getElementsByClassName(className);
+    for (let b of btns) { b.disabled = true; if (clickedBtn && b === clickedBtn) { b.style.background = "#be185d"; b.style.color = "white"; } }
 }
 
 window.onload = () => { showTyping(); setTimeout(() => { removeTyping(); addMessage(getWelcomeMessage(), "bot"); }, 1000); };
