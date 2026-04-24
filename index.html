@@ -113,7 +113,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLAMeWjuqUvg18Ez6FR2Kf-UcAlqIAuV7TEsk9h08nqk5JdH6qvXcxWjVJdqChZLUG/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzHQB7NtpaqJ0MhOBhcjGMr7wZppZWdsGa2uVVa1RcDMTF-CMaY58UDOcmZNi3VzIgS/exec";
 
 function getWelcomeMessage() {
     return `👋 <b style="color:var(--dark-pink); font-size:1.05rem;">أهلاً بكِ في عيادتنا</b><br><br>
@@ -211,17 +211,18 @@ function validateAndSubmit(bookingType) {
     const payload = { name, phone, lastVisit, source, type: bookingType };
     
     // إرسال البيانات للسكريبت (الذي سيقوم بالترقيم والتوقيت التلقائي)
-    fetch(SCRIPT_URL, { 
-        method: "POST", 
-        mode: "no-cors", 
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload) 
-    })
-    .then(() => { 
-        setTimeout(() => { 
-            removeTyping(); 
-            finishProcess(payload); 
-        }, 2000); 
+    fetch(SCRIPT_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(payload)
+})
+.then(res => res.json())
+.then(response => {
+  removeTyping();
+  finishProcess(payload, response);
+    
     })
     .catch(() => {
         removeTyping();
@@ -231,21 +232,47 @@ function validateAndSubmit(bookingType) {
     });
 }
 
-function finishProcess(data) {
-    // عرض النتيجة للمستخدمة بناءً على منطق النظام التلقائي
-    const msg = `<div class="msg bot-msg success-card">
-    🎉 <b>تم تسجيل طلبكِ بنجاح</b><br><br>
-    📍 سيتم مراجعة طلبكِ فوراً وتأكيد:<br>
-    🔢 رقم الحجز (مثلاً B1, B2...) <br>
-    📅 اليوم والتاريخ المتاح <br>
-    ⏰ الساعة (بداية من 5:15 مساءً) <br>
-    ⏱ مدة الانتظار: <b>ساعة واحدة</b><br><br>
-    <div class="flash-red">
-    ⚠️ الحجز لا يُعتبر مؤكد إلا بعد التواصل عبر واتساب لإرسال بيانات الموعد النهائي
-    </div>
-    </div>`;
+function finishProcess(data, response) {
 
-    addMessage(msg, "bot");
+    const id = response.id;
+    const date = response.date;
+    const time = response.time;
+
+    addMessage(`
+    <div class="msg bot-msg success-card">
+    🎉 <b>تم تسجيل طلبكِ بنجاح</b><br><br>
+
+    📌 رقمك: <b>${id}</b><br>
+    📅 اليوم: <b>${date}</b><br>
+    ⏰ الساعة: <b>${time}</b><br>
+    ⏱ مدة الانتظار: <b>ساعة واحدة</b><br>
+    </div>
+    `, "bot");
+
+    const waMsg = encodeURIComponent(`*تأكيد الحجز*
+رقمك: ${id}
+اليوم: ${date}
+الساعة: ${time}`);
+
+    const waUrl = `https://wa.me/201125337717?text=${waMsg}`;
+
+    addMessage(`
+    <a href="${waUrl}" target="_blank" style="
+        display:block;
+        margin-top:10px;
+        padding:15px;
+        border-radius:15px;
+        border:2px solid #dc2626;
+        background:#fee2e2;
+        color:#dc2626;
+        font-weight:700;
+        text-decoration:none;
+    ">
+    ⚠️ الحجز لا يعتبر مؤكد إلا بعد التواصل عبر واتساب
+    <br>اضغطي هنا لتأكيد الحجز
+    </a>
+    `, "bot");
+}
 
     const waMsg = encodeURIComponent(`*طلب حجز عيادة*\nالاسم: ${data.name}\nالهاتف: ${data.phone}\nالنوع: ${data.type}`);
     const waUrl = `https://wa.me/201125337717?text=${waMsg}`;
