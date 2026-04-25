@@ -83,13 +83,17 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby7Fab8nRaSr640ieyWx
 
 function getWelcomeMessage() {
     return `
-    <div class="welcome-box">
-        تحديد يوم الحجز من ثاني يوم مع أولوية الحجز، وفي حال كان غداً عطلة يرحل لليوم التالي، وعند اكتمال العدد يكون الحجز بعد غد.
-    </div>
-    👋 <b style="color:var(--dark-pink);">أهلاً بكِ في عيادتنا</b><br>
-    أنا مساعدكِ الذكي، اختاري الخدمة المطلوبة:
-    <div class="btn-group">
-        <button class="option-btn" onclick="showBookingOptions(this)">📅 حجز ميعاد جديد</button>
+   <div class="welcome-box">
+    📅 يتم تحديد موعد الحجز بدايةً من اليوم التالي حسب أولوية الحجز.<br>
+    وفي حال كان اليوم التالي عطلة أو اكتمل العدد، يتم الحجز في أقرب يوم متاح.
+</div>
+
+👋 <b style="color:var(--dark-pink);">أهلاً بيكِ في عيادتنا</b><br>
+أنا <span style="color:var(--primary-color); font-weight:700;">مساعدكِ الذكي</span> 🤍<br>
+هكون معاكي علشان أسهّل عليكِ الحجز والاستفسار:
+
+<div class="btn-group">
+        <button class="option-btn" onclick="showBookingOptions(this)">📅 احجزيلي ميعاد</button>
         <button class="option-btn" onclick="quickSend('حاسبة الحمل', this)">🤰 احسبي عمر حملكِ</button>
         <button class="option-btn" onclick="quickSend('عن المساعد الذكي', this)">✨ عن المساعد الذكي</button>
     </div>`;
@@ -122,7 +126,7 @@ function renderForm(type, btn) {
         const baseFields = `
             <input type="text" id="pName" placeholder="👤 اسمكِ الثلاثي بالكامل" oninput="this.value=this.value.replace(/[^\\u0600-\\u06FF\\s]/g,''); checkNameInput(this)">
             <div id="nameErr" class="error-hint">⚠️ يرجى كتابة الاسم ثلاثي بالحروف فقط</div>
-            <input type="tel" id="pPhone" placeholder="📱 موبايلكِ (11 رقم)" maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,''); checkPhoneInput(this)">
+            <input type="tel" id="pPhone" placeholder="📱 موبايلكِ (11 رقم) يفضل واتساب" maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,''); checkPhoneInput(this)">
             <div id="phoneErr" class="error-hint">⚠️ يرجى التأكد من الرقم (11 رقم فقط)</div>
         `;
 
@@ -136,7 +140,8 @@ function renderForm(type, btn) {
                     <option value="فيسبوك">🔵 فيسبوك</option>
                     <option value="تيك توك">⚫ تيك توك</option>
                     <option value="صديقة">👭 صديقة</option>
-                    <option value="أخرى">🔍 جهة أخرى</option>
+                    <option value="انستغرام">📸 انستغرام</option>
+                    <option value="أخرى">🔍 مكان تانى</option>
                 </select>
                 <div id="otherArea"></div>${note}<button class="option-btn" style="background:var(--primary-color); color:white;" onclick="validateAndSubmit('كشف أول مرة')">تأكيد الحجز الآن ✅</button>`;
         } else if (type === 'follow' || type === 'consult') {
@@ -199,7 +204,7 @@ function validateAndSubmit(bookingType) {
     // تعديل رقم 3: التحقق من "عرفتينا منين"
     if (bookingType === 'كشف أول مرة') {
         if (!source) { alert("من فضلكِ اختاري عرفتينا منين ✨"); return; }
-        if (source === 'أخرى' && !other.trim()) { alert("من فضلكِ اكتبي المصدر في الخانة المطلوبة 🔍"); return; }
+        if (source === 'أخرى' && !other.trim()) { alert("من فضلكِ اكتبي مكان تانى في الخانة المطلوبة 🔍"); return; }
     }
     
     if ((bookingType === 'متابعة' || bookingType === 'استشارة') && !lastVisit) { alert("يرجى إدخال تاريخ آخر زيارة 📅"); return; }
@@ -217,20 +222,52 @@ function validateAndSubmit(bookingType) {
 
 function finishProcess(data, res) {
     addMessage(`
-    <div class="msg bot-msg success-card">
-        🎉 <b>تم تسجيل طلبكِ بنجاح</b><br><br>
+<div class="msg bot-msg success-card" style="
+    text-align:center;
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.25);
+    border: 2px solid #ec4899;
+    background: linear-gradient(135deg,#fff0f6,#ffe4ec);
+">
+
+    <div style="
+        font-size:1.15rem;
+        font-weight:800;
+        color:#be185d;
+        margin-bottom:12px;
+        text-shadow: 0 0 8px rgba(236,72,153,0.4);
+    ">
+        🎉 تم تسجيل طلبكِ بنجاح
+    </div>
+
+    <div style="
+        text-align:right;
+        font-size:0.85rem;
+        line-height:1.9;
+        color:#334155;
+    ">
         📌 رقمك المرجعي: <b>${res.id}</b><br>
         🩺 نوع الكشف: <b>${res.type}</b><br>
         📅 اليوم: <b>${res.date}</b><br>
         ⏰ موعد الحضور: <b>${res.time}</b><br>
         ⏳ مدة الانتظار: <b>ساعة واحدة</b><br>
-        🩺 الكشف المتوقع: <b>${res.expectedTime}</b><br>
-        <hr>
-        <div style="text-align:right; font-size:0.8rem; color:#dc2626;">
-            • يرجى الحضور قبل الموعد بـ 15 دقيقة.<br>
-            • عدم الحضور في الموعد يلغي الحجز تلقائياً.
-        </div>
-    </div>`, "bot");
+        🩺 الكشف المتوقع: <b>${res.expectedTime}</b>
+    </div>
+
+    <hr style="margin:12px 0; border-top:1px solid #fbcfe8;">
+
+    <div style="
+        text-align:center;
+        font-size:0.8rem;
+        color:#dc2626;
+        font-weight:700;
+        line-height:1.8;
+    ">
+        يرجى الحضور قبل الموعد بـ 15 دقيقة<br>
+        عدم الحضور في الموعد يلغي الحجز تلقائياً
+    </div>
+
+</div>
+`, "bot");
 
     const waMsg = `*تأكيد حجز جديد*\n📌 الرقم: ${res.id}\n🩺 النوع: ${res.type}\n👤 الاسم: ${data.name}\n📱 الهاتف: ${data.phone}\n📅 اليوم: ${res.date}\n⏰ الحضور: ${res.time}\n🩺 المتوقع: ${res.expectedTime}\n⚠️ الحضور قبل الموعد بـ 15 دقيقة`;
     const waUrl = `https://wa.me/201125337717?text=${encodeURIComponent(waMsg)}`;
