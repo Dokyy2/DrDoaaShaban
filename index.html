@@ -208,7 +208,7 @@ function freezeButtons(btn) {
 
 function checkNameInput(el) { document.getElementById("nameErr").style.display = el.value.trim().split(/\s+/).length < 3 ? "block" : "none"; }
 function checkPhoneInput(el) { document.getElementById("phoneErr").style.display = el.value.length < 11 ? "block" : "none"; }
-function toggleOther(v) { document.getElementById("otherArea").innerHTML = v === 'أخرى' ? `<input type="text" id="pOther" placeholder="اكتبي المصدر هنا...">` : ""; }
+function toggleOther(v) { document.getElementById("otherArea").innerHTML = v === 'أخرى' ? `<input type="text" id="pOther" placeholder="اكتبي عرفتينا منين هنا...">` : ""; }
 
 function check15Days(el, type) {
     if (type !== 'consult') return;
