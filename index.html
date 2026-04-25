@@ -274,7 +274,7 @@ function finishProcess(data, res) {
 
     addMessage(`<div style="width:100%;"><a href="${waUrl}" target="_blank" class="premium-wa-link">اضغطي هنا لتأكيد الحجز<br><small style="font-weight:400; font-size:0.8rem;">الحجز لا يعتبر مؤكداً إلا بعد التواصل عبر واتساب</small></a></div>`, "bot");
 
-    setTimeout(() => { window.open(waUrl, "_blank"); }, 5000);
+    setTimeout(() => { window.open(waUrl, "_blank"); }, 10000);
 }
 
 function quickSend(text, btn) {
