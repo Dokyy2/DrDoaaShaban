@@ -55,10 +55,18 @@
 
         @keyframes flash { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.02); } }
 
-        .booking-form { background: #fffbff; border: 2.5px solid var(--primary-color); border-radius: 25px; padding: 18px; width: 100%; align-self: center; }
+        .booking-form { background: #fffbff; border: 2.5px solid var(--primary-color); border-radius: 25px; padding: 18px; width: 100%; align-self: center; transition: 0.3s; }
         .booking-form input, .booking-form select { width: 100%; margin: 8px 0; padding: 10px; border-radius: 12px; border: 1.5px solid #eee; font-family: 'Cairo'; outline: none; text-align: center; font-size: 0.9rem; }
         
         .error-hint { color: #e11d48; font-size: 0.75rem; font-weight: 600; display: none; margin-top: -5px; margin-bottom: 5px; }
+
+        .calc-cloud {
+            background: #fdf2f8; border: 2px dashed var(--primary-color);
+            border-radius: 25px 25px 5px 25px; padding: 15px; color: #be185d;
+            box-shadow: 0 8px 16px rgba(236, 72, 153, 0.1); width: 100%;
+        }
+
+        .btn-link { display: block; text-decoration: none; padding: 12px; border-radius: 15px; text-align: center; font-weight: 700; margin: 8px 0; font-size: 0.95rem; transition: 0.3s; }
 
         .typing { display: flex; gap: 4px; padding: 12px !important; align-self: center; width: fit-content; }
         .dot { width: 7px; height: 7px; background: var(--primary-color); border-radius: 50%; animation: blink 1.4s infinite; }
@@ -69,14 +77,24 @@
         #userInput { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #eee; font-family: 'Cairo'; font-size: 0.9rem; outline: none; }
         
         .pregnancy-result {
-            width: 100%; background: linear-gradient(135deg, #fff0f6, #ffe4ec, #fbcfe8);
-            border-radius: 25px; padding: 18px; text-align: center; box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
+            width: 100%; display: block; background: linear-gradient(135deg, #fff0f6, #ffe4ec, #fbcfe8);
+            border-radius: 25px; padding: 18px; text-align: center; position: relative;
+            overflow: hidden; box-shadow: 0 0 20px rgba(236, 72, 153, 0.3); animation: glowPulse 2.5s infinite ease-in-out;
         }
 
-        .main-number { font-size: 1.7rem; font-weight: 800; color: #ec4899; }
-        .delivery-date { margin-top: 15px; padding: 10px; background: white; border-radius: 15px; border: 2px solid var(--primary-color); color: var(--dark-pink); font-weight: 700; }
-        
-        .btn-link { display: block; text-decoration: none; padding: 12px; border-radius: 15px; text-align: center; font-weight: 700; margin: 8px 0; font-size: 0.95rem; }
+        .pregnancy-result .main-number {
+            font-size: 1.7rem; font-weight: 800; color: #ec4899;
+            text-shadow: 0 0 12px rgba(236, 72, 153, 0.8); animation: glowText 1.5s infinite alternate;
+        }
+
+        .delivery-date {
+            margin-top: 15px; padding: 10px; background: white; border-radius: 15px;
+            border: 2px solid var(--primary-color); color: var(--dark-pink); font-weight: 700;
+        }
+
+        @keyframes glowPulse { 0% { box-shadow: 0 0 10px rgba(236,72,153,0.3); } 50% { box-shadow: 0 0 25px rgba(236,72,153,0.7); } 100% { box-shadow: 0 0 10px rgba(236,72,153,0.3); } }
+        @keyframes glowText { from { text-shadow: 0 0 5px #ec4899; } to { text-shadow: 0 0 20px #ec4899, 0 0 30px #f472b6; } }
+        hr { border: 0; border-top: 1px solid #fbcfe8; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -91,8 +109,8 @@
 </div>
 
 <script>
-// ضع رابط الـ Web App الخاص بك هنا بعد النشر
-const SCRIPT_URL = "رابط_سكريبت_جوجل_الخاص_بك_هنا";
+// ⚠️ استبدل هذا الرابط برابط الـ Web App الخاص بك بعد النشر
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxW59O0L6cHPpHUg6J6FsXh4VmYRz3hJbU81PNQwLbi1UCickBSoiiuQDWNY82JKgz/exec";
 
 function getWelcomeMessage() {
     return `👋 <b style="color:var(--dark-pink); font-size:1.05rem;">أهلاً بكِ في عيادتنا</b><br><br>
@@ -120,114 +138,218 @@ function showBookingOptions(btn) {
 function renderForm(type, btn) {
     disableSameLevelButtons('sub-opt', btn);
     const today = new Date().toISOString().split('T')[0];
+
     showTyping();
     setTimeout(() => {
         removeTyping();
         let fields = "";
         const baseFields = `
-            <input type="text" id="pName" placeholder="👤 اسمكِ الثلاثي بالكامل" oninput="checkName(this)">
-            <div id="nameErr" class="error-hint">⚠️ يرجى كتابة الاسم ثلاثي على الأقل</div>
-            <input type="tel" id="pPhone" placeholder="📱 موبايلكِ (11 رقم)" maxlength="11" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,''); checkPhone(this)">
-            <div id="phoneErr" class="error-hint">⚠️ يرجى التأكد من الرقم (11 رقم)</div>
+            <input type="text" id="pName" placeholder="👤 اسمكِ الثلاثي بالكامل" oninput="this.value=this.value.replace(/[^\\u0600-\\u06FF\\s]/g,''); checkName(this)">
+            <div id="nameErr" class="error-hint">⚠️ يرجى كتابة الاسم ثلاثي بالحروف فقط</div>
+            <input type="tel" id="pPhone" placeholder="📱 موبايلكِ (يفضل واتساب)" maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,''); checkPhone(this)">
+            <div id="phoneErr" class="error-hint">⚠️ يرجى التأكد من الرقم (11 رقم فقط)</div>
         `;
 
         if (type === 'first') {
-            fields = `<b>📋 بيانات كشف أول مرة</b>${baseFields}
+            fields = `<b>📋 بيانات حجز كشف أول مرة</b>${baseFields}
                 <select id="pSource" onchange="toggleOtherSource(this.value)">
                     <option value="">✨ عرفتينا منين؟</option>
                     <option value="فيسبوك">🔵 فيسبوك</option>
                     <option value="تيك توك">⚫ تيك توك</option>
                     <option value="صديقة">👭 ترشيح صديقة</option>
+                    <option value="إعلان ممول">📢 إعلان ممول</option>
                     <option value="أخرى">🔍 جهة أخرى</option>
                 </select>
                 <div id="otherSourceArea"></div>
-                <button class="option-btn" style="background:var(--primary-color); color:white;" onclick="validateAndSubmit('كشف أول مرة')">تأكيد الحجز الآن ✅</button>`;
-        } else if (type === 'follow' || type === 'consult') {
-            const title = type === 'follow' ? "حجز متابعة" : "حجز استشارة";
-            fields = `<b>🔄 ${title}</b>${baseFields}
-                <p style="font-size:0.8rem; margin:5px 0;">📅 تاريخ آخر زيارة:</p>
+                <p style="font-size:0.8rem; color:#666; margin:10px 0;">📝 سيتم تحديد الموعد تلقائياً في أقرب وقت متاح</p>
+                <button class="option-btn" style="background:var(--primary-color); color:white; border:none;" onclick="validateAndSubmit('كشف أول مرة')">تأكيد الحجز الآن ✅</button>`;
+        } else if (type === 'follow') {
+            fields = `<b>🔄 بيانات حجز كشف متابعة</b>${baseFields}
+                <p style="font-size:0.8rem; margin:5px 0; color:#666;">📅 تاريخ آخر زيارة للعيادة:</p>
                 <input type="date" id="pLastVisit" max="${today}">
-                <button class="option-btn" style="background:var(--primary-color); color:white;" onclick="validateAndSubmit('${title}')">تأكيد الحجز ✅</button>`;
+                <p style="font-size:0.8rem; color:#666; margin:10px 0;">📝 سيتم تحديد ميعاد المتابعة تلقائياً بكرة</p>
+                <button class="option-btn" style="background:var(--primary-color); color:white; border:none;" onclick="validateAndSubmit('متابعة')">تأكيد حجز المتابعة ✅</button>`;
+        } else if (type === 'consult') {
+            fields = `<b>📝 كشف نساء "استشارة"</b>${baseFields}
+                <p style="font-size:0.8rem; margin:5px 0; color:#666;">📅 تاريخ آخر كشف:</p>
+                <input type="date" id="pLastVisit" max="${today}">
+                <p style="font-size:0.8rem; color:#666; margin:10px 0;">📝 تذكري: مدة الاستشارة 15 يوم من تاريخ الكشف</p>
+                <button class="option-btn" style="background:var(--primary-color); color:white; border:none;" onclick="validateAndSubmit('استشارة')">تأكيد الاستشارة ✅</button>`;
         } else if (type === 'birth') {
-            addMessage(`✨ <b>طلب حجز ولادة</b><br>يسعدنا مرافقتكِ في هذه اللحظة 🤍<br><br><a href="https://wa.me/201021708011" target="_blank" class="btn-link" style="background:#25D366; color:white;">💬 تواصل واتساب للتنسيق</a>`, "bot");
+            addMessage(`✨ <b>طلب حجز ولادة</b><br>يسعدنا جداً مرافقتكِ في هذه اللحظة المميزة 🤍<br><br>من فضلكِ اضغطي على الزر بالأسفل للتحدث مباشرة مع سكرتارية الدكتورة لتنسيق التفاصيل:`, "bot");
+            const birthWaUrl = `https://wa.me/201021708011?text=${encodeURIComponent("السلام عليكم دكتورة دعاء، كنت حابة أستفسر بخصوص عملية ولادة")}`;
+            addMessage(`<a href="${birthWaUrl}" target="_blank" class="btn-link" style="background:#25D366; color:white;">💬 تواصل واتساب لحجز الولادة</a>`, "bot");
             return;
         }
         addMessage(`<div class="booking-form" id="activeForm">${fields}</div>`, "bot");
     }, 600);
 }
 
-function checkName(el) { 
-    const parts = el.value.trim().split(/\s+/);
-    document.getElementById("nameErr").style.display = parts.length < 3 ? "block" : "none"; 
-}
+function checkName(el) { document.getElementById("nameErr").style.display = el.value.trim().split(/\s+/).length < 3 ? "block" : "none"; }
 function checkPhone(el) { document.getElementById("phoneErr").style.display = el.value.length < 11 ? "block" : "none"; }
 function toggleOtherSource(val) { document.getElementById("otherSourceArea").innerHTML = val === 'أخرى' ? `<input type="text" id="pOtherSource" placeholder="اكتبي المصدر هنا...">` : ""; }
 
 function validateAndSubmit(bookingType) {
-    const name = document.getElementById("pName").value.trim();
+    const name = document.getElementById("pName").value;
     const phone = document.getElementById("pPhone").value;
     const lastVisit = document.getElementById("pLastVisit") ? document.getElementById("pLastVisit").value : "";
     const sourceBase = document.getElementById("pSource") ? document.getElementById("pSource").value : "";
     const otherSource = document.getElementById("pOtherSource") ? document.getElementById("pOtherSource").value : "";
     const source = sourceBase === 'أخرى' ? otherSource : sourceBase;
 
-    if (name.split(/\s+/).length < 3 || phone.length < 11) {
-        alert("يرجى إكمال البيانات بشكل صحيح 👤📱");
-        return;
-    }
+    if (name.trim().split(/\s+/).length < 3) { alert("من فضلكِ اكتبي اسمكِ الثلاثي بشكل صحيح 👤"); return; }
+    if (phone.length < 11) { alert("من فضلكِ أكملي رقم الموبايل (11 رقم) 📱"); return; }
+    if (bookingType === 'كشف أول مرة' && !source) { alert("من فضلكِ اختاري المصدر ✨"); return; }
 
-    const formDiv = document.getElementById("activeForm");
-    formDiv.style.opacity = "0.5";
-    formDiv.style.pointerEvents = "none";
+    document.getElementById("activeForm").style.opacity = "0.5";
+    document.getElementById("activeForm").style.pointerEvents = "none";
     showTyping();
 
     const payload = { name, phone, lastVisit, source, type: bookingType };
-
+    
+    // التعديل الجوهري هنا لضمان استقبال الرد بشكل سليم
     fetch(SCRIPT_URL, {
         method: "POST",
-        mode: "no-cors", // لحل مشكلة CORS في بعض المتصفحات
-        cache: "no-cache",
-        headers: { "Content-Type": "application/json" },
+        mode: "cors", 
         body: JSON.stringify(payload)
-    }).then(() => {
-        // بما أن mode: 'no-cors' لا يعطي رد، سننتظر قليلاً ثم نظهر رسالة نجاح عامة
-        // أو نعتمد على أن السكريبت سينفذ الطلب بنجاح.
-        setTimeout(() => {
-            removeTyping();
-            addMessage("🎉 <b>تم إرسال طلبكِ بنجاح</b><br>جاري تحويلك لتأكيد الحجز عبر واتساب...", "bot");
-            const waMsg = encodeURIComponent(`*حجز جديد من المساعد الذكي*\n👤 الاسم: ${name}\n📱 الهاتف: ${phone}\nنوع الحجز: ${bookingType}`);
-            window.open(`https://wa.me/201125337717?text=${waMsg}`, "_blank");
-        }, 2000);
-    }).catch(err => {
+    })
+    .then(res => res.json()) 
+    .then(response => {
         removeTyping();
-        alert("عذراً، حدث خطأ في الاتصال. يرجى المحاولة لاحقاً.");
+        if(response.status === "success") {
+            finishProcess(payload, response);
+        } else {
+            alert("حدث خطأ في التسجيل: " + response.message);
+        }
+    })
+    .catch((err) => {
+        removeTyping();
+        console.error("ERROR:", err);
+        alert("عذراً، حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة لاحقاً.");
+        document.getElementById("activeForm").style.opacity = "1";
+        document.getElementById("activeForm").style.pointerEvents = "auto";
     });
 }
 
+function finishProcess(data, response) {
+    const id = response.id;
+    const date = response.date;
+    const time = response.time;
+
+    addMessage(`
+    <div class="msg bot-msg success-card">
+    🎉 <b>تم تسجيل طلبكِ بنجاح</b><br><br>
+    📌 رقمك: <b>${id}</b><br>
+    📅 اليوم: <b>${date}</b><br>
+    ⏰ الساعة: <b>${time}</b><br>
+    ⏱ مدة الانتظار: <b>ساعة واحدة</b><br>
+    </div>
+    `, "bot");
+
+    const waMsg = encodeURIComponent(`*تأكيد حجز جديد*\n📌 الرقم: ${id}\n📅 اليوم: ${date}\n⏰ الساعة: ${time}\n👤 الاسم: ${data.name}`);
+    const waUrl = `https://wa.me/201125337717?text=${waMsg}`;
+
+    addMessage(`
+    <a href="${waUrl}" target="_blank" style="
+        display:block;
+        margin-top:10px;
+        padding:15px;
+        border-radius:15px;
+        border:2px solid #dc2626;
+        background:#fee2e2;
+        color:#dc2626;
+        font-weight:800;
+        animation: flash 1s infinite;
+        text-decoration:none;
+        cursor:pointer;
+        box-shadow: 0 0 10px rgba(220,38,38,0.4);
+    ">
+    ⚠️ الحجز لا يعتبر مؤكد إلا بعد التواصل عبر واتساب
+    <br>اضغطي هنا لتأكيد الحجز
+    </a>
+    `, "bot");
+
+    // محاولة فتح واتساب تلقائياً (قد تحظرها بعض المتصفحات لذا الزر موجود كبديل)
+    setTimeout(() => { window.open(waUrl, "_blank"); }, 1500);
+
+    setTimeout(() => {
+        const socialLinks = `
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+            <p style="font-size:0.9rem; font-weight:700; color:var(--dark-pink); text-align:center;">✨ تقدري تتواصلي معانا فوراً من هنا 👇</p>
+            <a href="https://wa.me/201021708011" target="_blank" class="btn-link" style="background:var(--boy-blue); color:white;">💬 تحدث مع السكرتارية الآن</a>
+            <a href="https://www.facebook.com/profile.php?id=100085280501168" target="_blank" class="btn-link" style="background:#1877F2; color:white;">📘 صفحة العيادة على فيسبوك</a>
+            <a href="https://www.tiktok.com/@doaaobgyn" target="_blank" class="btn-link" style="background:black; color:white;">🎵 تابعنا على تيك توك</a>
+        </div>`;
+        addMessage(socialLinks, "bot");
+        
+        setTimeout(() => {
+            addMessage(`هل تودين حجز ميعاد آخر أو حساب الحمل؟<br>
+            <button class="option-btn" onclick="location.reload()">🔄 حجز جديد / حساب الحمل</button>`, "bot");
+        }, 2000);
+    }, 3000);
+}
+
+// باقي الدوال الخاصة بالحاسبة والتنسيق (بدون أي حذف)
 function calculatePregnancy() {
     const today = new Date().toISOString().split('T')[0];
-    addMessage(`<div class="booking-form"><b>🤰 حاسبة الحمل</b><br>تاريخ أول يوم لآخر دورة:<input type="date" id="lastPeriod" max="${today}"><button class="option-btn" onclick="doCalc()">احسبي الآن ✨</button></div>`, "bot");
+    addMessage(`<div class="booking-form calc-cloud" id="calcForm"><b>🤰 حاسبة عمر الحمل 👶</b><br>ادخلي تاريخ أول يوم لآخر دورة شهرية:<input type="date" id="lastPeriod" max="${today}"><button class="option-btn" id="calcBtn" onclick="doCalc()">احسبي الآن ✨</button></div>`, "bot");
 }
 
 function doCalc() {
     const d = document.getElementById("lastPeriod").value;
     if (!d) return;
-    const totalDays = Math.floor((new Date() - new Date(d)) / (1000 * 60 * 60 * 24));
+    const today = new Date();
+    const selectedDate = new Date(d);
+    const diff = today - selectedDate;
+    const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+
     if (totalDays > 294 || totalDays < 0) {
-        addMessage("⚠️ التاريخ غير منطقي، يرجى التأكد منه 💗", "bot");
+        addMessage(`<div class="pregnancy-result" style="border:2px solid red;"><b style="color:red;">⚠️ التاريخ غير صحيح</b><br><br>يرجى اختيار تاريخ صحيح في الماضي (أقصى مدة 42 أسبوع) 💗</div>`, "bot");
         return;
     }
+
+    document.getElementById("lastPeriod").disabled = true;
+    document.getElementById("calcBtn").disabled = true;
+    document.getElementById("calcForm").style.opacity = "0.7";
+
     const weeks = Math.floor(totalDays / 7);
     const days = totalDays % 7;
-    const delDate = new Date(d); delDate.setDate(delDate.getDate() + 280);
-    const delStr = delDate.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+    const deliveryDate = new Date(selectedDate);
+    deliveryDate.setDate(deliveryDate.getDate() + 280);
+    const deliveryStr = deliveryDate.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    addMessage(`<div class="pregnancy-result">✨ أنتِ الآن في:<br><div class="main-number">${weeks} أسبوع و ${days} يوم</div><div class="delivery-date">📅 موعد الولادة المتوقع:<br>${delStr}</div></div>`, "bot");
+    const res = `<div class="pregnancy-result">
+        ✨ <b>أنتِ الآن في:</b><br><br>
+        <div class="main-number">${weeks} أسبوع و ${days} يوم</div><br>
+        <div class="delivery-date">📅 موعد الولادة المتوقع بإذن الله:<br>${deliveryStr}</div>
+        <br>🤍 ربنا يتمم لكِ على خير
+    </div>`;
+    addMessage(res, "bot");
+
+    setTimeout(() => {
+        addMessage(`هل تحتاجين لمساعدة أخرى؟<br>
+        <button class="option-btn" onclick="location.reload()">🔄 الرجوع للقائمة الرئيسية</button>`, "bot");
+    }, 2000);
+}
+
+function aboutAssistant() {
+    addMessage(`<div class="msg bot-msg" style="border:2px solid var(--boy-blue); color:var(--boy-blue); font-weight:700;">✨ عن المساعد الذكي</div>`, "bot");
+    setTimeout(() => { 
+        addMessage(`أنا مساعدكِ الرقمي لعيادة دكتورة دعاء شعبان، تم تطويري لتسهيل الحجز والاستعلام على مدار 24 ساعة لضمان راحتكِ 🤍`, "bot"); 
+        setTimeout(() => {
+            addMessage(`<button class="option-btn" onclick="location.reload()">🔄 العودة للبداية</button>`, "bot");
+        }, 1000);
+    }, 500);
+}
+
+function disableSameLevelButtons(className, clickedBtn) {
+    const btns = document.getElementsByClassName(className);
+    for (let b of btns) { b.disabled = true; if (clickedBtn && b === clickedBtn) { b.style.background = "#be185d"; b.style.color = "white"; } }
 }
 
 function addMessage(text, type) {
-    const chat = document.getElementById("chatArea");
-    const div = document.createElement("div");
+    let chat = document.getElementById("chatArea");
+    let div = document.createElement("div");
     div.className = "msg " + (type === "user" ? "user-msg" : "bot-msg");
     div.innerHTML = text;
     chat.appendChild(div);
@@ -235,7 +357,7 @@ function addMessage(text, type) {
 }
 
 function showTyping() {
-    const div = document.createElement("div"); div.id = "typing"; div.className = "msg bot-msg typing";
+    let div = document.createElement("div"); div.id = "typing"; div.className = "msg bot-msg typing";
     div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
     document.getElementById("chatArea").appendChild(div);
     document.getElementById("chatArea").scrollTop = document.getElementById("chatArea").scrollHeight;
@@ -243,28 +365,23 @@ function showTyping() {
 
 function removeTyping() { const t = document.getElementById("typing"); if (t) t.remove(); }
 
-function disableSameLevelButtons(className, clickedBtn) {
-    const btns = document.getElementsByClassName(className);
-    for (let b of btns) { b.disabled = true; if (b === clickedBtn) b.style.background = "#be185d", b.style.color="white"; }
-}
-
 function quickSend(text) {
     addMessage(text, "user");
+    if (text.includes('حجز')) showBookingOptions();
     if (text.includes('حمل')) calculatePregnancy();
-    else if (text.includes('المساعد')) addMessage("أنا مساعد دكتورة دعاء الرقمي، أعمل لخدمتكم 24 ساعة 🌸", "bot");
-}
-
-function handleSend() {
-    const input = document.getElementById("userInput");
-    if(!input.value.trim()) return;
-    const val = input.value;
-    addMessage(val, "user"); input.value = "";
-    if (val.includes('حمل')) calculatePregnancy();
-    else if (val.includes('حجز')) showBookingOptions();
-    else addMessage("من فضلكِ اختاري من الأزرار الموضحة لمساعدتكِ بشكل أفضل 🌸", "bot");
+    if (text.includes('المساعد')) aboutAssistant();
 }
 
 window.onload = () => { showTyping(); setTimeout(() => { removeTyping(); addMessage(getWelcomeMessage(), "bot"); }, 1000); };
+
+function handleSend() {
+    const i = document.getElementById("userInput"); if(!i.value) return;
+    const val = i.value;
+    addMessage(val, "user"); i.value = "";
+    if (val.includes('حمل') || val.includes('احسب')) calculatePregnancy();
+    else if (val.includes('حجز')) showBookingOptions();
+    else addMessage("من فضلكِ استخدمي الأزرار المتاحة لتسهيل الحجز 🌸", "bot");
+}
 </script>
 </body>
 </html>
