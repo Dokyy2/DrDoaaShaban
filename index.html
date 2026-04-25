@@ -280,35 +280,144 @@ function finishProcess(data, res) {
 function quickSend(text, btn) {
     if(btn) freezeButtons(btn);
     addMessage(text, "user");
-    if (text.includes('حمل')) {
+
+    if (text.includes('حمل') || text.includes('احسب')) {
         const today = new Date().toISOString().split('T')[0];
-        addMessage(`<b>🤰 حاسبة عمر الحمل</b><br>تاريخ أول يوم لآخر دورة:<br><input type="date" id="lp" max="${today}"><button class="option-btn" onclick="doCalc()">احسبي الآن ✨</button>`, "bot");
+        showTyping();
+        
+        setTimeout(() => {
+            removeTyping();
+            addMessage(`
+            <div class="booking-form" style="border-style: dashed;">
+                <b>🤰 حاسبة عمر الحمل</b><br>
+                تاريخ أول يوم لآخر دورة شهرية:<br>
+                <input type="date" id="lp" max="${today}">
+                <button class="option-btn" id="calcBtn" onclick="doCalc(this)">احسبي الآن ✨</button>
+            </div>
+            `, "bot");
+        }, 600);
+
     } else {
-        // تعديل رقم 5: إضافة زر حجز جديد في "عن المساعد"
-        addMessage(`أنا مساعدكِ الرقمي لعيادة دكتورة دعاء شعبان، أعمل لخدمتكِ على مدار الساعة لتسهيل الحجز والاستعلام 🤍<br><br><button class="option-btn" onclick="location.reload()">📅 ابدأ حجز جديد الآن</button>`, "bot");
+        showTyping();
+        setTimeout(() => {
+            removeTyping();
+            addMessage(`أنا مساعدكِ الرقمي لعيادة دكتورة دعاء شعبان، أعمل لخدمتكِ على مدار الساعة لتسهيل الحجز والاستعلام 🤍<br><br>
+            <button class="option-btn" onclick="location.reload()">📅 ابدأ حجز جديد الآن</button>`, "bot");
+        }, 600);
     }
 }
 
-function doCalc() {
-    const d = document.getElementById("lp").value; if(!d) return;
-    const diff = Math.floor((new Date() - new Date(d)) / (1000 * 60 * 60 * 24));
-    const weeks = Math.floor(diff/7), days = diff%7;
-    const del = new Date(d); del.setDate(del.getDate() + 280);
-    const delStr = del.toLocaleDateString('ar-EG', {year:'numeric', month:'long', day:'numeric'});
-    addMessage(`
-    <div class="pregnancy-result" style="background:white; padding:20px; border-radius:20px; border:2px solid var(--primary-color);">
-        ✨ أنتِ الآن في الأسبوع <b>${weeks}</b> واليوم <b>${days}</b><br><br>
-        📅 موعد الولادة المتوقع بإذن الله:<br><b>${delStr}</b><br>
-        <p style="font-size:1.5rem; margin-top:15px; color:var(--dark-pink);">🙌 ربنا يتمم لكِ على خير 🤍🤲</p>
-    </div>`, "bot");
+function doCalc(btn) {
+    const d = document.getElementById("lp").value;
+    if (!d) {
+        alert("من فضلكِ اختاري التاريخ أولاً 📅");
+        return;
+    }
+
+    const today = new Date();
+    const selectedDate = new Date(d);
+    const diff = today - selectedDate;
+    const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (totalDays > 294 || totalDays < 0) {
+        addMessage(`
+        <div class="pregnancy-result" style="border:2px solid red; background: #fff1f2;">
+            <b style="color:red;">⚠️ التاريخ غير صحيح</b><br><br>
+            يرجى اختيار تاريخ صحيح في الماضي (أقصى مدة 42 أسبوع) 💗
+        </div>`, "bot");
+        return;
+    }
+
+    // تعطيل الإدخال والزر بعد الحساب
+    document.getElementById("lp").disabled = true;
+    if(btn) btn.disabled = true;
+
+    showTyping();
+
+    setTimeout(() => {
+        removeTyping();
+        const weeks = Math.floor(totalDays / 7);
+        const days = totalDays % 7;
+        const months = Math.floor(weeks / 4);
+
+        const deliveryDate = new Date(selectedDate);
+        deliveryDate.setDate(deliveryDate.getDate() + 280);
+
+        const deliveryStr = deliveryDate.toLocaleDateString('ar-EG', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        const res = `
+        <div class="pregnancy-result">
+            ✨ <b>أنتِ الآن في:</b><br><br>
+            <div class="main-number">${weeks} أسبوع و ${days} يوم</div><br>
+            📅 يعني تقريباً في <b>الشهر ${months + 1}</b> 👶
+
+            <div class="delivery-date">
+                📅 موعد الولادة المتوقع بإذن الله:<br>
+                <span style="font-size:1.1rem;">${deliveryStr}</span>
+            </div>
+
+            <br>🤍 ربنا يتمم لكِ على خير ويقومك بالسلامة
+        </div>`;
+
+        addMessage(`<div style="width:100%">${res}</div>`, "bot");
+
+        setTimeout(() => {
+            showTyping();
+            setTimeout(() => {
+                removeTyping();
+                addMessage(`
+                ✨ <b>هل تودين المتابعة معنا في العيادة؟</b><br>
+                يمكنكِ الآن حجز موعد متابعة الحمل للاطمئنان بالسونار 🩺<br>
+                <button class="option-btn" onclick="showBookingOptions(this)">📅 احجزيلي ميعاد</button>
+                `, "bot");
+            }, 800);
+        }, 1500);
+    }, 1000);
 }
 
-function addMessage(t, type) { const c = document.getElementById("chatArea"); const d = document.createElement("div"); d.className = "msg "+(type==="user"?"user-msg":"bot-msg"); d.innerHTML = t; c.appendChild(d); scrollToBottom(); }
-function showTyping() { const d = document.createElement("div"); d.id = "typing"; d.className = "msg bot-msg typing"; d.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>'; document.getElementById("chatArea").appendChild(d); scrollToBottom(); }
-function removeTyping() { const t = document.getElementById("typing"); if(t) t.remove(); }
-function scrollToBottom() { const c = document.getElementById("chatArea"); c.scrollTop = c.scrollHeight; }
+function addMessage(t, type) { 
+    const c = document.getElementById("chatArea"); 
+    const d = document.createElement("div"); 
+    d.className = "msg "+(type==="user"?"user-msg":"bot-msg"); 
+    d.innerHTML = t; 
+    c.appendChild(d); 
+    scrollToBottom(); 
+}
 
-window.onload = () => { showTyping(); setTimeout(() => { removeTyping(); addMessage(getWelcomeMessage(), "bot"); }, 1000); };
+function showTyping() { 
+    const d = document.createElement("div"); 
+    d.id = "typing"; 
+    d.className = "msg bot-msg typing"; 
+    d.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>'; 
+    document.getElementById("chatArea").appendChild(d); 
+    scrollToBottom(); 
+}
+
+function removeTyping() { 
+    const t = document.getElementById("typing"); 
+    if(t) t.remove(); 
+}
+
+function scrollToBottom() { 
+    const c = document.getElementById("chatArea"); 
+    if(c) c.scrollTop = c.scrollHeight; 
+}
+
+window.onload = () => { 
+    showTyping(); 
+    setTimeout(() => { 
+        removeTyping(); 
+        if (typeof getWelcomeMessage === 'function') {
+            addMessage(getWelcomeMessage(), "bot");
+        } else {
+            addMessage("👋 أهلاً بكِ في عيادة دكتورة دعاء شعبان.. كيف يمكنني مساعدتكِ؟", "bot");
+        }
+    }, 1000); 
+};
 </script>
 </body>
 </html>
