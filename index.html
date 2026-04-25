@@ -60,6 +60,44 @@
         .typing { display: flex; gap: 4px; padding: 10px; align-self: center; }
         .dot { width: 6px; height: 6px; background: var(--primary-color); border-radius: 50%; animation: blink 1.4s infinite; }
         @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+        /* ستايل حاسبة الحمل المتوهجة */
+.pregnancy-result {
+    width: 100%; 
+    background: linear-gradient(135deg, #fff0f6, #ffe4ec, #fbcfe8);
+    border-radius: 25px; 
+    padding: 20px; 
+    text-align: center; 
+    position: relative;
+    overflow: hidden; 
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.3); 
+    /* ده السطر المسؤول عن تشغيل التوهج */
+    animation: glowPulse 2.5s infinite ease-in-out; 
+}
+
+.main-number { 
+    font-size: 1.8rem; 
+    font-weight: 800; 
+    color: #ec4899; 
+    text-shadow: 0 0 12px rgba(236, 72, 153, 0.6); 
+}
+
+.delivery-date { 
+    margin-top: 15px; 
+    padding: 12px; 
+    background: white; 
+    border-radius: 15px; 
+    border: 2px solid var(--primary-color); 
+    color: var(--dark-pink); 
+    font-weight: 700; 
+}
+
+/* حركة التوهج (النبض) */
+@keyframes glowPulse { 
+    0% { box-shadow: 0 0 10px rgba(236,72,153,0.3); transform: scale(1); } 
+    50% { box-shadow: 0 0 25px rgba(236,72,153,0.7); transform: scale(1.02); } 
+    100% { box-shadow: 0 0 10px rgba(236,72,153,0.3); transform: scale(1); } 
+}
     </style>
 </head>
 <body>
