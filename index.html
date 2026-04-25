@@ -6,54 +6,47 @@
     <title>المساعد الذكي - عيادة دكتورة دعاء شعبان</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary-color: #ec4899; --dark-pink: #be185d; --boy-blue: #2563eb; --glass-bg: rgba(255, 255, 255, 0.95); }
+        :root { --primary-color: #ec4899; --dark-pink: #be185d; --boy-blue: #2563eb; --glass-bg: rgba(255, 255, 255, 0.98); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body { 
             margin: 0; direction: rtl; font-family: 'Cairo', sans-serif; 
             background: linear-gradient(-45deg, #fdf2f8, #fbcfe8, #ec4899, #be185d); 
             background-size: 400% 400%; animation: gradientBG 15s ease infinite; 
-            display: flex; align-items: center; justify-content: center; 
-            height: 100vh; overflow: hidden; 
+            display: flex; align-items: flex-start; justify-content: center; /* يبدأ من الأعلى */
+            min-height: 100vh; overflow: hidden; 
         }
 
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         
-        /* الصندوق العائم المرفوع قليلاً عن المنتصف */
         .chat-container { 
-            width: 92%; height: 88vh; max-width: 450px; 
-            background: var(--glass-bg); border-radius: 35px; 
+            width: 100%; height: 100vh; /* يملأ الصفحة طولياً */
+            max-width: 450px; background: var(--glass-bg); 
             display: flex; flex-direction: column; 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15); 
-            position: relative; border: 1px solid rgba(255,255,255,0.3);
-            transform: translateY(-20px); /* رفع الصندوق للأعلى قليلاً */
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2); position: relative;
         }
 
-        .header { padding: 15px; text-align: center; background: white; color: var(--dark-pink); font-weight: 700; border-bottom: 2px solid #fce7f3; font-size: 1rem; border-radius: 35px 35px 0 0; flex-shrink: 0; }
+        .header { padding: 15px; text-align: center; background: white; color: var(--dark-pink); font-weight: 700; border-bottom: 2px solid #fce7f3; font-size: 1rem; flex-shrink: 0; }
         
-        .social-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: rgba(255,255,255,0.5); border-bottom: 1px solid #fce7f3; }
-        .social-icons { display: flex; gap: 10px; }
-        .social-icons a img { width: 28px; height: 28px; transition: 0.3s; }
-        .home-btn { background: var(--primary-color); color: white; border: none; padding: 6px 12px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 0.8rem; }
+        .social-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: #fffbff; border-bottom: 1px solid #fce7f3; }
+        .social-icons { display: flex; gap: 12px; }
+        .social-icons a img { width: 28px; height: 28px; }
+        .home-btn { background: var(--primary-color); color: white; border: none; padding: 6px 12px; border-radius: 10px; font-weight: 700; cursor: pointer; }
 
-        .chat-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
-        
-        .msg { max-width: 92%; padding: 12px 18px; border-radius: 20px; font-size: 0.92rem; line-height: 1.6; animation: slideIn 0.4s ease; text-align: center; margin: 0 auto; }
+        .chat-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; background: rgba(255,255,255,0.2); }
+        .msg { max-width: 92%; padding: 12px 16px; border-radius: 20px; font-size: 0.92rem; line-height: 1.6; animation: slideIn 0.4s ease; text-align: center; margin: 0 auto; }
         .bot-msg { background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); color: #334155; border: 1px solid #fdf2f8; width: 100%; }
         .user-msg { background: linear-gradient(135deg, #ec4899, #be185d); color: white; align-self: flex-end; text-align: right; margin-right: 0; }
         
-        .option-btn { 
-            background: white; border: 2px solid #fbcfe8; color: var(--dark-pink); 
-            padding: 10px; margin: 5px 0; border-radius: 15px; cursor: pointer; 
-            width: 100%; font-weight: 700; font-family: 'Cairo'; transition: 0.3s; 
-        }
+        .option-btn { background: white; border: 2px solid #fbcfe8; color: var(--dark-pink); padding: 10px; margin: 5px 0; border-radius: 15px; cursor: pointer; width: 100%; font-weight: 700; transition: 0.3s; }
         .option-btn:hover:not(:disabled) { background: var(--primary-color); color: white; box-shadow: 0 0 15px var(--primary-color); }
         .option-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .booking-form { background: #fffbff; border: 2.5px solid var(--primary-color); border-radius: 25px; padding: 18px; width: 100%; align-self: center; }
         .booking-form input, .booking-form select { width: 100%; margin: 8px 0; padding: 10px; border-radius: 12px; border: 1.5px solid #eee; font-family: 'Cairo'; text-align: center; }
+        .error-hint { color: #e11d48; font-size: 0.75rem; font-weight: 700; display: none; margin-bottom: 5px; }
 
-        /* حاسبة الحمل المتوهجة التي طلبتها */
+        /* حاسبة الحمل المتوهجة الأصلية */
         .pregnancy-result {
             width: 100%; display: block; background: linear-gradient(135deg, #fff0f6, #ffe4ec, #fbcfe8);
             border-radius: 25px; padding: 18px; text-align: center; position: relative;
@@ -62,8 +55,7 @@
         .main-number { font-size: 1.7rem; font-weight: 800; color: #ec4899; text-shadow: 0 0 12px rgba(236, 72, 153, 0.8); }
         .delivery-date { margin-top: 15px; padding: 10px; background: white; border-radius: 15px; border: 2px solid var(--primary-color); color: var(--dark-pink); font-weight: 700; }
 
-        /* تنسيق كارت النجاح */
-        .success-card { border: 2px solid var(--boy-blue); background: #f0f7ff; color: #1e40af; font-weight: 700; width: 100%; padding: 15px !important; }
+        .success-card { border: 2px solid var(--boy-blue); background: #f0f7ff; color: #1e40af; font-weight: 700; width: 100%; text-align: right !important; }
         .premium-wa-link { display: block; text-decoration: none; padding: 15px; border-radius: 15px; text-align: center; font-weight: 800; margin: 10px 0; background: #dc2626; color: white; animation: flash 1s infinite; }
 
         @keyframes glowPulse { 0% { box-shadow: 0 0 10px rgba(236,72,153,0.3); } 50% { box-shadow: 0 0 25px rgba(236,72,153,0.7); } 100% { box-shadow: 0 0 10px rgba(236,72,153,0.3); } }
@@ -73,7 +65,6 @@
         .typing { display: flex; gap: 4px; padding: 10px; align-self: center; }
         .dot { width: 6px; height: 6px; background: var(--primary-color); border-radius: 50%; animation: blink 1.4s infinite; }
         @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-        .error-hint { color: #e11d48; font-size: 0.75rem; font-weight: 700; display: none; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -85,6 +76,7 @@
             <a href="https://wa.me/201125337717"><img src="https://cdn-icons-png.flaticon.com/512/733/733585.png"></a>
             <a href="https://www.facebook.com/drdoaashaban"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png"></a>
             <a href="https://instagram.com/drdo3aashaban"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png"></a>
+            <a href="https://www.tiktok.com/@drdoaashaban"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png"></a>
         </div>
         <button class="home-btn" onclick="location.reload()">🔄 الرئيسية</button>
     </div>
@@ -92,11 +84,11 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiUkEfKKD-XWPBLXXIhR-Dd_Yh9a7iSjb7a-5Agp4lpvRkyl0VCpmfegKY1__0Rt12/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyEhn0qnbG7esyKF2nQmky6vWQIAv6rODrJb2LvJVcaU6QIDC13-HXCCW3Kgc9POZBU/exec";
 
 function getWelcomeMessage() {
     return `
-    <div style="border:2px solid var(--dark-pink); border-radius:15px; padding:12px; background:#fff0f6; color:var(--dark-pink); font-weight:700; margin-bottom:10px;">
+    <div style="border:2.5px solid var(--dark-pink); border-radius:15px; padding:12px; background:#fff0f6; color:var(--dark-pink); font-weight:700; margin-bottom:10px;">
         📌 تنبيه: تحديد يوم الحجز من ثاني يوم، وفي حال العطلة يرحل لليوم التالي.
     </div>
     👋 <b style="color:var(--dark-pink);">أهلاً بكِ في عيادتنا</b><br>
@@ -131,9 +123,9 @@ function renderForm(type, btn) {
         removeTyping();
         let fields = "";
         const baseFields = `
-            <input type="text" id="pName" placeholder="👤 اسمكِ الثلاثي بالكامل" oninput="this.value=this.value.replace(/[^\\u0600-\\u06FF\\s]/g,''); checkNameInput(this)">
+            <input type="text" id="pName" placeholder="👤 اسمكِ الثلاثي بالكامل" oninput="this.value=this.value.replace(/[^\\u0600-\\u06FF\\s]/g,''); checkName(this)">
             <div id="nameErr" class="error-hint">⚠️ يرجى كتابة الاسم ثلاثي بالكامل</div>
-            <input type="tel" id="pPhone" placeholder="📱 موبايلكِ (11 رقم)" maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,''); checkPhoneInput(this)">
+            <input type="tel" id="pPhone" placeholder="📱 موبايلكِ (11 رقم)" maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,''); checkPhone(this)">
             <div id="phoneErr" class="error-hint">⚠️ يرجى التأكد من الرقم (11 رقم)</div>
         `;
 
@@ -162,8 +154,8 @@ function renderForm(type, btn) {
     }, 600);
 }
 
-function checkNameInput(el) { document.getElementById("nameErr").style.display = el.value.trim().split(/\s+/).length < 3 ? "block" : "none"; }
-function checkPhoneInput(el) { document.getElementById("phoneErr").style.display = el.value.length < 11 ? "block" : "none"; }
+function checkName(el) { document.getElementById("nameErr").style.display = el.value.trim().split(/\s+/).length < 3 ? "block" : "none"; }
+function checkPhone(el) { document.getElementById("phoneErr").style.display = el.value.length < 11 ? "block" : "none"; }
 function toggleOther(v) { document.getElementById("otherArea").innerHTML = v === 'أخرى' ? `<input type="text" id="pOther" placeholder="اكتبي المصدر هنا...">` : ""; }
 
 function check15Days(el, type) {
@@ -184,35 +176,33 @@ function validateAndSubmit(bookingType) {
     const name = document.getElementById("pName").value.trim();
     const phone = document.getElementById("pPhone").value;
     const source = document.getElementById("pSource")?.value || "";
+    const lastVisit = document.getElementById("pLastVisit")?.value || "";
+
     if (name.split(/\s+/).length < 3 || phone.length < 11) { alert("يرجى إكمال البيانات 👤📱"); return; }
     if (bookingType === 'كشف أول مرة' && !source) { alert("من فضلكِ اختاري المصدر ✨"); return; }
+    if ((bookingType === 'متابعة' || bookingType === 'استشارة') && !lastVisit) { alert("يرجى إدخال تاريخ آخر زيارة 📅"); return; }
 
     document.getElementById("activeForm").style.opacity = "0.5";
     showTyping();
-    const payload = { name, phone, type: bookingType, lastVisit: document.getElementById("pLastVisit")?.value || "", source: source==='أخرى'?document.getElementById("pOther").value:source };
+    const payload = { name, phone, type: bookingType, lastVisit, source: source==='أخرى'?document.getElementById("pOther").value:source };
 
     fetch(SCRIPT_URL, { method: "POST", mode: "cors", body: JSON.stringify(payload) })
     .then(res => res.json()).then(res => {
         removeTyping();
-        if(res.status === "success") finishProcess(payload, res);
+        if(res.status === "success") {
+            addMessage(`
+            <div class="msg bot-msg success-card">
+                🎉 <b>تم تسجيل طلبكِ بنجاح</b><br><br>
+                📌 رقم الحجز: <b>${res.id}</b><br>
+                🩺 النوع: <b>${res.type}</b><br>
+                📅 التاريخ: <b>${res.date}</b><br>
+                ⏰ الحضور: <b>${res.time}</b><br>
+                🩺 المتوقع: <b>${res.expectedTime}</b>
+            </div>`, "bot");
+            const waMsg = `*تأكيد حجز جديد*\n📌 الرقم: ${res.id}\n👤 الاسم: ${name}\n📅 اليوم: ${res.date}\n⏰ الحضور: ${res.time}`;
+            addMessage(`<a href="https://wa.me/201125337717?text=${encodeURIComponent(waMsg)}" target="_blank" class="premium-wa-link">اضغطي هنا لتأكيد الحجز عبر واتساب</a>`, "bot");
+        }
     }).catch(() => { removeTyping(); alert("خطأ في الاتصال"); });
-}
-
-function finishProcess(data, res) {
-    addMessage(`
-    <div class="msg bot-msg success-card">
-        🎉 <b>تم تسجيل طلبكِ بنجاح</b><br><br>
-        📌 رقم الحجز: <b>${res.id}</b><br>
-        📅 التاريخ: <b>${res.date}</b><br>
-        ⏰ الحضور: <b>${res.time}</b><br>
-        ⏳ الانتظار: <b>ساعة واحدة</b><br>
-        <hr style="border:0; border-top:1px solid #c3dafe; margin:10px 0;">
-        🩺 الكشف المتوقع: <b>${res.expectedTime}</b>
-    </div>`, "bot");
-
-    const waMsg = `*تأكيد حجز جديد*\n📌 الرقم: ${res.id}\n👤 الاسم: ${data.name}\n📅 اليوم: ${res.date}\n⏰ الحضور: ${res.time}`;
-    const waUrl = `https://wa.me/201125337717?text=${encodeURIComponent(waMsg)}`;
-    addMessage(`<a href="${waUrl}" target="_blank" class="premium-wa-link">اضغطي هنا لتأكيد الحجز عبر واتساب</a>`, "bot");
 }
 
 function quickSend(text, btn) {
