@@ -8,13 +8,28 @@
     <style>
         :root { --primary-color: #ec4899; --dark-pink: #be185d; --boy-blue: #2563eb; --glass-bg: rgba(255, 255, 255, 0.98); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; direction: rtl; font-family: 'Cairo', sans-serif; background: linear-gradient(-45deg, #fdf2f8, #fbcfe8, #ec4899, #be185d); background-size: 400% 400%; animation: gradientBG 15s ease infinite; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        
+        /* تعديل رقم 1: إنزال الصندوق ليكون في المنتصف تماماً */
+        body { 
+            margin: 0; direction: rtl; font-family: 'Cairo', sans-serif; 
+            background: linear-gradient(-45deg, #fdf2f8, #fbcfe8, #ec4899, #be185d); 
+            background-size: 400% 400%; animation: gradientBG 15s ease infinite; 
+            display: flex; align-items: center; justify-content: center; 
+            height: 100vh; overflow: hidden; 
+        }
+
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         
-        .chat-container { width: 95%; max-width: 450px; height: 92vh; background: var(--glass-bg); border-radius: 30px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.2); position: relative; }
+        .chat-container { 
+            width: 95%; max-width: 450px; height: 92vh; 
+            background: var(--glass-bg); border-radius: 30px; 
+            display: flex; flex-direction: column; overflow: hidden; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2); position: relative; 
+            /* الصندوق الآن يتوسط الشاشة تلقائياً بفضل flex في الـ body */
+        }
+
         .header { padding: 12px; text-align: center; background: white; color: var(--dark-pink); font-weight: 700; border-bottom: 2px solid #fce7f3; font-size: 0.9rem; flex-shrink: 0; }
         
-        /* Social Header */
         .social-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; background: #fffbff; border-bottom: 1px solid #fce7f3; }
         .social-icons { display: flex; gap: 12px; }
         .social-icons a img { width: 28px; height: 28px; transition: 0.3s; }
@@ -29,8 +44,10 @@
         .info-red-glow { color: #dc2626; font-weight: 800; font-size: 0.95rem; text-shadow: 0 0 10px rgba(220,38,38,0.2); margin: 10px 0; display: block; line-height: 1.4; }
         
         .option-btn { background: white; border: 2px solid #fbcfe8; color: var(--dark-pink); padding: 10px; margin: 5px 0; border-radius: 15px; cursor: pointer; width: 100%; font-weight: 700; font-family: 'Cairo'; transition: 0.3s; }
-        .option-btn:disabled { opacity: 0.3; cursor: not-allowed; display: none; } /* يختفي عند الاختيار */
         
+        /* تعديل رقم 2: الأزرار لا تختفي بل يتم قفلها فقط */
+        .option-btn:disabled { opacity: 0.5; cursor: not-allowed; border-color: #ddd; } 
+
         .booking-form { background: #fffbff; border: 2.5px solid var(--primary-color); border-radius: 25px; padding: 18px; width: 100%; align-self: center; }
         .booking-form input, .booking-form select { width: 100%; margin: 8px 0; padding: 10px; border-radius: 12px; border: 1.5px solid #eee; font-family: 'Cairo'; text-align: center; font-size: 0.9rem; outline: none; }
         .error-hint { color: #e11d48; font-size: 0.75rem; font-weight: 700; display: none; margin-top: -5px; margin-bottom: 5px; }
@@ -79,7 +96,8 @@ function getWelcomeMessage() {
 }
 
 function showBookingOptions(btn) {
-    if(btn) btn.style.display = 'none';
+    // تعديل رقم 2: قفل الأزرار بدلاً من إخفائها
+    if(btn) freezeButtons(btn); 
     showTyping();
     setTimeout(() => {
         removeTyping();
@@ -95,7 +113,7 @@ function showBookingOptions(btn) {
 }
 
 function renderForm(type, btn) {
-    if(btn) btn.parentElement.style.display = 'none';
+    if(btn) freezeButtons(btn);
     const today = new Date().toISOString().split('T')[0];
     showTyping();
     setTimeout(() => {
@@ -108,11 +126,18 @@ function renderForm(type, btn) {
             <div id="phoneErr" class="error-hint">⚠️ يرجى التأكد من الرقم (11 رقم فقط)</div>
         `;
 
-        const note = `<span class="info-red-glow">سيتم تحديد الموعد تلقائياً<br>والحجز يبدأ من غدٍ</span>`;
+        const note = `<span class="info-red-glow" id="noteArea">سيتم تحديد الموعد تلقائياً<br>والحجز يبدأ من غدٍ</span>`;
 
         if (type === 'first') {
+            // تعديل رقم 3: إضافة أيقونات وإلزامية الحقل
             fields = `<b>📋 بيانات حجز كشف أول مرة</b>${baseFields}
-                <select id="pSource" onchange="toggleOther(this.value)"><option value="">✨ عرفتينا منين؟</option><option value="فيسبوك">فيسبوك</option><option value="تيك توك">تيك توك</option><option value="صديقة">صديقة</option><option value="أخرى">جهة أخرى</option></select>
+                <select id="pSource" onchange="toggleOther(this.value)">
+                    <option value="">✨ عرفتينا منين؟</option>
+                    <option value="فيسبوك">🔵 فيسبوك</option>
+                    <option value="تيك توك">⚫ تيك توك</option>
+                    <option value="صديقة">👭 صديقة</option>
+                    <option value="أخرى">🔍 جهة أخرى</option>
+                </select>
                 <div id="otherArea"></div>${note}<button class="option-btn" style="background:var(--primary-color); color:white;" onclick="validateAndSubmit('كشف أول مرة')">تأكيد الحجز الآن ✅</button>`;
         } else if (type === 'follow' || type === 'consult') {
             fields = `<b>🔄 حجز ${type==='follow'?'متابعة':'استشارة'}</b>${baseFields}
@@ -129,6 +154,15 @@ function renderForm(type, btn) {
     }, 600);
 }
 
+function freezeButtons(btn) {
+    const parent = btn.parentElement;
+    const buttons = parent.querySelectorAll('button');
+    buttons.forEach(b => {
+        b.disabled = true;
+        if (b !== btn) b.style.opacity = "0.3";
+    });
+}
+
 function checkNameInput(el) { document.getElementById("nameErr").style.display = el.value.trim().split(/\s+/).length < 3 ? "block" : "none"; }
 function checkPhoneInput(el) { document.getElementById("phoneErr").style.display = el.value.length < 11 ? "block" : "none"; }
 function toggleOther(v) { document.getElementById("otherArea").innerHTML = v === 'أخرى' ? `<input type="text" id="pOther" placeholder="اكتبي المصدر هنا...">` : ""; }
@@ -138,12 +172,18 @@ function check15Days(el, type) {
     const diff = Math.floor((new Date() - new Date(el.value)) / (1000 * 60 * 60 * 24));
     const fb = document.getElementById("dateFeedback");
     const btn = document.getElementById("subBtn");
+    const note = document.getElementById("noteArea");
+
     if (diff > 15) {
+        // تعديل رقم 4: إخفاء الجملة وإظهار زر حجز جديد
         fb.innerHTML = `<span style="color:red;">⚠️ المدة تجاوزت 15 يوماً، يرجى حجز كشف جديد.</span>`;
-        btn.disabled = true; btn.style.display = 'none';
+        btn.style.display = 'none';
+        if(note) note.style.display = 'none';
+        fb.innerHTML += `<br><button class="option-btn" onclick="location.reload()">📅 حجز كشف جديد</button>`;
     } else {
         fb.innerHTML = `<span style="color:green;">✅ متبقي ${15 - diff} أيام متاحة للاستشارة.</span>`;
         btn.disabled = false; btn.style.display = 'block';
+        if(note) note.style.display = 'block';
     }
 }
 
@@ -151,15 +191,22 @@ function validateAndSubmit(bookingType) {
     const name = document.getElementById("pName").value.trim();
     const phone = document.getElementById("pPhone").value;
     const source = document.getElementById("pSource")?.value || "";
+    const other = document.getElementById("pOther")?.value || "";
     const lastVisit = document.getElementById("pLastVisit")?.value || "";
 
     if (name.split(/\s+/).length < 3 || phone.length < 11) { alert("يرجى إدخال الاسم الثلاثي ورقم الموبايل بشكل صحيح 👤📱"); return; }
-    if (bookingType === 'كشف أول مرة' && !source) { alert("من فضلكِ اختاري عرفتينا منين ✨"); return; }
+    
+    // تعديل رقم 3: التحقق من "عرفتينا منين"
+    if (bookingType === 'كشف أول مرة') {
+        if (!source) { alert("من فضلكِ اختاري عرفتينا منين ✨"); return; }
+        if (source === 'أخرى' && !other.trim()) { alert("من فضلكِ اكتبي المصدر في الخانة المطلوبة 🔍"); return; }
+    }
+    
     if ((bookingType === 'متابعة' || bookingType === 'استشارة') && !lastVisit) { alert("يرجى إدخال تاريخ آخر زيارة 📅"); return; }
 
     document.getElementById("activeForm").style.opacity = "0.5";
     showTyping();
-    const payload = { name, phone, type: bookingType, lastVisit, source: source==='أخرى'?document.getElementById("pOther").value:source };
+    const payload = { name, phone, type: bookingType, lastVisit, source: source==='أخرى'?other:source };
 
     fetch(SCRIPT_URL, { method: "POST", mode: "cors", body: JSON.stringify(payload) })
     .then(res => res.json()).then(res => {
@@ -188,19 +235,20 @@ function finishProcess(data, res) {
     const waMsg = `*تأكيد حجز جديد*\n📌 الرقم: ${res.id}\n🩺 النوع: ${res.type}\n👤 الاسم: ${data.name}\n📱 الهاتف: ${data.phone}\n📅 اليوم: ${res.date}\n⏰ الحضور: ${res.time}\n🩺 المتوقع: ${res.expectedTime}\n⚠️ الحضور قبل الموعد بـ 15 دقيقة`;
     const waUrl = `https://wa.me/201125337717?text=${encodeURIComponent(waMsg)}`;
 
-    addMessage(`<div style="width:100%;"><a href="${waUrl}" target="_blank" class="premium-wa-link">اضغطي هنا لتأكيد الحجز<br><small style="font-weight:400; font-size:0.8rem;">الحجز لا يعتبر مؤكداً إلا بعد التواصل عبر الواتساب</small></a></div>`, "bot");
+    addMessage(`<div style="width:100%;"><a href="${waUrl}" target="_blank" class="premium-wa-link">اضغطي هنا لتأكيد الحجز<br><small style="font-weight:400; font-size:0.8rem;">الحجز لا يعتبر مؤكداً إلا بعد التواصل عبر واتساب</small></a></div>`, "bot");
 
     setTimeout(() => { window.open(waUrl, "_blank"); }, 5000);
 }
 
 function quickSend(text, btn) {
-    if(btn) btn.parentElement.style.display = 'none';
+    if(btn) freezeButtons(btn);
     addMessage(text, "user");
     if (text.includes('حمل')) {
         const today = new Date().toISOString().split('T')[0];
         addMessage(`<b>🤰 حاسبة عمر الحمل</b><br>تاريخ أول يوم لآخر دورة:<br><input type="date" id="lp" max="${today}"><button class="option-btn" onclick="doCalc()">احسبي الآن ✨</button>`, "bot");
     } else {
-        addMessage("أنا مساعدكِ الرقمي لعيادة دكتورة دعاء شعبان، أعمل لخدمتكِ على مدار الساعة لتسهيل الحجز والاستعلام 🤍", "bot");
+        // تعديل رقم 5: إضافة زر حجز جديد في "عن المساعد"
+        addMessage(`أنا مساعدكِ الرقمي لعيادة دكتورة دعاء شعبان، أعمل لخدمتكِ على مدار الساعة لتسهيل الحجز والاستعلام 🤍<br><br><button class="option-btn" onclick="location.reload()">📅 ابدأ حجز جديد الآن</button>`, "bot");
     }
 }
 
