@@ -242,7 +242,7 @@ function validateAndSubmit(bookingType) {
     // تعديل رقم 3: التحقق من "عرفتينا منين"
     if (bookingType === 'كشف أول مرة') {
         if (!source) { alert("من فضلكِ اختاري عرفتينا منين ✨"); return; }
-        if (source === 'أخرى' && !other.trim()) { alert("من فضلكِ اكتبي مكان تانى في الخانة المطلوبة 🔍"); return; }
+        if (source === 'أخرى' && !other.trim()) { alert("من فضلكِ اكتبي عرفتينا منين في الخانة المطلوبة 🔍"); return; }
     }
     
     if ((bookingType === 'متابعة' || bookingType === 'استشارة') && !lastVisit) { alert("يرجى إدخال تاريخ آخر زيارة 📅"); return; }
