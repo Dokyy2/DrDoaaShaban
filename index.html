@@ -109,7 +109,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGhi-DOr_mleTHkgLBJ48F4LKGtk8ogkktSo35vnRXzjAnIFGTg_7x5A1IMtSSI18/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwokNSa40CT4cm905qacibPUgdzlZAJb2LlBrzhVy7Ya6X440-XkRPBrISyNVGkYcvt/exec";
 
 function getWelcomeMessage() {
     return `👋 <b style="color:var(--dark-pink); font-size:1.05rem;">أهلاً بكِ في عيادتنا</b><br><br>
@@ -207,27 +207,31 @@ function validateAndSubmit(bookingType) {
     const payload = { name, phone, lastVisit, source, type: bookingType };
     
     fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    })
-    .then(res => res.json())
-    .then(response => {
-        removeTyping();
-        if (response.status !== "success") {
-            alert("حصلت مشكلة في الحجز ❌");
-            document.getElementById("activeForm").style.opacity = "1";
-            document.getElementById("activeForm").style.pointerEvents = "auto";
-            return;
-        }
-        finishProcess(payload, response);
-    })
-    .catch(() => {
-        removeTyping();
-        alert("حدثت مشكلة بسيطة، يرجى المحاولة مرة أخرى 🌸");
-        document.getElementById("activeForm").style.opacity = "1";
-        document.getElementById("activeForm").style.pointerEvents = "auto";
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(payload)
+})
+.then(res => res.text()) // 👈 غيرنا دي
+.then(text => {
+  console.log("RAW RESPONSE:", text); // 👈 مهم
+
+  let response;
+  try {
+    response = JSON.parse(text);
+  } catch (e) {
+    throw new Error("الرد مش JSON: " + text);
+  }
+
+  removeTyping();
+  finishProcess(payload, response);
+})
+.catch((err) => {
+  removeTyping();
+  console.error("ERROR:", err);
+  alert("حصل مشكلة: " + err.message);
+});
 }
 
 function finishProcess(data, response) {
