@@ -171,7 +171,6 @@ function renderForm(type, btn) {
         const note = `<span class="info-red-glow" id="noteArea">سيتم تحديد الموعد تلقائياً<br>والحجز يبدأ من غدٍ</span>`;
 
         if (type === 'first') {
-            // تعديل رقم 3: إضافة أيقونات وإلزامية الحقل
             fields = `<b>📋 بيانات حجز كشف أول مرة</b>${baseFields}
                 <select id="pSource" onchange="toggleOther(this.value)">
                     <option value="">✨ عرفتينا منين؟</option>
@@ -183,11 +182,12 @@ function renderForm(type, btn) {
                 </select>
                 <div id="otherArea"></div>${note}<button class="option-btn" style="background:var(--primary-color); color:white;" onclick="validateAndSubmit('كشف أول مرة')">تأكيد الحجز الآن ✅</button>`;
         } else if (type === 'follow' || type === 'consult') {
-            fields = `<b>🔄 حجز ${type==='follow'?'متابعة':'استشارة'}</b>${baseFields}
+            const title = (type === 'follow') ? 'متابعة' : 'استشارة';
+            fields = `<b>🔄 حجز ${title}</b>${baseFields}
                 <p style="font-size:0.8rem; margin:5px 0;">📅 تاريخ آخر زيارة للعيادة:</p>
                 <input type="date" id="pLastVisit" max="${today}" onchange="check15Days(this, '${type}')">
                 <div id="dateFeedback" style="font-size:0.8rem; font-weight:700;"></div>
-                ${note}<button id="subBtn" class="option-btn" style="background:var(--primary-color); color:white;" onclick="validateAndSubmit('${type==='follow'?'متابعة':'استشارة'}')">تأكيد الحجز ✅</button>`;
+                ${note}<button id="subBtn" class="option-btn" style="background:var(--primary-color); color:white;" onclick="validateAndSubmit('${title}')">تأكيد الحجز ✅</button>`;
         } else if (type === 'birth') {
             addMessage(`✨ <b>طلب حجز ولادة</b><br>يسعدنا جداً مرافقتكِ في هذه اللحظة المميزة 🤍<br><br>من فضلكِ اضغطي على الزر للتحدث مباشرة مع سكرتارية العيادة لتنسيق التفاصيل:<br><a href="https://wa.me/201125337717" class="premium-wa-link" style="background:#25D366; animation:none;">💬 واتساب حجز الولادة</a>`, "bot");
             return;
@@ -196,7 +196,6 @@ function renderForm(type, btn) {
         scrollToBottom();
     }, 600);
 }
-
 function freezeButtons(btn) {
     const parent = btn.parentElement;
     const buttons = parent.querySelectorAll('button');
@@ -237,25 +236,57 @@ function validateAndSubmit(bookingType) {
     const other = document.getElementById("pOther")?.value || "";
     const lastVisit = document.getElementById("pLastVisit")?.value || "";
 
-    if (name.split(/\s+/).length < 3 || phone.length < 11) { alert("يرجى إدخال الاسم الثلاثي ورقم الموبايل بشكل صحيح 👤📱"); return; }
+    if (name.split(/\s+/).length < 3 || phone.length < 11) { 
+        alert("يرجى إدخال الاسم الثلاثي ورقم الموبايل بشكل صحيح 👤📱"); 
+        return; 
+    }
     
-    // تعديل رقم 3: التحقق من "عرفتينا منين"
     if (bookingType === 'كشف أول مرة') {
         if (!source) { alert("من فضلكِ اختاري عرفتينا منين ✨"); return; }
         if (source === 'أخرى' && !other.trim()) { alert("من فضلكِ اكتبي عرفتينا منين في الخانة المطلوبة 🔍"); return; }
     }
     
-    if ((bookingType === 'متابعة' || bookingType === 'استشارة') && !lastVisit) { alert("يرجى إدخال تاريخ آخر زيارة 📅"); return; }
+    if ((bookingType === 'متابعة' || bookingType === 'استشارة') && !lastVisit) { 
+        alert("يرجى إدخال تاريخ آخر زيارة 📅"); 
+        return; 
+    }
 
     document.getElementById("activeForm").style.opacity = "0.5";
+    document.getElementById("activeForm").style.pointerEvents = "none";
     showTyping();
-    const payload = { name, phone, type: bookingType, lastVisit, source: source==='أخرى'?other:source };
+
+    const payload = { 
+        name, 
+        phone, 
+        type: bookingType, 
+        lastVisit, 
+        source: source === 'أخرى' ? other : source 
+    };
 
     fetch(SCRIPT_URL, { method: "POST", mode: "cors", body: JSON.stringify(payload) })
-    .then(res => res.json()).then(res => {
+    .then(res => res.json())
+    .then(response => {
         removeTyping();
-        if(res.status === "success") finishProcess(payload, res);
-    }).catch(() => { removeTyping(); alert("عذراً، حصل خطأ في الاتصال."); });
+        if(response.status === "success") {
+            // حالة النجاح: عرض الكارد النهائي
+            finishProcess(payload, response);
+        } else if (response.status === "duplicated") {
+            // حالة التكرار: إظهار التنبيه وإعادة تفعيل الفورم
+            addMessage(`⚠️ <b>تنبيه بخصوص الحجز:</b><br>${response.message}`, "bot");
+            document.getElementById("activeForm").style.opacity = "1";
+            document.getElementById("activeForm").style.pointerEvents = "auto";
+        } else {
+            alert("حدث خطأ: " + response.message);
+            document.getElementById("activeForm").style.opacity = "1";
+            document.getElementById("activeForm").style.pointerEvents = "auto";
+        }
+    })
+    .catch((err) => {
+        removeTyping();
+        alert("عذراً، حصل خطأ في الاتصال بالخادم.");
+        document.getElementById("activeForm").style.opacity = "1";
+        document.getElementById("activeForm").style.pointerEvents = "auto";
+    });
 }
 
 function finishProcess(data, res) {
