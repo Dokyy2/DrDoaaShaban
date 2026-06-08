@@ -187,23 +187,23 @@
             <a class="album-close" href="#gallery" data-close-album aria-label="إغلاق الألبوم"><i class="fa-solid fa-xmark"></i></a>
             <div class="album-book" id="albumBook">
                 <article class="album-page is-active">
-                    <img src="assets/images/gallery/memory-01.jpg" alt="ذكرى من رحلة الرعاية">
+                    <div class="album-photo"><img src="assets/images/gallery/memory-01.jpg" alt="ذكرى من رحلة الرعاية"></div>
                     <div class="album-caption"><span>لحظة البداية</span><h3 id="albumModalTitle">البداية دائمًا نبضة</h3><p>من أول لحظة اطمئنان، تبدأ حكاية جديدة مليئة بالأمل والرعاية.</p></div>
                 </article>
                 <article class="album-page">
-                    <img src="assets/images/gallery/memory-02.png" alt="لحظة سعادة مع مولود جديد">
+                    <div class="album-photo"><img src="assets/images/gallery/memory-02.png" alt="لحظة سعادة مع مولود جديد"></div>
                     <div class="album-caption"><span>لحظة وصول</span><h3>أول لقاء</h3><p>لحظة لا تتكرر، وابتسامة تختصر رحلة كاملة من الانتظار.</p></div>
                 </article>
                 <article class="album-page">
-                    <img src="assets/images/gallery/memory-03.jpg" alt="ذكرى متابعة ورعاية">
+                    <div class="album-photo"><img src="assets/images/gallery/memory-03.jpg" alt="ذكرى متابعة ورعاية"></div>
                     <div class="album-caption"><span>ثقة تمتد</span><h3>معكِ خطوة بخطوة</h3><p>متابعة هادئة وشرح واضح، لأن الاطمئنان جزء أساسي من الرعاية.</p></div>
                 </article>
                 <article class="album-page">
-                    <img src="assets/images/gallery/memory-04.png" alt="ذكرى سعيدة مع الأسرة">
+                    <div class="album-photo"><img src="assets/images/gallery/memory-04.png" alt="ذكرى سعيدة مع الأسرة"></div>
                     <div class="album-caption"><span>عائلة العيادة</span><h3>ذكريات تكبر معنا</h3><p>أطفال كبروا، وأسر ما زالت الثقة تجمعنا بها عامًا بعد عام.</p></div>
                 </article>
                 <article class="album-page">
-                    <img src="assets/images/gallery/memory-05.png" alt="احتفال بسنوات من الرعاية">
+                    <div class="album-photo"><img src="assets/images/gallery/memory-05.png" alt="احتفال بسنوات من الرعاية"></div>
                     <div class="album-caption"><span>18 عامًا</span><h3>رحلة من القلب</h3><p>سنوات من الخبرة، وآلاف الحكايات التي بدأت كلها بنبضة.</p></div>
                 </article>
             </div>
@@ -321,17 +321,14 @@
 </main>
 
 <footer class="footer">
-    Future Reservation System © 2026 - Dr. Doaa Shaban Clinic
+    Future Reservation System © 2026 - <span class="footer-clinic-name">Dr. Doaa Shaban Clinic</span>
 </footer>
 
 <a href="https://wa.me/201125337717" target="_blank" class="whatsapp-float" onclick="handleVibrate()">
     <i class="fa-brands fa-whatsapp"></i>
 </a>
 
-<script src="js/main.js"></script>
-<script src="js/gallery.js"></script>
-
-<div class="memory-flyer" onclick="openStoryAlbum()">
+<button class="memory-flyer" type="button" aria-label="افتحي ألبوم الذكريات">
     <div class="memory-heart">
         <i class="fa-regular fa-heart"></i>
     </div>
@@ -341,7 +338,10 @@
     </div>
 
     <div class="memory-shine"></div>
-</div>	
+</button>	
+
+<script src="js/main.js"></script>
+<script src="js/gallery.js"></script>
 
 </body>
 </html>

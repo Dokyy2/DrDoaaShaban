@@ -1073,3 +1073,1198 @@ input:focus, select:focus, textarea:focus {
     .visit-grid { grid-template-columns: repeat(2, 1fr); gap: 10px;}
     .review-card { min-width: 86%; }
 }
+
+/* Premium clinic restyle: soft rose-gold, ivory, and calm medical mint. */
+:root {
+    --primary-color: #b76e79;
+    --primary-soft: rgba(183,110,121,0.13);
+    --medical-blue: #3aa8a0;
+    --accent-pink: #d96c9f;
+    --dark-pink: #6f2f4f;
+    --text-main: #2f2730;
+    --text-soft: #7c6f79;
+    --silk-bg: #fffaf5;
+    --page-bg: #fff7f0;
+    --card-bg: rgba(255,252,248,0.9);
+    --border-soft: rgba(183,110,121,0.22);
+    --shadow-soft: 0 24px 65px rgba(111,47,79,0.12);
+}
+
+[data-mode="dark"] {
+    --silk-bg: #1e1720;
+    --page-bg: #130f15;
+    --card-bg: rgba(31,23,32,0.88);
+    --text-main: #fff7f2;
+    --text-soft: #decbd3;
+    --dark-pink: #ffd2df;
+    --primary-soft: rgba(217,108,159,0.13);
+    --border-soft: rgba(255,210,223,0.18);
+    --shadow-soft: 0 26px 70px rgba(0,0,0,0.44);
+}
+
+body {
+    background:
+        radial-gradient(circle at 10% 4%, rgba(217,108,159,0.16), transparent 30%),
+        radial-gradient(circle at 92% 18%, rgba(58,168,160,0.13), transparent 28%),
+        linear-gradient(180deg, #fffaf5 0%, var(--page-bg) 42%, #fff3ed 100%);
+}
+
+[data-mode="dark"] body {
+    background:
+        radial-gradient(circle at 10% 4%, rgba(217,108,159,0.16), transparent 30%),
+        radial-gradient(circle at 92% 18%, rgba(58,168,160,0.12), transparent 28%),
+        linear-gradient(180deg, #171119 0%, var(--page-bg) 58%, #1b121b 100%);
+}
+
+#splash {
+    background:
+        linear-gradient(135deg, rgba(111,47,79,0.58), rgba(255,246,241,0.2)),
+        radial-gradient(circle at 50% 36%, rgba(255,255,255,0.18), transparent 34%),
+        url("../assets/images/splash.png") center / cover no-repeat;
+}
+
+.splash-title,
+.splash-sub {
+    text-shadow: 0 14px 40px rgba(79,29,53,0.58);
+}
+
+.topbar {
+    border: 1px solid rgba(255,236,225,0.28);
+    background: rgba(50,35,48,0.72);
+    box-shadow: 0 18px 48px rgba(111,47,79,0.16);
+}
+
+[data-mode="light"] .topbar {
+    background: rgba(255,250,245,0.82);
+    border-color: rgba(183,110,121,0.22);
+}
+
+.brand strong {
+    background: linear-gradient(120deg, #ffd7c9 12%, #d96c9f 46%, #8f516d 78%);
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+}
+
+[data-mode="light"] .brand strong {
+    background: linear-gradient(120deg, #6f2f4f 12%, #b76e79 46%, #3aa8a0 78%);
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+}
+
+.nav a { color: rgba(255,247,242,0.9); }
+[data-mode="light"] .nav a { color: #4b3a45; }
+.nav a:hover,
+.smart-nav-hint { color: #ffd2df !important; }
+[data-mode="light"] .nav a:hover,
+[data-mode="light"] .smart-nav-hint { color: var(--accent-pink) !important; }
+
+.hero {
+    background:
+        linear-gradient(90deg, rgba(54,34,48,0.68), rgba(111,47,79,0.32), rgba(255,247,242,0.08)),
+        url("../assets/images/banner.png") center top / cover no-repeat;
+    box-shadow: 0 30px 90px rgba(111,47,79,0.2);
+}
+
+[data-mode="light"] .hero {
+    background:
+        linear-gradient(90deg, rgba(255,248,243,0.66), rgba(255,241,246,0.36), rgba(111,47,79,0.08)),
+        url("../assets/images/banner.png") center top / cover no-repeat;
+}
+
+.hero::after {
+    background:
+        radial-gradient(circle at 70% 35%, rgba(217,108,159,0.22), transparent 34%),
+        radial-gradient(circle at 28% 76%, rgba(58,168,160,0.12), transparent 30%),
+        linear-gradient(to bottom, transparent 68%, var(--page-bg) 100%);
+}
+
+.hero p,
+[data-mode="light"] .hero p {
+    color: #fff7f2;
+    text-shadow: 0 10px 26px rgba(54,34,48,0.35);
+}
+
+[data-mode="light"] .hero p {
+    color: #3d3039;
+    text-shadow: 0 8px 22px rgba(255,255,255,0.5);
+}
+
+.hero-note,
+.section-title,
+#clockNow,
+.stat-number,
+.detail-value {
+    color: var(--dark-pink);
+}
+
+.btn-primary,
+.smart-submit,
+.premium-wa-link,
+.result-icon {
+    background: linear-gradient(135deg, #b76e79, #d96c9f 52%, #6f2f4f);
+    box-shadow: 0 18px 42px rgba(183,110,121,0.28);
+}
+
+.btn-ghost {
+    background: rgba(255,250,245,0.13);
+    border-color: rgba(255,210,223,0.34);
+}
+
+[data-mode="light"] .btn-ghost {
+    color: #6f2f4f;
+    background: rgba(255,250,245,0.78);
+}
+
+.clock-card-wide,
+.stat-card,
+.info-card,
+.service-card,
+.review-card,
+.booking-panel,
+.contact-card,
+.assistant-card,
+.fri-card,
+.soft-alert-card {
+    border-color: var(--border-soft);
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.72), rgba(255,246,241,0.84)),
+        var(--card-bg);
+    box-shadow: var(--shadow-soft);
+}
+
+[data-mode="dark"] .clock-card-wide,
+[data-mode="dark"] .stat-card,
+[data-mode="dark"] .info-card,
+[data-mode="dark"] .service-card,
+[data-mode="dark"] .review-card,
+[data-mode="dark"] .booking-panel,
+[data-mode="dark"] .contact-card,
+[data-mode="dark"] .fri-card,
+[data-mode="dark"] .soft-alert-card {
+    background:
+        linear-gradient(145deg, rgba(45,33,46,0.9), rgba(31,23,32,0.88)),
+        var(--card-bg);
+}
+
+.clock-ring {
+    background: conic-gradient(from 90deg, #b76e79, #d96c9f, #3aa8a0, #b76e79);
+    box-shadow: 0 0 30px rgba(217,108,159,0.35);
+}
+
+.doctor-photo {
+    background: linear-gradient(145deg, #fff0e9, #f7dbe6);
+    border-color: rgba(217,108,159,0.24);
+}
+
+.doctor-photo::after {
+    border-color: rgba(183,110,121,0.72);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.42);
+}
+
+.service-card::before,
+.neon-divider {
+    background: linear-gradient(90deg, transparent, #b76e79, #d96c9f, #3aa8a0, transparent);
+}
+
+.service-card i,
+.contact-line i,
+.fri-card i {
+    color: var(--medical-blue);
+}
+
+.booking-section {
+    background:
+        radial-gradient(circle at 14% 20%, rgba(217,108,159,0.11), transparent 34%),
+        linear-gradient(135deg, rgba(255,250,245,0.62), rgba(255,235,242,0.45));
+    border-color: rgba(183,110,121,0.22);
+}
+
+[data-mode="light"] .booking-section {
+    background:
+        radial-gradient(circle at 14% 20%, rgba(217,108,159,0.13), transparent 34%),
+        linear-gradient(135deg, rgba(255,250,245,0.9), rgba(255,235,242,0.66));
+}
+
+.booking-head h2 {
+    color: var(--dark-pink);
+    border-color: rgba(183,110,121,0.22);
+    background: rgba(255,250,245,0.24);
+    text-shadow: 0 6px 24px rgba(183,110,121,0.2);
+}
+
+.flip-card-front {
+    background: rgba(255,250,245,0.14);
+}
+
+[data-mode="light"] .flip-card-front {
+    background: rgba(255,250,245,0.84);
+}
+
+.flip-card-front i,
+.flip-card-back,
+.submit-btn {
+    background: linear-gradient(135deg, #b76e79, #d96c9f, #6f2f4f);
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    border-color: rgba(183,110,121,0.24);
+    background: rgba(255,250,245,0.72);
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    border-color: #d96c9f;
+    box-shadow: 0 0 0 4px rgba(217,108,159,0.13);
+}
+
+.assistant-card {
+    background:
+        linear-gradient(135deg, rgba(111,47,79,0.94), rgba(183,110,121,0.78)),
+        url("https://i.ibb.co/r2gY7y29/smart-assistant.png") center / cover no-repeat;
+    border-color: rgba(255,210,223,0.2);
+}
+
+.review-person .avatar,
+.details-box {
+    background: var(--primary-soft);
+}
+
+.memory-flyer {
+    background: linear-gradient(135deg, #6f2f4f, #d96c9f 48%, #b76e79);
+    box-shadow: 0 18px 45px rgba(111,47,79,0.28);
+}
+
+/* Premium visual redesign v2: stronger visible transformation, same layout and logic. */
+:root,
+[data-theme="pink"],
+[data-theme="purple"],
+[data-theme="mint"],
+[data-theme="rose"] {
+    --primary-color: #9c5266;
+    --primary-soft: rgba(156,82,102,0.12);
+    --medical-blue: #2f9f98;
+    --accent-pink: #c65f89;
+    --dark-pink: #5a2942;
+    --text-main: #2d2430;
+    --text-soft: #756878;
+    --silk-bg: #fffaf6;
+    --page-bg: #fff2ec;
+    --card-bg: rgba(255,251,247,0.92);
+    --border-soft: rgba(156,82,102,0.2);
+    --shadow-soft: 0 26px 70px rgba(90,41,66,0.14);
+    --radius-lg: 30px;
+}
+
+[data-mode="dark"] {
+    --primary-color: #d69aaa;
+    --primary-soft: rgba(214,154,170,0.13);
+    --medical-blue: #72d5cc;
+    --accent-pink: #f0a9c4;
+    --dark-pink: #ffe1e8;
+    --text-main: #fff7f2;
+    --text-soft: #e1ccd4;
+    --silk-bg: #1c141c;
+    --page-bg: #120d13;
+    --card-bg: rgba(34,24,34,0.9);
+    --border-soft: rgba(240,169,196,0.2);
+    --shadow-soft: 0 28px 80px rgba(0,0,0,0.46);
+}
+
+body {
+    background:
+        radial-gradient(circle at 8% 10%, rgba(198,95,137,0.18), transparent 28%),
+        radial-gradient(circle at 88% 5%, rgba(47,159,152,0.14), transparent 25%),
+        radial-gradient(circle at 48% 58%, rgba(255,214,199,0.38), transparent 42%),
+        linear-gradient(180deg, #fffaf6 0%, #fff2ec 46%, #fae8e4 100%);
+}
+
+[data-mode="dark"] body {
+    background:
+        radial-gradient(circle at 8% 10%, rgba(198,95,137,0.18), transparent 28%),
+        radial-gradient(circle at 88% 5%, rgba(47,159,152,0.12), transparent 25%),
+        linear-gradient(180deg, #171018 0%, #120d13 54%, #1b1119 100%);
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(156,82,102,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(156,82,102,0.04) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), transparent 78%);
+}
+
+.topbar {
+    width: min(1160px, calc(100% - 24px));
+    padding: 12px 18px;
+    border-radius: 24px;
+    background:
+        linear-gradient(135deg, rgba(90,41,66,0.88), rgba(45,36,48,0.76));
+    border: 1px solid rgba(255,225,232,0.22);
+    box-shadow: 0 22px 55px rgba(90,41,66,0.22);
+}
+
+[data-mode="light"] .topbar {
+    background: rgba(255,250,246,0.86);
+    border-color: rgba(156,82,102,0.2);
+}
+
+.brand {
+    padding-inline-start: 4px;
+}
+
+.brand strong {
+    letter-spacing: .2px;
+    background: linear-gradient(120deg, #ffe4dc, #f0a9c4 44%, #d7f5ef);
+    -webkit-background-clip: text;
+}
+
+[data-mode="light"] .brand strong {
+    background: linear-gradient(120deg, #5a2942, #9c5266 46%, #2f9f98);
+    -webkit-background-clip: text;
+}
+
+.nav {
+    gap: 9px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+}
+
+[data-mode="light"] .nav {
+    background: rgba(156,82,102,0.06);
+}
+
+.nav a {
+    padding: 8px 12px;
+    border-radius: 999px;
+    transition: var(--transition);
+}
+
+.nav a:hover {
+    background: rgba(255,225,232,0.14);
+    transform: translateY(-1px);
+}
+
+[data-mode="light"] .nav a:hover {
+    background: rgba(156,82,102,0.1);
+}
+
+.icon-btn,
+.text-btn {
+    border-color: rgba(255,225,232,0.24);
+    background: rgba(255,255,255,0.1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
+}
+
+.hero {
+    min-height: 720px;
+    border-radius: 0 0 56px 56px;
+    background:
+        linear-gradient(90deg, rgba(45,36,48,0.76) 0%, rgba(90,41,66,0.54) 45%, rgba(255,242,236,0.05) 100%),
+        url("../assets/images/banner.png") center top / cover no-repeat;
+}
+
+[data-mode="light"] .hero {
+    background:
+        linear-gradient(90deg, rgba(255,250,246,0.72) 0%, rgba(255,226,237,0.42) 48%, rgba(90,41,66,0.1) 100%),
+        url("../assets/images/banner.png") center top / cover no-repeat;
+}
+
+.hero-content {
+    padding: clamp(24px, 4vw, 42px);
+    border-radius: 34px;
+    background: rgba(45,36,48,0.34);
+    border: 1px solid rgba(255,225,232,0.2);
+    box-shadow: 0 28px 70px rgba(45,36,48,0.26);
+    backdrop-filter: blur(12px);
+}
+
+[data-mode="light"] .hero-content {
+    background: rgba(255,250,246,0.62);
+    border-color: rgba(156,82,102,0.16);
+}
+
+.hero-note {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 18px;
+    background: rgba(255,225,232,0.14);
+    border: 1px solid rgba(255,225,232,0.2);
+}
+
+[data-mode="light"] .hero-note {
+    background: rgba(156,82,102,0.09);
+    border-color: rgba(156,82,102,0.16);
+}
+
+.btn {
+    min-height: 54px;
+    padding-inline: 26px;
+    letter-spacing: .1px;
+}
+
+.btn-primary,
+.smart-submit,
+.premium-wa-link,
+.submit-btn,
+.pregnancy-submit {
+    background: linear-gradient(135deg, #5a2942 0%, #9c5266 42%, #c65f89 74%, #2f9f98 130%) !important;
+    box-shadow: 0 20px 46px rgba(156,82,102,0.32) !important;
+}
+
+.btn-ghost {
+    background: rgba(255,250,246,0.16);
+    border: 1px solid rgba(255,225,232,0.28);
+}
+
+.section {
+    margin: 46px auto;
+}
+
+.clock-card-wide,
+.stat-card,
+.info-card,
+.service-card,
+.review-card,
+.booking-panel,
+.contact-card,
+.fri-card,
+.soft-alert-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 32px;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.86), rgba(255,245,241,0.76)),
+        var(--card-bg);
+    border: 1px solid rgba(156,82,102,0.18);
+    box-shadow:
+        0 18px 55px rgba(90,41,66,0.1),
+        inset 0 1px 0 rgba(255,255,255,0.72);
+}
+
+.clock-card-wide::before,
+.stat-card::before,
+.info-card::before,
+.service-card::after,
+.review-card::after,
+.booking-panel::before,
+.contact-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 15% 10%, rgba(198,95,137,0.16), transparent 28%),
+        radial-gradient(circle at 90% 90%, rgba(47,159,152,0.1), transparent 30%);
+}
+
+[data-mode="dark"] .clock-card-wide,
+[data-mode="dark"] .stat-card,
+[data-mode="dark"] .info-card,
+[data-mode="dark"] .service-card,
+[data-mode="dark"] .review-card,
+[data-mode="dark"] .booking-panel,
+[data-mode="dark"] .contact-card,
+[data-mode="dark"] .fri-card,
+[data-mode="dark"] .soft-alert-card {
+    background:
+        linear-gradient(145deg, rgba(40,29,40,0.92), rgba(28,20,28,0.9)),
+        var(--card-bg);
+    border-color: rgba(240,169,196,0.16);
+}
+
+.stats-bar {
+    gap: 18px;
+}
+
+.stat-card {
+    min-height: 144px;
+}
+
+.stat-card > div,
+.info-card > *,
+.service-card > *,
+.booking-panel > *,
+.contact-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.stat-number {
+    font-size: clamp(2rem, 4.4vw, 3.25rem);
+    background: linear-gradient(135deg, #5a2942, #c65f89);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+[data-mode="dark"] .stat-number {
+    background: linear-gradient(135deg, #ffe1e8, #72d5cc);
+    -webkit-background-clip: text;
+}
+
+.doctor-photo {
+    border-radius: 42px;
+    padding: 10px;
+    background: linear-gradient(145deg, #fff6ef, #efd0d9);
+}
+
+.doctor-photo img {
+    border-radius: 32px;
+}
+
+.doctor-photo::after {
+    inset: 18px;
+    border: 2px solid rgba(255,255,255,0.72);
+}
+
+.section-title {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 10px;
+    background: linear-gradient(135deg, #5a2942, #9c5266 55%, #2f9f98);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.section-title::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 74px;
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #c65f89, #2f9f98);
+}
+
+.services-grid {
+    gap: 22px;
+}
+
+.service-card {
+    min-height: 238px;
+    padding: 30px 22px;
+    border-radius: 34px;
+}
+
+.service-card::before {
+    height: 100%;
+    width: 7px;
+    left: auto;
+    background: linear-gradient(180deg, #5a2942, #c65f89, #2f9f98);
+}
+
+.service-card:hover {
+    transform: translateY(-10px) scale(1.015);
+    box-shadow: 0 28px 70px rgba(90,41,66,0.18);
+}
+
+.service-card i,
+.meta-stat i,
+.contact-line i {
+    width: 58px;
+    height: 58px;
+    margin-bottom: 16px;
+    border-radius: 20px;
+    display: inline-grid;
+    place-items: center;
+    color: #fff !important;
+    background: linear-gradient(135deg, #5a2942, #c65f89 68%, #2f9f98);
+    box-shadow: 0 14px 30px rgba(156,82,102,0.24);
+}
+
+.contact-line i {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    margin-bottom: 0;
+    font-size: 1rem;
+}
+
+.booking-section {
+    border-radius: 46px;
+    background:
+        radial-gradient(circle at 20% 0%, rgba(198,95,137,0.18), transparent 32%),
+        radial-gradient(circle at 82% 90%, rgba(47,159,152,0.14), transparent 34%),
+        linear-gradient(135deg, rgba(255,250,246,0.78), rgba(255,226,237,0.58));
+    border: 1px solid rgba(156,82,102,0.18);
+}
+
+.booking-panel {
+    border-radius: 38px;
+}
+
+.booking-head h2 {
+    border-radius: 28px;
+    padding: 14px 34px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.72), rgba(255,226,237,0.52));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 14px 36px rgba(90,41,66,.1);
+}
+
+.group-title {
+    padding: 14px 18px;
+    border: 0;
+    border-radius: 20px;
+    background: linear-gradient(90deg, rgba(156,82,102,0.12), rgba(47,159,152,0.08), transparent);
+}
+
+.flip-card {
+    height: 154px;
+}
+
+.flip-card-front,
+.flip-card-back {
+    border-radius: 28px;
+    box-shadow: 0 16px 38px rgba(90,41,66,0.12);
+}
+
+.flip-card-front {
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.86), rgba(255,239,246,0.72));
+    border-color: rgba(156,82,102,0.18);
+}
+
+[data-mode="dark"] .flip-card-front {
+    background: linear-gradient(145deg, rgba(40,29,40,0.92), rgba(28,20,28,0.9));
+}
+
+.flip-card-front i {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 12px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+    background: linear-gradient(135deg, #5a2942, #c65f89, #2f9f98) !important;
+    -webkit-background-clip: border-box !important;
+    box-shadow: 0 12px 26px rgba(156,82,102,0.22);
+}
+
+.flip-card-back {
+    background: linear-gradient(135deg, #5a2942, #9c5266 54%, #2f9f98) !important;
+    box-shadow: 0 18px 44px rgba(90,41,66,0.22);
+}
+
+.flip-card.special .flip-card-front {
+    border-color: rgba(198,95,137,0.34);
+}
+
+.flip-card.special .flip-card-front i,
+.flip-card.family-card .flip-card-front i {
+    background: linear-gradient(135deg, #c65f89, #9c5266, #5a2942) !important;
+}
+
+.flip-card.family-card .flip-card-front {
+    background: linear-gradient(135deg, #5a2942, #c65f89) !important;
+}
+
+input,
+select,
+textarea {
+    border-radius: 22px;
+    border: 1.5px solid rgba(156,82,102,0.18);
+    background: rgba(255,250,246,0.86);
+    color: #2d2430;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+[data-mode="dark"] input,
+[data-mode="dark"] select,
+[data-mode="dark"] textarea {
+    background: rgba(255,255,255,0.08);
+    color: #fff7f2;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #c65f89;
+    box-shadow: 0 0 0 4px rgba(198,95,137,0.14), inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.upload-box {
+    background: rgba(198,95,137,0.08);
+    border-color: rgba(198,95,137,0.28);
+}
+
+.processing-card,
+.result-card,
+.pregnancy-result-card {
+    border-radius: 34px;
+    background:
+        radial-gradient(circle at 14% 10%, rgba(198,95,137,0.12), transparent 30%),
+        linear-gradient(145deg, rgba(255,255,255,0.9), rgba(255,242,236,0.78));
+    border-color: rgba(156,82,102,0.18);
+}
+
+.result-icon,
+.pregnancy-result-card .baby-icon {
+    border-radius: 24px;
+    background: linear-gradient(135deg, #2f9f98, #9c5266, #c65f89) !important;
+}
+
+.assistant-card {
+    border-radius: 40px;
+    background:
+        linear-gradient(135deg, rgba(45,36,48,0.94), rgba(90,41,66,0.78)),
+        url("https://i.ibb.co/r2gY7y29/smart-assistant.png") center / cover no-repeat !important;
+    box-shadow: 0 28px 80px rgba(90,41,66,0.24);
+}
+
+.assistant-icon {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.34);
+}
+
+.reviews-scroll {
+    gap: 20px;
+}
+
+.review-card {
+    min-width: 360px;
+    border-radius: 34px;
+}
+
+.review-card::before {
+    color: rgba(198,95,137,0.2);
+}
+
+.avatar {
+    background: linear-gradient(135deg, rgba(198,95,137,0.18), rgba(47,159,152,0.13));
+    color: #5a2942;
+}
+
+.contact-wrap {
+    gap: 24px;
+}
+
+.contact-card {
+    border-radius: 36px;
+}
+
+.map-frame {
+    border-radius: 36px;
+    filter: saturate(.9) contrast(.96);
+}
+
+.neon-divider {
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #5a2942, #c65f89, #2f9f98, transparent);
+    box-shadow: 0 0 24px rgba(198,95,137,0.28);
+}
+
+.whatsapp-float {
+    background: linear-gradient(135deg, #25d366, #128c7e);
+    box-shadow: 0 18px 42px rgba(18,140,126,0.36);
+}
+
+.memory-flyer {
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 26% 18%, rgba(255,255,255,0.34), transparent 28%),
+        linear-gradient(135deg, #5a2942, #c65f89 58%, #2f9f98);
+}
+
+@media (max-width: 900px) {
+    .hero-content {
+        padding: 22px;
+        border-radius: 28px;
+    }
+
+    .topbar {
+        border-radius: 22px;
+    }
+}
+
+/* Bright feminine clinic theme: airy pink, fuchsia, sky blue, and gold. */
+:root,
+[data-theme="pink"],
+[data-theme="purple"],
+[data-theme="mint"],
+[data-theme="rose"],
+[data-mode="dark"] {
+    --primary-color: #ff4fa3;
+    --primary-soft: rgba(255,79,163,0.12);
+    --medical-blue: #28b8f6;
+    --accent-pink: #ff79c8;
+    --dark-pink: #b31372;
+    --text-main: #34263a;
+    --text-soft: #7a6b86;
+    --silk-bg: #ffffff;
+    --page-bg: #fff7fd;
+    --card-bg: rgba(255,255,255,0.92);
+    --border-soft: rgba(255,79,163,0.18);
+    --shadow-soft: 0 24px 70px rgba(255,79,163,0.14);
+}
+
+body,
+[data-mode="dark"] body {
+    color: var(--text-main);
+    background:
+        radial-gradient(circle at 12% 8%, rgba(255,121,200,0.22), transparent 30%),
+        radial-gradient(circle at 84% 10%, rgba(40,184,246,0.2), transparent 28%),
+        radial-gradient(circle at 58% 42%, rgba(255,215,128,0.18), transparent 34%),
+        linear-gradient(180deg, #ffffff 0%, #fff7fd 42%, #eefaff 100%);
+}
+
+body::before {
+    background-image:
+        radial-gradient(circle, rgba(255,79,163,0.12) 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(40,184,246,0.1) 1px, transparent 1.5px);
+    background-position: 0 0, 22px 22px;
+    background-size: 44px 44px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,.45), transparent 72%);
+}
+
+.topbar,
+[data-mode="light"] .topbar {
+    background: rgba(255,255,255,0.82);
+    border: 1px solid rgba(255,79,163,0.18);
+    box-shadow: 0 18px 50px rgba(40,184,246,0.13), 0 10px 34px rgba(255,79,163,0.12);
+}
+
+.brand strong,
+[data-mode="light"] .brand strong {
+    background: linear-gradient(120deg, #b31372, #ff4fa3 45%, #28b8f6 86%);
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+}
+
+.brand span,
+.nav a,
+[data-mode="light"] .nav a,
+.icon-btn,
+.text-btn {
+    color: #4b3a55;
+}
+
+.nav,
+[data-mode="light"] .nav {
+    background: linear-gradient(135deg, rgba(255,79,163,0.08), rgba(40,184,246,0.08));
+}
+
+.nav a:hover,
+.smart-nav-hint,
+[data-mode="light"] .smart-nav-hint {
+    color: #ff2f98 !important;
+    background: rgba(255,79,163,0.12);
+}
+
+.icon-btn,
+.text-btn {
+    background: rgba(255,255,255,0.86);
+    border-color: rgba(255,79,163,0.2);
+}
+
+.hero,
+[data-mode="light"] .hero {
+    background:
+        linear-gradient(90deg, rgba(255,255,255,0.25), rgba(255,121,200,0.18), rgba(40,184,246,0.08)),
+        url("../assets/images/banner.png") center top / cover no-repeat;
+    box-shadow: 0 26px 80px rgba(255,79,163,0.16);
+}
+
+.hero::after {
+    background:
+        radial-gradient(circle at 74% 30%, rgba(255,121,200,0.24), transparent 34%),
+        radial-gradient(circle at 22% 74%, rgba(40,184,246,0.18), transparent 30%),
+        linear-gradient(to bottom, transparent 70%, var(--page-bg) 100%);
+}
+
+.hero-content,
+[data-mode="light"] .hero-content {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.hero p,
+[data-mode="light"] .hero p {
+    width: fit-content;
+    max-width: 620px;
+    padding: 16px 20px;
+    border-radius: 22px;
+    color: #3b2d42;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(255,255,255,0.58);
+    text-shadow: none;
+    box-shadow: 0 16px 45px rgba(255,79,163,0.11);
+    backdrop-filter: blur(8px);
+}
+
+.hero-note {
+    color: #ffffff;
+    background: linear-gradient(135deg, #ff4fa3, #ff79c8 55%, #28b8f6);
+    border: 0;
+    box-shadow: 0 18px 45px rgba(255,79,163,0.24);
+}
+
+.btn-primary,
+.smart-submit,
+.premium-wa-link,
+.submit-btn,
+.pregnancy-submit {
+    background: linear-gradient(135deg, #ff2f98 0%, #ff79c8 48%, #28b8f6 115%) !important;
+    box-shadow: 0 18px 42px rgba(255,79,163,0.28) !important;
+}
+
+.btn-ghost,
+[data-mode="light"] .btn-ghost {
+    color: #b31372;
+    background: rgba(255,255,255,0.72);
+    border-color: rgba(255,79,163,0.22);
+}
+
+.clock-card-wide,
+.stat-card,
+.info-card,
+.service-card,
+.review-card,
+.booking-panel,
+.contact-card,
+.fri-card,
+.soft-alert-card,
+[data-mode="dark"] .clock-card-wide,
+[data-mode="dark"] .stat-card,
+[data-mode="dark"] .info-card,
+[data-mode="dark"] .service-card,
+[data-mode="dark"] .review-card,
+[data-mode="dark"] .booking-panel,
+[data-mode="dark"] .contact-card,
+[data-mode="dark"] .fri-card,
+[data-mode="dark"] .soft-alert-card {
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255,241,249,0.86));
+    border-color: rgba(255,79,163,0.16);
+    box-shadow: 0 18px 52px rgba(255,79,163,0.12), 0 10px 35px rgba(40,184,246,0.08);
+}
+
+.clock-card-wide::before,
+.stat-card::before,
+.info-card::before,
+.service-card::after,
+.review-card::after,
+.booking-panel::before,
+.contact-card::before {
+    background:
+        radial-gradient(circle at 14% 10%, rgba(255,121,200,0.18), transparent 30%),
+        radial-gradient(circle at 90% 90%, rgba(40,184,246,0.14), transparent 32%);
+}
+
+.clock-ring {
+    background: conic-gradient(from 90deg, #ff4fa3, #ffd166, #28b8f6, #ff4fa3);
+}
+
+.stat-number,
+.section-title {
+    background: linear-gradient(135deg, #b31372, #ff4fa3 58%, #28b8f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.section-title::after,
+.service-card::before,
+.neon-divider {
+    background: linear-gradient(90deg, #ff4fa3, #ffd166, #28b8f6);
+}
+
+.doctor-photo {
+    background: linear-gradient(145deg, #ffffff, #ffe8f6 54%, #e8f8ff);
+    border: 1px solid rgba(255,79,163,0.14);
+}
+
+.doctor-photo::after {
+    display: none;
+}
+
+.service-card {
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.98), rgba(255,235,247,0.82));
+}
+
+.service-card i,
+.meta-stat i,
+.contact-line i,
+.flip-card-front i {
+    background: linear-gradient(135deg, #ff4fa3, #ff79c8 56%, #28b8f6) !important;
+    box-shadow: 0 14px 30px rgba(255,79,163,0.24);
+}
+
+.booking-section,
+[data-mode="light"] .booking-section {
+    background:
+        radial-gradient(circle at 16% 14%, rgba(255,121,200,0.22), transparent 32%),
+        radial-gradient(circle at 84% 90%, rgba(40,184,246,0.2), transparent 34%),
+        linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,236,247,0.78));
+}
+
+.booking-head h2 {
+    color: #b31372;
+    background: linear-gradient(135deg, #ffffff, #ffe5f5);
+    border: 1px solid rgba(255,79,163,0.16);
+}
+
+.group-title {
+    color: #b31372;
+    background: linear-gradient(90deg, rgba(255,79,163,0.13), rgba(40,184,246,0.1), transparent);
+}
+
+.flip-card-front,
+[data-mode="dark"] .flip-card-front,
+[data-mode="light"] .flip-card-front {
+    background: linear-gradient(145deg, #ffffff, #fff0fa);
+    border-color: rgba(255,79,163,0.16);
+    color: #34263a;
+}
+
+.flip-card-back,
+.flip-card.special .flip-card-back,
+.flip-card.family-card .flip-card-front {
+    background: linear-gradient(135deg, #ff2f98, #ff79c8 58%, #28b8f6) !important;
+}
+
+input,
+select,
+textarea,
+[data-mode="dark"] input,
+[data-mode="dark"] select,
+[data-mode="dark"] textarea {
+    background: rgba(255,255,255,0.92);
+    border-color: rgba(255,79,163,0.18);
+    color: #34263a;
+}
+
+.assistant-card {
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 330px;
+    border: 0;
+    background:
+        radial-gradient(circle at 15% 18%, rgba(255,255,255,0.46), transparent 24%),
+        linear-gradient(135deg, rgba(255,47,152,0.92), rgba(255,121,200,0.86) 45%, rgba(40,184,246,0.9)),
+        url("https://i.ibb.co/r2gY7y29/smart-assistant.png") center / cover no-repeat !important;
+    box-shadow: 0 28px 85px rgba(255,79,163,0.26), 0 12px 40px rgba(40,184,246,0.18);
+    animation: assistantPulseGlow 2.4s ease-in-out infinite;
+}
+
+.assistant-card::before {
+    content: "";
+    position: absolute;
+    inset: -40%;
+    z-index: 0;
+    background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.42), transparent 28%);
+    animation: assistantShineSpin 4.2s linear infinite;
+}
+
+.assistant-card::after {
+    content: "ابدئي من هنا";
+    position: absolute;
+    top: 22px;
+    left: 22px;
+    z-index: 2;
+    padding: 9px 15px;
+    border-radius: 999px;
+    color: #b31372;
+    background: #ffffff;
+    font-weight: 900;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.16);
+    animation: assistantBadgePop 1.4s ease-in-out infinite;
+}
+
+.assistant-card h2 {
+    color: #fff;
+    text-shadow: 0 8px 26px rgba(113,0,68,0.35);
+}
+
+.assistant-card p {
+    color: rgba(255,255,255,0.96);
+}
+
+.assistant-card .btn {
+    color: #fff;
+    background: linear-gradient(135deg, #b31372, #ff2f98, #28b8f6) !important;
+    box-shadow: 0 18px 42px rgba(179,19,114,0.34);
+    animation: assistantButtonPulse 1.55s ease-in-out infinite;
+}
+
+.assistant-icon {
+    animation: assistantIconFloat 2s ease-in-out infinite;
+}
+
+@keyframes assistantPulseGlow {
+    0%, 100% { transform: translateY(0); box-shadow: 0 28px 85px rgba(255,79,163,0.24), 0 12px 40px rgba(40,184,246,0.18); }
+    50% { transform: translateY(-5px); box-shadow: 0 36px 105px rgba(255,79,163,0.34), 0 16px 52px rgba(40,184,246,0.26); }
+}
+
+@keyframes assistantShineSpin {
+    to { transform: rotate(1turn); }
+}
+
+@keyframes assistantBadgePop {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+@keyframes assistantButtonPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes assistantIconFloat {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(-8px) rotate(-4deg); }
+}
+
+.review-card {
+    background: linear-gradient(145deg, #ffffff, #fff1fa);
+}
+
+.avatar {
+    color: #fff;
+    background: linear-gradient(135deg, #ff4fa3, #28b8f6);
+}
+
+.memory-flyer {
+    background:
+        radial-gradient(circle at 28% 18%, rgba(255,255,255,0.46), transparent 30%),
+        linear-gradient(135deg, #ff2f98, #ff79c8 52%, #28b8f6);
+}
+
+.footer {
+    color: #28b8f6;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.92), transparent);
+    text-shadow:
+        0 1px 0 #ffffff,
+        0 0 10px rgba(40,184,246,0.28);
+}
+
+.footer-clinic-name {
+    display: inline-block;
+    color: #d4a017;
+    font-weight: 900;
+    background: linear-gradient(110deg, #8a5b00 0%, #ffd45a 28%, #ffffff 44%, #d4a017 58%, #8a5b00 100%);
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow:
+        0 1px 0 rgba(255,255,255,0.75),
+        0 0 14px rgba(255,212,90,0.55),
+        0 0 28px rgba(40,184,246,0.2);
+    animation: goldNameShine 2.8s linear infinite;
+}
+
+@keyframes goldNameShine {
+    to { background-position: -220% center; }
+}
