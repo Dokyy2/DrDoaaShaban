@@ -468,7 +468,11 @@ body.album-open { overflow: hidden; }
     box-shadow: 0 14px 30px rgba(0,0,0,.2);
 }
 
-@media (max-width: 820px) {
+/* =========================================
+   Mobile Album Fix
+   ========================================= */
+
+@media (max-width: 820px){
 
     .story-album{
         grid-template-columns:1fr;
@@ -506,7 +510,6 @@ body.album-open { overflow: hidden; }
         object-fit:contain;
     }
 
-    /* لو صورك الجديدة مكتوب عليها النص بالفعل */
     .album-caption{
         display:none;
     }
