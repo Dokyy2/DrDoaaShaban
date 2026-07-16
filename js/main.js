@@ -1,4 +1,4 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP_Kllz_3jkLxGj2hJpNAQ6Vt4I_JOU9EnC0LB471hFJitfEoxQLdsbec8P7hcmraC/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgnEsxhrKW9YABtwxAoBHAfZvR90AJEWZIdrTJBD-cwgZb7GLqPkZ09uZ6J0eMr1XJ/exec";
 const CLINIC_WHATSAPP = "201125337717";
 const signatureHtml = `<div class="form-signature">Future Reservation System © 2026</div>`;
 
