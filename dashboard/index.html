@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>إدارة عيادة د. دعاء شعبان</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <main id="app"><div class="loading-screen"><i class="fa-solid fa-heart-pulse"></i><p>جارٍ تجهيز لوحة الإدارة…</p></div></main>
+  <script src="../js/config.js"></script>
+  <script type="module" src="dashboard.js"></script>
+  <script>
+    setTimeout(() => {
+      if (!window.CLINIC_DASHBOARD_READY) {
+        document.getElementById('app').innerHTML = '<section class="login-page"><div class="login-card"><div class="clinic-mark"><i class="fa-solid fa-triangle-exclamation"></i></div><h1>ملفات لوحة الإدارة غير مكتملة</h1><p>ارفعي مجلد <b>dashboard</b> كاملًا، ومعه ملف <b>js/config.js</b>، ثم أعيدي فتح الصفحة.</p></div></section>';
+      }
+    }, 7000);
+  </script>
+</body>
+</html>
