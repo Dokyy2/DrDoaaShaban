@@ -1,0 +1,21 @@
+# بيانات المرضى والنسخ الاحتياطية: تبقى محليًا فقط ولا تُرفع إلى GitHub.
+import/
+backups/
+exports/
+*.xlsx
+*.xls
+*.csv
+
+# مفاتيح وبيانات تشغيل محلية محتملة.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ملفات النظام والسجلات.
+.DS_Store
+Thumbs.db
+*.log

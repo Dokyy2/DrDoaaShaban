@@ -796,14 +796,14 @@ async function submitBooking() {
         const response = await sendBooking(payload);
         clearInterval(progressTimer);
 
-        if (response.status !== "success" && response.status !== "duplicated") {
+        if (!["success", "duplicated", "duplicate"].includes(response.status)) {
             showSubmissionError(response.message);
             return;
         }
 
         const finalId = String(response.id || response.bookingId || "-");
 
-        if (response.status === "duplicated") {
+        if (["duplicated", "duplicate"].includes(response.status)) {
             const oldData = {
                 name: response.oldName || valid.name,
                 phone: response.oldPhone || valid.phone,
@@ -846,14 +846,14 @@ async function submitBirth() {
         const response = await sendBooking(payload);
         clearInterval(progressTimer);
 
-        if (response.status !== "success" && response.status !== "duplicated") {
+        if (!["success", "duplicated", "duplicate"].includes(response.status)) {
             showSubmissionError(response.message);
             return;
         }
 
         const finalId = String(response.id || response.bookingId || "-");
 
-        if (response.status === "duplicated") {
+        if (["duplicated", "duplicate"].includes(response.status)) {
             const oldData = {
                 name: response.oldName || valid.name,
                 phone: response.oldPhone || valid.phone,
