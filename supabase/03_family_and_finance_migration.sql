@@ -8,11 +8,91 @@ alter table public.clinic_settings
 alter table public.appointments
   add column if not exists amount_due numeric(12,2),
   add column if not exists amount_paid numeric(12,2),
-  add column if not exists payment_method text check (payment_method in ('cash','card','wallet','transfer','other')),
+  add column if not exists payment_method text,
+  add column if not exists payment_note text not null default '',
   add column if not exists payment_recorded_by uuid references public.profiles(id) on delete set null,
   add column if not exists payment_recorded_at timestamptz;
 
+-- وسائل الدفع التي تظهر للسكرتارية عند إتمام الزيارة.
+alter table public.appointments drop constraint if exists appointments_payment_method_check;
+update public.appointments
+set payment_method = case payment_method
+  when 'card' then 'visa'
+  when 'wallet' then 'vodafone_cash'
+  when 'transfer' then 'instapay'
+  else payment_method
+end
+where payment_method in ('card','wallet','transfer');
+alter table public.appointments add constraint appointments_payment_method_check
+  check (payment_method is null or payment_method in ('cash','visa','instapay','vodafone_cash','other'));
+
 create index if not exists appointments_payment_date_idx on public.appointments(payment_recorded_at desc) where amount_paid is not null;
+
+-- تنظيم وقت الموعد، قائمة الانتظار، وأسباب الإلغاء أو عدم الحضور.
+alter table public.appointments
+  add column if not exists requested_time time,
+  add column if not exists is_waitlist boolean not null default false,
+  add column if not exists outcome_reason text not null default '',
+  add column if not exists outcome_note text not null default '';
+create index if not exists appointments_schedule_idx on public.appointments(requested_date, requested_time) where requested_time is not null;
+
+-- سجل مستقل لكل تعديل مالي؛ يكتب تلقائيًا ولا يمكن تعديله من لوحة الإدارة.
+create table if not exists public.payment_audit (
+  id bigint generated always as identity primary key,
+  appointment_id bigint not null references public.appointments(id) on delete cascade,
+  changed_by uuid references public.profiles(id) on delete set null,
+  changed_by_name text not null default '',
+  old_amount_due numeric(12,2),
+  new_amount_due numeric(12,2),
+  old_amount_paid numeric(12,2),
+  new_amount_paid numeric(12,2),
+  old_payment_method text,
+  new_payment_method text,
+  old_payment_note text not null default '',
+  new_payment_note text not null default '',
+  changed_at timestamptz not null default now()
+);
+alter table public.payment_audit add column if not exists changed_by_name text not null default '';
+alter table public.payment_audit add column if not exists old_amount_due numeric(12,2);
+alter table public.payment_audit add column if not exists new_amount_due numeric(12,2);
+alter table public.payment_audit enable row level security;
+drop policy if exists "staff reads payment audit" on public.payment_audit;
+create policy "staff reads payment audit" on public.payment_audit for select to authenticated using (public.is_staff());
+grant select on public.payment_audit to authenticated;
+
+create or replace function public.log_payment_change() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare v_staff_name text := '';
+begin
+  if old.amount_paid is distinct from new.amount_paid
+     or old.amount_due is distinct from new.amount_due
+     or old.payment_method is distinct from new.payment_method
+     or old.payment_note is distinct from new.payment_note then
+    select coalesce(full_name, '') into v_staff_name from public.profiles where id = auth.uid();
+    insert into public.payment_audit (appointment_id, changed_by, changed_by_name, old_amount_due, new_amount_due, old_amount_paid, new_amount_paid, old_payment_method, new_payment_method, old_payment_note, new_payment_note)
+    values (new.id, auth.uid(), v_staff_name, old.amount_due, new.amount_due, old.amount_paid, new.amount_paid, old.payment_method, new.payment_method, coalesce(old.payment_note, ''), coalesce(new.payment_note, ''));
+  end if;
+  return new;
+end; $$;
+drop trigger if exists appointments_payment_audit on public.appointments;
+create trigger appointments_payment_audit after update on public.appointments
+for each row execute function public.log_payment_change();
+
+-- المصروفات تظهر للدكتورة فقط، ثم تدخل في صافي دخل الشهر.
+create table if not exists public.clinic_expenses (
+  id bigint generated always as identity primary key,
+  expense_date date not null default current_date,
+  category text not null default 'أخرى',
+  amount numeric(12,2) not null check (amount >= 0),
+  note text not null default '',
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+alter table public.clinic_expenses enable row level security;
+drop policy if exists "doctor manages clinic expenses" on public.clinic_expenses;
+create policy "doctor manages clinic expenses" on public.clinic_expenses for all to authenticated using (public.is_doctor()) with check (public.is_doctor());
+grant select, insert, update, delete on public.clinic_expenses to authenticated;
+grant usage, select on sequence public.clinic_expenses_id_seq to authenticated;
 
 -- كل مريضة لديها ملف سابق تُعد بالفعل من عائلة العيادة.
 -- عند تسجيل رقم موجود من شاشة العائلة لا ينشئ طلبًا مكررًا، ويعرض رسالة ترحيب بدلًا من ذلك.
