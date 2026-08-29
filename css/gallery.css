@@ -481,8 +481,8 @@ body.album-open { overflow: hidden; }
     }
 
     .album-book{
-        height:85vh;
-        min-height:auto;
+        height:min(84vh, 760px);
+        min-height:620px;
     }
 
     .album-book::after{
@@ -498,20 +498,27 @@ body.album-open { overflow: hidden; }
     }
 
     .album-photo{
-        min-height:auto;
+        min-height:0;
         padding:12px;
-        flex:none;
+        flex:0 0 58%;
     }
 
     .album-photo img{
         width:100%;
-        height:auto;
+        height:100%;
         max-height:none;
         object-fit:contain;
     }
 
     .album-caption{
-        display:none;
+        display:flex;
+        flex:1 1 auto;
+        min-height:0;
+        padding:18px 22px 22px;
+        text-align:right;
+        overflow:auto;
     }
+    .album-caption h3{font-size:clamp(1.35rem,6vw,1.8rem);margin:6px 0 8px}
+    .album-caption p{font-size:.86rem;line-height:1.85}
 
 }

@@ -3,12 +3,10 @@ const CLINIC_WHATSAPP = "201125337717";
 const signatureHtml = `<a class="form-signature designer-signature" href="https://wa.me/201021708011?text=%D8%A3%D8%AD%D8%AA%D8%A7%D8%AC%20%D8%AA%D9%81%D8%A7%D8%B5%D9%8A%D9%84%20%D8%A3%D9%83%D8%AB%D8%B1%20%D8%B9%D9%86%20%D8%A7%D9%84%D8%AD%D8%AC%D9%88%D8%B2%D8%A7%D8%AA%20%D9%88%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D9%85%D9%88%D9%82%D8%B9%20%D9%85%D8%AB%D9%84%D9%87" target="_blank" rel="noopener"><i class="fa-solid fa-wand-magic-sparkles"></i> تصميم وتطوير: <b>Eng. Bassem Ashraf</b></a>`;
 
 let currentLang = "ar";
-let themes = ["default", "pink", "purple", "mint", "rose"];
-let currentThemeIndex = 0;
-let isDark = true;
 let currentBookingType = "first";
 let demandTimer = null;
 let flipInterval = null;
+let hasShownNameBloom = false;
 
 const dict = {
     ar: {
@@ -232,8 +230,8 @@ const visitDesc = {
 };
 
 window.addEventListener("load", () => {
-    currentThemeIndex = Math.floor(Math.random() * themes.length);
-    setTheme(themes[currentThemeIndex]);
+    document.documentElement.setAttribute("data-mode", "dark");
+    document.documentElement.removeAttribute("data-theme");
 
     renderBookingStart();
     animateStats();
@@ -241,24 +239,12 @@ window.addEventListener("load", () => {
     setInterval(updateClock, 1000);
     applyLanguage();
 
-    // غلق قائمة الألوان عند الضغط خارجها
-    document.addEventListener("click", function(event) {
-        let menu = document.getElementById("themeMenu");
-        let btn = document.querySelector(".control-group .fa-palette").parentElement;
-        if (menu && btn && !menu.contains(event.target) && !btn.contains(event.target)) {
-            menu.classList.remove("open");
-        }
-    });
 });
 
 function startExperience() {
     let splash = document.getElementById("splash");
     splash.classList.add("hide");
     setTimeout(() => { splash.style.display = "none"; }, 800);
-}
-
-function toggleThemeMenu() {
-    document.getElementById("themeMenu").classList.toggle("open");
 }
 
 function t(key) { return formText[currentLang][key] || key; }
@@ -280,18 +266,6 @@ function applyLanguage() {
     });
 }
 
-function toggleDarkMode() {
-    isDark = !isDark;
-    document.documentElement.setAttribute("data-mode", isDark ? "dark" : "light");
-    document.getElementById("themeMenu").classList.remove("open");
-}
-
-function setTheme(theme) {
-    if (theme === "default") document.documentElement.removeAttribute("data-theme");
-    else document.documentElement.setAttribute("data-theme", theme);
-    document.getElementById("themeMenu").classList.remove("open");
-}
-
 function updateClock() {
     const now = new Date();
     const locale = currentLang === "ar" ? "ar-EG" : "en-US";
@@ -301,7 +275,11 @@ function updateClock() {
 
 function animateStats() {
     document.querySelectorAll(".stat-number").forEach(el => {
-        const target = parseInt(el.dataset.target, 10);
+        const base = parseInt(el.dataset.target, 10);
+        const growthPerDay = parseInt(el.dataset.dailyGrowth || "0", 10);
+        const startedAt = new Date(el.dataset.startedAt || "2026-08-01T12:00:00");
+        const elapsedDays = Math.max(0, Math.floor((Date.now() - startedAt.getTime()) / 86400000));
+        const target = base + elapsedDays * growthPerDay;
         let current = 0;
         const step = Math.max(1, Math.ceil(target / 90));
         const timer = setInterval(() => {
@@ -422,6 +400,7 @@ function renderBookingForm() {
 
     clearInterval(demandTimer);
     clearInterval(flipInterval);
+    hasShownNameBloom = false;
 
     document.getElementById("bookingArea").innerHTML = `
         <div class="booking-panel" id="activeForm">
@@ -433,7 +412,7 @@ function renderBookingForm() {
             <div class="form-grid">
                 <div class="form-field">
                     <label>${t("name")}</label>
-                    <input type="text" id="pName" placeholder="${t("name")}" oninput="checkNameInput(this)">
+                    <input type="text" id="pName" placeholder="${t("name")}" oninput="checkNameInput(this)" onblur="showNameBloom(this)">
                     <div id="nameErr" class="error-hint">${t("nameErr")}</div>
                 </div>
 
@@ -586,18 +565,19 @@ function calculatePregnancy() {
 }
 
 function simulateDemand() {
-    let count = 3;
+    let count = 2 + Math.floor(Math.random() * 4);
     demandTimer = setInterval(() => {
         const el = document.getElementById("liveBookingHint");
         if (!el) {
             clearInterval(demandTimer);
             return;
         }
-        count = Math.max(1, count + (Math.random() > 0.5 ? 1 : -1));
+        const change = Math.random();
+        count = Math.max(2, Math.min(7, count + (change > 0.7 ? 1 : change < 0.28 ? -1 : 0)));
         el.innerText = currentLang === "ar"
-            ? "يوجد " + count + " أشخاص يستخدمون نظام الحجز الآن"
-            : count + " people are using the booking system now";
-    }, 3000);
+            ? "هناك " + count + " زائرة تتصفحن الحجز الآن"
+            : count + " visitors are browsing booking now";
+    }, 2400);
 }
 
 function toggleUpload(el) {
@@ -607,6 +587,20 @@ function toggleUpload(el) {
 function checkNameInput(el) {
     const err = document.getElementById("nameErr");
     err.style.display = el.value.trim() && el.value.trim().split(/\s+/).length < 3 ? "block" : "none";
+}
+
+function showNameBloom(el) {
+    if (hasShownNameBloom || el.value.trim().split(/\s+/).length < 3) return;
+    hasShownNameBloom = true;
+    const rect = el.getBoundingClientRect();
+    const bloom = document.createElement("div");
+    bloom.className = "name-bloom";
+    bloom.setAttribute("aria-hidden", "true");
+    bloom.innerHTML = '<span>✿</span><i class="fa-solid fa-heart"></i>';
+    bloom.style.setProperty("--bloom-x", `${Math.max(18, Math.min(window.innerWidth - 70, rect.right - 42))}px`);
+    bloom.style.setProperty("--bloom-y", `${Math.max(80, rect.top - 12)}px`);
+    document.body.appendChild(bloom);
+    setTimeout(() => bloom.remove(), 3600);
 }
 
 function checkPhoneInput(el) {
@@ -796,12 +790,17 @@ async function submitBooking() {
         const response = await sendBooking(payload);
         clearInterval(progressTimer);
 
-        if (!["success", "duplicated", "duplicate"].includes(response.status)) {
+        if (!["success", "duplicated", "duplicate", "family_member"].includes(response.status)) {
             showSubmissionError(response.message);
             return;
         }
 
         const finalId = String(response.id || response.bookingId || "-");
+
+        if (response.status === "family_member") {
+            showFamilyMember(valid, response.message);
+            return;
+        }
 
         if (["duplicated", "duplicate"].includes(response.status)) {
             const oldData = {
@@ -989,6 +988,21 @@ function showDuplicated(oldData, finalId, msg, hasAttachment, message) {
         </div>
     `;
     document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function showFamilyMember(valid, message) {
+    document.getElementById("bookingArea").innerHTML = `
+        <div class="result-card family-welcome-card">
+            <div class="result-icon family-welcome-icon"><i class="fa-solid fa-heart-circle-check"></i></div>
+            <h2>${currentLang === "ar" ? "أنتِ من عائلة العيادة بالفعل" : "You are already part of our clinic family"}</h2>
+            <p>${message || (currentLang === "ar" ? "من أول يوم حجزتِ فيه معنا أصبحتِ جزءًا من عائلة عيادة د. دعاء شعبان." : "You have been part of Dr. Doaa Shaban's clinic family since your first visit.")}</p>
+            <div class="family-welcome-note"><i class="fa-solid fa-sparkles"></i> ${currentLang === "ar" ? "يسعدنا استمرارك معنا، وستصلكِ أخبار ونصائح العيادة." : "We are happy to keep caring for you."}</div>
+            <a href="https://wa.me/${CLINIC_WHATSAPP}" target="_blank" class="premium-wa-link"><i class="fa-brands fa-whatsapp"></i> ${currentLang === "ar" ? "التواصل مع العيادة" : "Contact clinic"}</a>
+            <button class="inline-back-btn" onclick="renderBookingStart()">${currentLang === "ar" ? "رجوع للرئيسية" : "Back"}</button>
+        </div>
+    `;
+    document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "center" });
+    handleVibrate();
 }
 
 function handleVibrate() {
