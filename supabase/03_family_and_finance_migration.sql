@@ -172,10 +172,17 @@ begin
   end if;
 
   v_name_normalized := lower(regexp_replace(v_name, '[[:space:]]+', ' ', 'g'));
-  select id into v_name_match_patient from public.patients
-  where lower(regexp_replace(trim(full_name), '[[:space:]]+', ' ', 'g')) = v_name_normalized and phone <> v_phone limit 1;
+  -- تطابق الاسم وحده يمنع الحجز فقط إذا كان للملف الآخر حجز نشط.
+  -- الحجز الملغي أو الذي لم تحضر صاحبته لا يمنع المريضة من الحجز مرة أخرى.
+  select p.id, a.id, a.booking_code into v_name_match_patient, v_existing_appointment, v_existing_booking_code
+  from public.patients p join public.appointments a on a.patient_id = p.id
+  where lower(regexp_replace(trim(p.full_name), '[[:space:]]+', ' ', 'g')) = v_name_normalized
+    and p.phone <> v_phone
+    and a.status in ('new', 'contacted', 'confirmed', 'rescheduled', 'follow_up')
+    and a.request_type <> 'contacts'
+    and a.requested_date >= current_date
+  order by a.created_at desc limit 1;
   if v_name_match_patient is not null then
-    select id, booking_code into v_existing_appointment, v_existing_booking_code from public.appointments where patient_id = v_name_match_patient order by created_at desc limit 1;
     insert into public.booking_alerts (full_name, phone, request_type, requested_date, reason, message, matched_appointment_id)
     values (v_name, v_phone, v_type, v_date, 'تطابق الاسم الثلاثي مع رقم هاتف مختلف؛ يلزم مراجعة العيادة.', 'تم العثور على نفس الاسم الثلاثي برقم هاتف مختلف.', v_existing_appointment);
     return jsonb_build_object('status', 'duplicate', 'bookingId', v_existing_booking_code, 'message', 'نحتاج مراجعة الحجز مع العيادة. من فضلكِ استخدمي رقم الكشف الظاهر أمامك فقط.');

@@ -965,7 +965,10 @@ function showSuccess(valid, finalId, typeAr, message, hasAttachment) {
 }
 
 function showDuplicated(oldData, finalId, msg, hasAttachment, message) {
-    const waUrl = `https://wa.me/${CLINIC_WHATSAPP}`;
+    const waMessage = currentLang === "ar"
+        ? `مرحبًا، لدي مشكلة في الحجز ورقم الكشف الخاص بي هو: ${finalId}`
+        : `Hello, I need help with my booking. My visit ID is: ${finalId}`;
+    const waUrl = `https://wa.me/${CLINIC_WHATSAPP}?text=${encodeURIComponent(waMessage)}`;
 
     document.getElementById("bookingArea").innerHTML = `
         <div class="result-card" style="border-color:var(--error-red);">
@@ -982,7 +985,7 @@ function showDuplicated(oldData, finalId, msg, hasAttachment, message) {
                     ? "لإلغاء الحجز أو تعديل الموعد برجاء التواصل مع العيادة مباشرة عبر واتساب."
                     : "To cancel or modify the booking, please contact the clinic directly via WhatsApp."}
             </div>
-            <a href="${waUrl}" target="_blank" class="premium-wa-link"><i class="fa-brands fa-whatsapp"></i> ${currentLang === "ar" ? "التواصل مع العيادة" : "Contact clinic"}</a>
+            <a href="${waUrl}" target="_blank" class="premium-wa-link"><i class="fa-brands fa-whatsapp"></i> ${currentLang === "ar" ? "التواصل برقم الكشف" : "Contact clinic with Visit ID"}</a>
             <button class="inline-back-btn" onclick="renderBookingStart()">${currentLang === "ar" ? "رجوع للرئيسية" : "Back"}</button>
         </div>
     `;
