@@ -75,6 +75,9 @@ begin
      or old.payment_method is distinct from new.payment_method
      or old.payment_note is distinct from new.payment_note then
     select coalesce(full_name, '') into v_staff_name from public.profiles where id = auth.uid();
+    -- عند إقفال بيانات قديمة من SQL Editor لا يوجد مستخدم مسجّل؛
+    -- يظل سجل التدقيق واضحًا بدل إدخال قيمة فارغة أو NULL.
+    v_staff_name := coalesce(nullif(v_staff_name, ''), 'إقفال تاريخي للنظام');
     insert into public.payment_audit (appointment_id, changed_by, changed_by_name, old_amount_due, new_amount_due, old_amount_paid, new_amount_paid, old_payment_method, new_payment_method, old_payment_note, new_payment_note)
     values (new.id, auth.uid(), v_staff_name, old.amount_due, new.amount_due, old.amount_paid, new.amount_paid, old.payment_method, new.payment_method, coalesce(old.payment_note, ''), coalesce(new.payment_note, ''));
   end if;
@@ -144,7 +147,16 @@ begin
   end if;
 
   if v_type = 'contacts' then
-    select id into v_patient from public.patients where phone = v_phone limit 1;
+    -- لا نعرض رسالة «من العائلة» إلا إذا كان لهذا الرقم حجز فعلي سابق،
+    -- وليس لمجرد إنشاء بيانات اتصال سابقة.
+    select p.id into v_patient
+    from public.patients p
+    where p.phone = v_phone
+      and exists (
+        select 1 from public.appointments a
+        where a.patient_id = p.id and a.request_type <> 'contacts'
+      )
+    limit 1;
     if v_patient is not null then
       return jsonb_build_object('status', 'family_member', 'message', 'أنتِ من عائلة العيادة بالفعل منذ أول حجز لكِ معنا. يسعدنا استمرارك معنا دائمًا.');
     end if;
@@ -168,7 +180,7 @@ begin
   if v_existing_appointment is not null then
     insert into public.booking_alerts (full_name, phone, request_type, requested_date, reason, message, matched_appointment_id)
     values (v_name, v_phone, v_type, v_date, 'محاولة حجز مكرر: يوجد حجز نشط بنفس رقم الهاتف.', 'يوجد حجز نشط بالفعل بنفس رقم الهاتف.', v_existing_appointment);
-    return jsonb_build_object('status', 'duplicate', 'bookingId', v_existing_booking_code, 'message', 'يوجد حجز قائم بالفعل. من فضلكِ تواصلي مع العيادة باستخدام رقم الكشف الظاهر أمامك.');
+    return jsonb_build_object('status', 'duplicate', 'bookingId', v_existing_booking_code, 'message', 'تم إيقاف الطلب لأنه حجز مكرر بنفس رقم الهاتف. من فضلكِ تواصلي مع العيادة باستخدام رقم الكشف الظاهر أمامك.');
   end if;
 
   v_name_normalized := lower(regexp_replace(v_name, '[[:space:]]+', ' ', 'g'));
@@ -185,7 +197,7 @@ begin
   if v_name_match_patient is not null then
     insert into public.booking_alerts (full_name, phone, request_type, requested_date, reason, message, matched_appointment_id)
     values (v_name, v_phone, v_type, v_date, 'تطابق الاسم الثلاثي مع رقم هاتف مختلف؛ يلزم مراجعة العيادة.', 'تم العثور على نفس الاسم الثلاثي برقم هاتف مختلف.', v_existing_appointment);
-    return jsonb_build_object('status', 'duplicate', 'bookingId', v_existing_booking_code, 'message', 'نحتاج مراجعة الحجز مع العيادة. من فضلكِ استخدمي رقم الكشف الظاهر أمامك فقط.');
+    return jsonb_build_object('status', 'duplicate', 'bookingId', v_existing_booking_code, 'message', 'تم إيقاف الطلب لأنه حجز مكرر بنفس الاسم الثلاثي. من فضلكِ استخدمي رقم الكشف الظاهر أمامك فقط.');
   end if;
 
   select * into v_settings from public.clinic_settings where id = true;
@@ -210,3 +222,22 @@ exception when others then
 end; $$;
 
 grant execute on function public.create_booking(jsonb) to anon;
+
+-- إقفال السجل التاريخي: هذه العملية لا تغيّر الحالات أو المواعيد.
+-- تضع فقط الحجوزات المكتملة قبل 01-09-2026 التي لم يسجل لها دفع كـ «نقدًا»
+-- وبالسعر الحالي للخدمة. التقارير المالية الجديدة تبدأ من هذا التاريخ، لذلك
+-- لا تدخل هذه السجلات التاريخية في تقفيل سبتمبر أو الأشهر التالية.
+update public.clinic_settings
+set finance_start_date = date '2026-09-01'
+where id = true;
+
+update public.appointments a
+set
+  amount_due = coalesce(a.amount_due, (select coalesce((s.service_prices ->> a.request_type)::numeric, 0) from public.clinic_settings s where s.id = true)),
+  amount_paid = coalesce(a.amount_paid, (select coalesce((s.service_prices ->> a.request_type)::numeric, 0) from public.clinic_settings s where s.id = true)),
+  payment_method = coalesce(a.payment_method, 'cash'),
+  payment_note = case when coalesce(a.payment_note, '') = '' then 'إقفال تاريخي قبل بداية الحسابات الجديدة' else a.payment_note end,
+  payment_recorded_at = coalesce(a.payment_recorded_at, a.created_at, now())
+where a.status = 'completed'
+  and a.requested_date < date '2026-09-01'
+  and (a.amount_paid is null or a.payment_method is null);
