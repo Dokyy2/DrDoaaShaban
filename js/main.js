@@ -975,7 +975,6 @@ function showDuplicated(oldData, finalId, msg, hasAttachment, message) {
             
             <div class="details-box">
                 <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "رقم الكشف" : "Visit ID"}</span><span class="detail-value highlight-value">${finalId}</span></div>
-                <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "تاريخ التسجيل المسبق" : "Previous Registration"}</span><span class="detail-value">${oldData.date}</span></div>
             </div>
 
             <div class="notice-board">

@@ -130,6 +130,7 @@ declare
   v_settings public.clinic_settings;
   v_count integer;
   v_existing_appointment bigint;
+  v_existing_booking_code text;
   v_name_match_patient uuid;
 begin
   if v_type not in ('first', 'follow', 'consult', 'aesthetic', 'birth', 'labs', 'contacts') then
@@ -159,7 +160,7 @@ begin
     return jsonb_build_object('status', 'error', 'message', 'حجم المرفق كبير جدًا. يرجى إرسال ملف أصغر من 5 ميجابايت.');
   end if;
 
-  select a.id into v_existing_appointment
+  select a.id, a.booking_code into v_existing_appointment, v_existing_booking_code
   from public.appointments a join public.patients p on p.id = a.patient_id
   where p.phone = v_phone and a.status in ('new', 'contacted', 'confirmed', 'rescheduled', 'follow_up')
     and a.request_type <> 'contacts' and a.requested_date >= current_date
@@ -167,17 +168,17 @@ begin
   if v_existing_appointment is not null then
     insert into public.booking_alerts (full_name, phone, request_type, requested_date, reason, message, matched_appointment_id)
     values (v_name, v_phone, v_type, v_date, 'محاولة حجز مكرر: يوجد حجز نشط بنفس رقم الهاتف.', 'يوجد حجز نشط بالفعل بنفس رقم الهاتف.', v_existing_appointment);
-    return jsonb_build_object('status', 'duplicate', 'message', 'يوجد حجز قائم بالفعل بهذا الرقم. من فضلكِ تواصلي مع العيادة لتعديل أو تأكيد الموعد.');
+    return jsonb_build_object('status', 'duplicate', 'bookingId', v_existing_booking_code, 'message', 'يوجد حجز قائم بالفعل. من فضلكِ تواصلي مع العيادة باستخدام رقم الكشف الظاهر أمامك.');
   end if;
 
   v_name_normalized := lower(regexp_replace(v_name, '[[:space:]]+', ' ', 'g'));
   select id into v_name_match_patient from public.patients
   where lower(regexp_replace(trim(full_name), '[[:space:]]+', ' ', 'g')) = v_name_normalized and phone <> v_phone limit 1;
   if v_name_match_patient is not null then
-    select id into v_existing_appointment from public.appointments where patient_id = v_name_match_patient order by created_at desc limit 1;
+    select id, booking_code into v_existing_appointment, v_existing_booking_code from public.appointments where patient_id = v_name_match_patient order by created_at desc limit 1;
     insert into public.booking_alerts (full_name, phone, request_type, requested_date, reason, message, matched_appointment_id)
     values (v_name, v_phone, v_type, v_date, 'تطابق الاسم الثلاثي مع رقم هاتف مختلف؛ يلزم مراجعة العيادة.', 'تم العثور على نفس الاسم الثلاثي برقم هاتف مختلف.', v_existing_appointment);
-    return jsonb_build_object('status', 'duplicate', 'message', 'يوجد ملف سابق بنفس الاسم الثلاثي برقم مختلف. من فضلكِ تواصلي مع العيادة لإتمام الحجز.');
+    return jsonb_build_object('status', 'duplicate', 'bookingId', v_existing_booking_code, 'message', 'نحتاج مراجعة الحجز مع العيادة. من فضلكِ استخدمي رقم الكشف الظاهر أمامك فقط.');
   end if;
 
   select * into v_settings from public.clinic_settings where id = true;
