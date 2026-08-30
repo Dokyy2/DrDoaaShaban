@@ -3,7 +3,8 @@
 
 alter table public.clinic_settings
   add column if not exists service_prices jsonb not null default '{"first":0,"follow":0,"consult":0,"aesthetic":0,"birth":0,"labs":0}'::jsonb,
-  add column if not exists finance_enabled boolean not null default false;
+  add column if not exists finance_enabled boolean not null default false,
+  add column if not exists finance_start_date date not null default current_date;
 
 alter table public.appointments
   add column if not exists amount_due numeric(12,2),
@@ -11,7 +12,12 @@ alter table public.appointments
   add column if not exists payment_method text,
   add column if not exists payment_note text not null default '',
   add column if not exists payment_recorded_by uuid references public.profiles(id) on delete set null,
-  add column if not exists payment_recorded_at timestamptz;
+  add column if not exists payment_recorded_at timestamptz,
+  add column if not exists contact_note text not null default '',
+  add column if not exists clinic_birth_recorded boolean not null default false;
+
+alter table public.patients
+  add column if not exists clinic_births integer not null default 0 check (clinic_births >= 0);
 
 -- وسائل الدفع التي تظهر للسكرتارية عند إتمام الزيارة.
 alter table public.appointments drop constraint if exists appointments_payment_method_check;
@@ -77,6 +83,21 @@ end; $$;
 drop trigger if exists appointments_payment_audit on public.appointments;
 create trigger appointments_payment_audit after update on public.appointments
 for each row execute function public.log_payment_change();
+
+-- لا تُسجل الولادة إلا من بطاقة حجز ولادة داخل لوحة الإدارة، والعداد يُحدّث تلقائيًا.
+create or replace function public.sync_clinic_birth_count() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.request_type = 'birth' and new.clinic_birth_recorded is true and coalesce(old.clinic_birth_recorded, false) is false then
+    update public.patients set clinic_births = clinic_births + 1 where id = new.patient_id;
+  elsif new.request_type = 'birth' and new.clinic_birth_recorded is false and coalesce(old.clinic_birth_recorded, false) is true then
+    update public.patients set clinic_births = greatest(clinic_births - 1, 0) where id = new.patient_id;
+  end if;
+  return new;
+end; $$;
+drop trigger if exists appointments_birth_counter on public.appointments;
+create trigger appointments_birth_counter after update of clinic_birth_recorded on public.appointments
+for each row execute function public.sync_clinic_birth_count();
 
 -- المصروفات تظهر للدكتورة فقط، ثم تدخل في صافي دخل الشهر.
 create table if not exists public.clinic_expenses (
