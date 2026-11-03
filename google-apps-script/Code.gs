@@ -45,6 +45,18 @@ function doPost(e) {
 
     const data = JSON.parse(e.postData.contents || "{}");
 
+    // إجازة استثنائية ليوم الاثنين 9 نوفمبر 2026 فقط.
+    if (data.bookingDate) {
+      const reqDate = safeDate(data.bookingDate);
+      const reqKey = Utilities.formatDate(reqDate, TIMEZONE, "yyyy-MM-dd");
+      if (reqKey === "2026-11-09") {
+        return jsonOutput({
+          status: "holiday",
+          message: "العيادة إجازة يوم الاثنين 9 نوفمبر 2026. من فضلك اختر يوماً آخر للحجز."
+        });
+      }
+    }
+
         /* =======================================
        تعديل: إجازة عيد الأضحى المبارك
        من 26 مايو 2026 حتى 31 مايو 2026

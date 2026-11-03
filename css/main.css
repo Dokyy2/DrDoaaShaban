@@ -2265,6 +2265,33 @@ textarea,
     animation: goldNameShine 2.8s linear infinite;
 }
 
+.footer-meta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px auto 0;
+    color: #64748b;
+    font: 600 0.72rem/1.4 "Cairo", sans-serif;
+    text-shadow: none;
+}
+
+.footer-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid rgba(100,116,139,0.14);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.72);
+}
+
+.footer-meta i {
+    color: #8b5cf6;
+    font-size: 0.68rem;
+}
+
 @keyframes goldNameShine {
     to { background-position: -220% center; }
 }

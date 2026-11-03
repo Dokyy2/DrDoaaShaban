@@ -641,6 +641,18 @@ function checkWeekend(el) {
     const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
     selectedDate.setHours(0, 0, 0, 0);
 
+    // إجازة استثنائية ليوم الاثنين 9 نوفمبر 2026 فقط.
+    if (el.value === "2026-11-09") {
+        showSoftAlert(
+            currentLang === "ar" ? "إجازة استثنائية" : "One-time Holiday",
+            currentLang === "ar"
+                ? "العيادة إجازة يوم الاثنين 9 نوفمبر 2026. من فضلكِ اختاري يوماً آخر للحجز."
+                : "The clinic is closed on Monday, November 9, 2026. Please choose another booking day."
+        );
+        el.value = "";
+        return;
+    }
+
     const holidayStart = new Date(2026, 4, 26);
     const holidayEnd = new Date(2026, 4, 31);
     holidayStart.setHours(0, 0, 0, 0);
@@ -706,6 +718,16 @@ function validateRequired(isBirth = false) {
     const date = dateEl ? dateEl.value : "";
     const lastVisit = document.getElementById("pLastVisit") ? document.getElementById("pLastVisit").value : "";
     const isContacts = currentBookingType === "contacts";
+
+    if (!isContacts && date === "2026-11-09") {
+        showSoftAlert(
+            currentLang === "ar" ? "إجازة استثنائية" : "One-time Holiday",
+            currentLang === "ar"
+                ? "العيادة إجازة يوم الاثنين 9 نوفمبر 2026. من فضلكِ اختاري يوماً آخر للحجز."
+                : "The clinic is closed on Monday, November 9, 2026. Please choose another booking day."
+        );
+        return null;
+    }
 
     let errors = [];
     if (name.split(/\s+/).length < 3) errors.push(t("name"));
