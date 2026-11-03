@@ -57,10 +57,10 @@ const dict = {
         phoneLabel: "للاستفسار أو التعديل:",
         hoursLabel: "مواعيد العمل:",
         hoursText: "من 4 مساءً إلى 10 مساءً",
-        holidayFooter: "الإجازة الأسبوعية: الخميس والجمعة",
+        holidayFooter: "الإجازة الأسبوعية: الاثنين والخميس والجمعة",
         mapBtn: "افتحي الموقع على الخريطة",
         holidayTitle: "تنبيه المواعيد",
-        holidayMsg: "يوم الخميس والجمعة من العطلات الرسمية بالعيادة. من فضلكِ اختاري يوماً آخر للحجز.",
+        holidayMsg: "الإجازة الأسبوعية للعيادة أيام الاثنين والخميس والجمعة. من فضلكِ اختاري يوماً آخر للحجز.",
         understood: "فهمت",
         clickToStart: "اضغطي للبدء",
         groupMedical: "الكشوفات الطبية",
@@ -114,10 +114,10 @@ const dict = {
         phoneLabel: "For inquiries or changes:",
         hoursLabel: "Working hours:",
         hoursText: "From 4 PM to 10 PM",
-        holidayFooter: "Weekly holiday: Thursday and Friday",
+        holidayFooter: "Weekly holidays: Monday, Thursday, and Friday",
         mapBtn: "Open Location",
         holidayTitle: "Appointment Alert",
-        holidayMsg: "Thursday and Friday are clinic holidays. Please choose another booking day.",
+        holidayMsg: "The clinic is closed every Monday, Thursday, and Friday. Please choose another booking day.",
         understood: "OK",
         clickToStart: "Tap to Start",
         groupMedical: "Medical Visits",
@@ -635,23 +635,11 @@ function checkWeekend(el) {
     /* =======================================
        تعديل: إجازة عيد الأضحى المبارك
        من 26 مايو 2026 حتى 31 مايو 2026
-       والعودة للعمل يوم الاثنين 1 يونيو 2026
+       والعودة للعمل يوم الثلاثاء 2 يونيو 2026
        ======================================= */
     const parts = el.value.split("-").map(Number);
     const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
     selectedDate.setHours(0, 0, 0, 0);
-
-    // إجازة استثنائية ليوم الاثنين 9 نوفمبر 2026 فقط.
-    if (el.value === "2026-11-09") {
-        showSoftAlert(
-            currentLang === "ar" ? "إجازة استثنائية" : "One-time Holiday",
-            currentLang === "ar"
-                ? "العيادة إجازة يوم الاثنين 9 نوفمبر 2026. من فضلكِ اختاري يوماً آخر للحجز."
-                : "The clinic is closed on Monday, November 9, 2026. Please choose another booking day."
-        );
-        el.value = "";
-        return;
-    }
 
     const holidayStart = new Date(2026, 4, 26);
     const holidayEnd = new Date(2026, 4, 31);
@@ -662,8 +650,8 @@ function checkWeekend(el) {
         showSoftAlert(
             currentLang === "ar" ? "إجازة عيد الأضحى" : "Eid Al-Adha Holiday",
             currentLang === "ar"
-                ? "العيادة إجازة من الثلاثاء 26 مايو 2026 حتى الأحد 31 مايو 2026، والعودة للعمل يوم الاثنين 1 يونيو 2026. كل عام وأنتم بخير 🎉"
-                : "The clinic is closed from Tuesday, May 26, 2026 to Sunday, May 31, 2026, and will reopen on Monday, June 1, 2026. Happy Eid 🎉"
+                ? "العيادة إجازة من الثلاثاء 26 مايو 2026 حتى الأحد 31 مايو 2026، والعودة للعمل يوم الثلاثاء 2 يونيو 2026. كل عام وأنتم بخير 🎉"
+                : "The clinic is closed from Tuesday, May 26, 2026 to Sunday, May 31, 2026, and will reopen on Tuesday, June 2, 2026. Happy Eid 🎉"
         );
         el.value = "";
         return;
@@ -671,9 +659,10 @@ function checkWeekend(el) {
     /* ======================================= */
 
     const day = selectedDate.getDay();
-    if (day === 4 || day === 5) {
+    if (day === 1 || day === 4 || day === 5) {
         document.getElementById("fridayAlert").style.display = "flex";
         el.value = "";
+        return;
     }
     if (currentBookingType === "consult") check15Days();
 }
@@ -719,14 +708,13 @@ function validateRequired(isBirth = false) {
     const lastVisit = document.getElementById("pLastVisit") ? document.getElementById("pLastVisit").value : "";
     const isContacts = currentBookingType === "contacts";
 
-    if (!isContacts && date === "2026-11-09") {
-        showSoftAlert(
-            currentLang === "ar" ? "إجازة استثنائية" : "One-time Holiday",
-            currentLang === "ar"
-                ? "العيادة إجازة يوم الاثنين 9 نوفمبر 2026. من فضلكِ اختاري يوماً آخر للحجز."
-                : "The clinic is closed on Monday, November 9, 2026. Please choose another booking day."
-        );
-        return null;
+    if (!isContacts && date) {
+        const [year, month, day] = date.split("-").map(Number);
+        const weekday = new Date(year, month - 1, day).getDay();
+        if (weekday === 1 || weekday === 4 || weekday === 5) {
+            showSoftAlert(t("holidayTitle"), t("holidayMsg"));
+            return null;
+        }
     }
 
     let errors = [];

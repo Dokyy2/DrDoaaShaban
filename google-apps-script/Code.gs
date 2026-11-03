@@ -45,31 +45,27 @@ function doPost(e) {
 
     const data = JSON.parse(e.postData.contents || "{}");
 
-    // إجازة استثنائية ليوم الاثنين 9 نوفمبر 2026 فقط.
-    if (data.bookingDate) {
-      const reqDate = safeDate(data.bookingDate);
-      const reqKey = Utilities.formatDate(reqDate, TIMEZONE, "yyyy-MM-dd");
-      if (reqKey === "2026-11-09") {
-        return jsonOutput({
-          status: "holiday",
-          message: "العيادة إجازة يوم الاثنين 9 نوفمبر 2026. من فضلك اختر يوماً آخر للحجز."
-        });
-      }
-    }
-
         /* =======================================
        تعديل: إجازة عيد الأضحى المبارك
        من 26 مايو 2026 حتى 31 مايو 2026
-       والعودة للعمل يوم الاثنين 1 يونيو 2026
+       والعودة للعمل يوم الثلاثاء 2 يونيو 2026
        ======================================= */
     if (data.bookingDate) {
       const reqDate = safeDate(data.bookingDate);
       const reqKey = Utilities.formatDate(reqDate, TIMEZONE, "yyyy-MM-dd");
+      const weekday = Number(Utilities.formatDate(reqDate, TIMEZONE, "u"));
+
+      if (weekday === 1 || weekday === 4 || weekday === 5) {
+        return jsonOutput({
+          status: "holiday",
+          message: "الإجازة الأسبوعية للعيادة أيام الاثنين والخميس والجمعة. من فضلك اختر يوماً آخر للحجز."
+        });
+      }
 
       if (reqKey >= "2026-05-26" && reqKey <= "2026-05-31") {
         return jsonOutput({
           status: "holiday",
-          message: "العيادة إجازة من الثلاثاء 26 مايو 2026 حتى الأحد 31 مايو 2026، والعودة للعمل يوم الاثنين 1 يونيو 2026. كل عام وأنتم بخير 🎉"
+          message: "العيادة إجازة من الثلاثاء 26 مايو 2026 حتى الأحد 31 مايو 2026، والعودة للعمل يوم الثلاثاء 2 يونيو 2026. كل عام وأنتم بخير 🎉"
         });
       }
     }
