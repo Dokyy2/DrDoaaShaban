@@ -55,6 +55,18 @@ function doPost(e) {
       return handleBirthBooking(birthSheet, data);
     }
 
+    if (data.bookingDate) {
+      const requestedDate = safeDate(data.bookingDate);
+      const weekday = Number(Utilities.formatDate(requestedDate, TIMEZONE, "u"));
+
+      if (weekday === 1 || weekday === 4 || weekday === 5) {
+        return jsonOutput({
+          status: "holiday",
+          message: "الإجازة الأسبوعية للعيادة أيام الاثنين والخميس والجمعة. من فضلك اختر يوماً آخر للحجز."
+        });
+      }
+    }
+
     const duplicate = checkDuplicateBooking(sheet, data.phone);
 
     if (duplicate.isDuplicated) {
