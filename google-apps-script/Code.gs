@@ -10,6 +10,13 @@ function doGet(e) {
       return jsonOutput(getBookingStats(e.parameter.date));
     }
 
+    if (mode === "presence") {
+      const presence = updateActiveVisitors(e.parameter.visitor);
+      return e.parameter.callback
+        ? jsonpOutput(presence, e.parameter.callback)
+        : jsonOutput(presence);
+    }
+
     return jsonOutput({
       status: "ready",
       message: "Dr. Doaa Shaban booking system is running"
@@ -21,6 +28,35 @@ function doGet(e) {
       message: err.toString()
     });
   }
+}
+
+function updateActiveVisitors(visitorId) {
+  const id = String(visitorId || "");
+  if (!/^[a-f0-9]{32}$/.test(id)) return { status: "invalid", activeUsers: 0, moreThanFive: false };
+  const lock = LockService.getScriptLock();
+  lock.waitLock(3000);
+  try {
+    const properties = PropertiesService.getScriptProperties();
+    const key = "CLINIC_ACTIVE_VISITORS";
+    const now = Date.now(), ttlMs = 75000;
+    let visitors = {};
+    try { visitors = JSON.parse(properties.getProperty(key) || "{}"); } catch (_) { visitors = {}; }
+    Object.keys(visitors).forEach(visitor => { if (!visitors[visitor] || now - Number(visitors[visitor]) > ttlMs) delete visitors[visitor]; });
+    visitors[id] = now;
+    const recent = Object.entries(visitors).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 6);
+    const cappedVisitors = {};
+    recent.forEach(entry => { cappedVisitors[entry[0]] = entry[1]; });
+    properties.setProperty(key, JSON.stringify(cappedVisitors));
+    const activeUsers = Object.keys(cappedVisitors).length;
+    return { status: "success", activeUsers: Math.min(activeUsers, 5), moreThanFive: activeUsers > 5 };
+  } finally { lock.releaseLock(); }
+}
+
+function jsonpOutput(obj, callback) {
+  const safeCallback = String(callback || "");
+  if (!/^[A-Za-z_$][A-Za-z0-9_$]{0,80}$/.test(safeCallback)) return jsonOutput({ status: "invalid" });
+  return ContentService.createTextOutput(safeCallback + "(" + JSON.stringify(obj) + ");")
+    .setMimeType(ContentService.MimeType.JAVASCRIPT);
 }
 
 function doPost(e) {
@@ -675,3 +711,4 @@ function jsonOutput(obj) {
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
