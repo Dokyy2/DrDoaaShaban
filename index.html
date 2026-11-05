@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" data-mode="dark">
+<html lang="ar" data-mode="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -21,14 +21,28 @@
 
 <body>
 
-<div id="splash" onclick="startExperience()">
+<div class="local-preview-banner" id="localPreviewBanner" role="status" hidden>
+    نسخة تجربة محلية — لن يتم إرسال الحجوزات أو حفظها في الشيت
+</div>
+<div id="scrollDecorations" class="scroll-decorations" aria-hidden="true"></div>
+<div id="bookingCelebration" class="booking-celebration" aria-hidden="true"></div>
+
+<div id="splash" aria-label="واجهة ترحيب عيادة د. دعاء شعبان">
     <div class="splash-content">
         <div class="splash-title">الدكتورة</div>
         <div class="splash-title">دعاء شعبان</div>
         <div class="splash-sub">أخصائية النساء والتوليد</div>
         <div class="splash-sub">والتجميل النسائي</div>
         <div class="splash-line"></div>
-        <div class="click-to-start" data-i18n="clickToStart">اضغطي للبدء</div>
+        <div class="splash-loader" role="status" aria-live="polite">
+            <span class="splash-loading-text" data-i18n="clickToStart">جاري تجهيز الموقع</span>
+            <div class="splash-progress-track" aria-hidden="true">
+                <div class="splash-progress-fill"></div>
+                <span class="splash-progress-pattern">♡　✿　♡　✿　♡　✿　♡</span>
+                <span class="splash-progress-runner">🌸</span>
+            </div>
+            <span class="splash-loader-caption" data-i18n="splashWait">لحظات ونبدأ معكِ</span>
+        </div>
     </div>
 </div>
 
@@ -68,22 +82,6 @@
 
     <div class="control-group">
         <button class="text-btn" id="langBtn" onclick="toggleLanguage()">EN</button>
-        
-        <button class="icon-btn" onclick="toggleThemeMenu()" title="Theme"><i class="fa-solid fa-palette"></i></button>
-        
-        <div class="theme-menu" id="themeMenu">
-            <div class="theme-mode-toggle" onclick="toggleDarkMode()">
-                <i class="fa-solid fa-circle-half-stroke"></i> <span data-i18n="toggleMode">تغيير المظهر (داكن/فاتح)</span>
-            </div>
-            <div class="theme-colors">
-                <div class="color-dot" style="background:#38bdf8" onclick="setTheme('default')"></div>
-                <div class="color-dot" style="background:#ec4899" onclick="setTheme('pink')"></div>
-                <div class="color-dot" style="background:#8b5cf6" onclick="setTheme('purple')"></div>
-                <div class="color-dot" style="background:#10b981" onclick="setTheme('mint')"></div>
-                <div class="color-dot" style="background:#fb7185" onclick="setTheme('rose')"></div>
-            </div>
-        </div>
-
         <button class="icon-btn mobile-menu-btn" onclick="toggleMobileMenu()" title="Menu"><i class="fa-solid fa-bars"></i></button>
     </div>
 
@@ -164,51 +162,48 @@
 
     <section class="section story-album" id="gallery" aria-labelledby="galleryTitle">
         <div class="album-intro reveal-on-scroll">
-            <span class="album-kicker">18 عامًا من الرعاية والذكريات</span>
+            <span class="album-kicker"><i class="fa-solid fa-sparkles" aria-hidden="true"></i> 18 عامًا من الرعاية والذكريات</span>
             <h2 class="section-title" id="galleryTitle">حكايات بدأت بنبضة</h2>
-            <p class="section-lead">محطات دافئة من رحلة د. دعاء شعبان مع الأمهات وأطفالهن. افتحي الألبوم لتصفّح الصور والحكايات صفحة بعد صفحة.</p>
-            <a class="btn btn-primary album-open-btn" href="#albumModal" data-open-album>
-                <i class="fa-solid fa-book-open"></i> افتحي ألبوم الذكريات
-            </a>
+            <p class="section-lead">لحظات دافئة من رحلة د. دعاء شعبان مع الأمهات وأطفالهن. اختاري حكاية لتشاهديها.</p>
         </div>
-        <a class="album-cover reveal-on-scroll" href="#albumModal" data-open-album aria-label="فتح ألبوم حكايات بدأت بنبضة">
-            <img src="assets/images/gallery/album-cover.svg" alt="غلاف ألبوم ذكريات دكتورة دعاء شعبان">
-            <span class="album-cover-shine"></span>
-            <span class="album-cover-copy"><b>حكايات بدأت بنبضة</b><small>18 عامًا من الثقة والرعاية</small></span>
-        </a>
+        <div class="story-rail-shell reveal-on-scroll">
+            <div class="story-rail" role="group" aria-label="قصص وذكريات العيادة">
+                <button class="clinic-story" type="button" data-image="assets/images/gallery/memory-01.jpg" data-alt="لحظة من رحلة الرعاية" data-kicker="لحظة البداية" data-title="البداية دائمًا نبضة" data-caption="من أول لحظة اطمئنان، تبدأ حكاية جديدة مليئة بالأمل والرعاية.">
+                    <span class="clinic-story-ring"><img src="assets/images/gallery/memory-01.jpg" alt="" loading="lazy"></span><span class="clinic-story-label">لحظة البداية</span>
+                </button>
+                <button class="clinic-story" type="button" data-image="assets/images/gallery/memory-02.png" data-alt="لحظة سعادة مع مولود جديد" data-kicker="لحظة وصول" data-title="أول لقاء" data-caption="لحظة لا تتكرر، وابتسامة تختصر رحلة كاملة من الانتظار.">
+                    <span class="clinic-story-ring"><img src="assets/images/gallery/memory-02.png" alt="" loading="lazy"></span><span class="clinic-story-label">أول لقاء</span>
+                </button>
+                <button class="clinic-story" type="button" data-image="assets/images/gallery/memory-03.jpg" data-alt="ذكرى من المتابعة والرعاية" data-kicker="ثقة تمتد" data-title="معكِ خطوة بخطوة" data-caption="متابعة هادئة وشرح واضح، لأن الاطمئنان جزء أساسي من الرعاية.">
+                    <span class="clinic-story-ring"><img src="assets/images/gallery/memory-03.jpg" alt="" loading="lazy"></span><span class="clinic-story-label">ثقة تمتد</span>
+                </button>
+                <button class="clinic-story" type="button" data-image="assets/images/gallery/memory-04.png" data-alt="ذكرى سعيدة مع الأسرة" data-kicker="عائلة العيادة" data-title="ذكريات تكبر معنا" data-caption="أطفال كبروا، وأسر ما زالت الثقة تجمعنا بها عامًا بعد عام.">
+                    <span class="clinic-story-ring"><img src="assets/images/gallery/memory-04.png" alt="" loading="lazy"></span><span class="clinic-story-label">عائلة العيادة</span>
+                </button>
+                <button class="clinic-story" type="button" data-image="assets/images/gallery/memory-05.png" data-alt="ذكرى من سنوات الرعاية" data-kicker="18 عامًا" data-title="رحلة من القلب" data-caption="سنوات من الخبرة، وآلاف الحكايات التي بدأت كلها بنبضة.">
+                    <span class="clinic-story-ring"><img src="assets/images/gallery/memory-05.png" alt="" loading="lazy"></span><span class="clinic-story-label">رحلة من القلب</span>
+                </button>
+            </div>
+            <span class="story-rail-hint"><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i> اسحبي لاستكشاف الذكريات</span>
+        </div>
     </section>
 
-    <div class="album-modal" id="albumModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="albumModalTitle">
-        <div class="album-backdrop" data-close-album></div>
-        <div class="album-dialog">
-            <a class="album-close" href="#gallery" data-close-album aria-label="إغلاق الألبوم"><i class="fa-solid fa-xmark"></i></a>
-            <div class="album-book" id="albumBook">
-                <article class="album-page is-active">
-                    <div class="album-photo"><img src="assets/images/gallery/memory-01.jpg" alt="ذكرى من رحلة الرعاية"></div>
-                    <div class="album-caption"><span>لحظة البداية</span><h3 id="albumModalTitle">البداية دائمًا نبضة</h3><p>من أول لحظة اطمئنان، تبدأ حكاية جديدة مليئة بالأمل والرعاية.</p></div>
-                </article>
-                <article class="album-page">
-                    <div class="album-photo"><img src="assets/images/gallery/memory-02.png" alt="لحظة سعادة مع مولود جديد"></div>
-                    <div class="album-caption"><span>لحظة وصول</span><h3>أول لقاء</h3><p>لحظة لا تتكرر، وابتسامة تختصر رحلة كاملة من الانتظار.</p></div>
-                </article>
-                <article class="album-page">
-                    <div class="album-photo"><img src="assets/images/gallery/memory-03.jpg" alt="ذكرى متابعة ورعاية"></div>
-                    <div class="album-caption"><span>ثقة تمتد</span><h3>معكِ خطوة بخطوة</h3><p>متابعة هادئة وشرح واضح، لأن الاطمئنان جزء أساسي من الرعاية.</p></div>
-                </article>
-                <article class="album-page">
-                    <div class="album-photo"><img src="assets/images/gallery/memory-04.png" alt="ذكرى سعيدة مع الأسرة"></div>
-                    <div class="album-caption"><span>عائلة العيادة</span><h3>ذكريات تكبر معنا</h3><p>أطفال كبروا، وأسر ما زالت الثقة تجمعنا بها عامًا بعد عام.</p></div>
-                </article>
-                <article class="album-page">
-                    <div class="album-photo"><img src="assets/images/gallery/memory-05.png" alt="احتفال بسنوات من الرعاية"></div>
-                    <div class="album-caption"><span>18 عامًا</span><h3>رحلة من القلب</h3><p>سنوات من الخبرة، وآلاف الحكايات التي بدأت كلها بنبضة.</p></div>
-                </article>
+    <div class="story-viewer" id="storyViewer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="عرض قصة من ذكريات العيادة">
+        <button class="story-backdrop" type="button" tabindex="-1" data-story-close aria-label="إغلاق القصص"></button>
+        <div class="story-dialog">
+            <div class="story-progress" id="storyProgress" aria-hidden="true"></div>
+            <button class="story-viewer-close" type="button" data-story-close aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
+            <button class="story-viewer-pause" type="button" id="storyPause" aria-label="إيقاف عرض القصص مؤقتًا" aria-pressed="false"><i class="fa-solid fa-pause"></i></button>
+            <img class="story-viewer-image" id="storyViewerImage" src="" alt="">
+            <div class="story-viewer-shade"></div>
+            <button class="story-viewer-nav story-viewer-prev" type="button" id="storyPrev" aria-label="القصة السابقة"><i class="fa-solid fa-chevron-right"></i></button>
+            <button class="story-viewer-nav story-viewer-next" type="button" id="storyNext" aria-label="القصة التالية"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="story-viewer-copy" aria-live="polite">
+                <span class="story-viewer-kicker" id="storyViewerKicker"></span>
+                <h3 id="storyViewerTitle"></h3>
+                <p id="storyViewerCaption"></p>
             </div>
-            <div class="album-controls">
-                <button type="button" data-album-prev><i class="fa-solid fa-arrow-right"></i><span>السابق</span></button>
-                <div class="album-progress" aria-live="polite"><b id="albumCurrent">1</b><span>/</span><span id="albumTotal">5</span></div>
-                <button type="button" data-album-next><span>التالي</span><i class="fa-solid fa-arrow-left"></i></button>
-            </div>
+            <span class="story-viewer-count" id="storyViewerCount" aria-live="polite"></span>
         </div>
     </div>
 
@@ -253,6 +248,9 @@
     </section>
 
     <section class="section booking-section" id="booking">
+        <div class="visitor-presence" id="visitorPresence" role="status" aria-live="polite" hidden>
+            <span class="presence-pips" aria-hidden="true"></span><span class="presence-copy"></span>
+        </div>
         <div id="bookingArea"></div>
     </section>
 
@@ -264,12 +262,27 @@
                 <p data-i18n="assistantText">
                     المساعد الذكي هيساعدك تعرفي خطوات تسجيل شهادة الميلاد، متابعة التطعيمات، ورعاية صحتك وصحة طفلك بطريقة سهلة وواضحة.
                 </p>
-                <a href="https://dokyy2.github.io/smart-assistant/" target="_blank" class="btn">
-                    <i class="fa-solid fa-robot"></i> <span data-i18n="assistantBtn">افتحي المساعد الذكي</span>
+                <a href="https://dokyy2.github.io/smart-assistant/" target="_blank" rel="noopener noreferrer" class="btn assistant-launch-link">
+                    <img src="https://dokyy2.github.io/smart-assistant/assets/images/assistant-logo.png" alt="" loading="lazy"> <span data-i18n="assistantBtn">افتحي المساعد الذكي</span>
                 </a>
             </div>
         </div>
     </section>
+
+    <div class="assistant-float" id="assistantFloat" hidden>
+        <p class="assistant-hint" id="assistantHint" role="status" hidden>اسأليني 💬</p>
+        <button class="assistant-orb" id="assistantOpen" type="button" aria-label="فتح المساعد الذكي" aria-expanded="false">
+            <img src="https://dokyy2.github.io/smart-assistant/assets/images/assistant-logo.png" alt="">
+        </button>
+    </div>
+
+    <div class="assistant-modal" id="assistantModal" hidden>
+        <button class="assistant-modal-backdrop" type="button" data-close-assistant aria-label="إغلاق نافذة المساعد"></button>
+        <section class="assistant-dialog" role="dialog" aria-modal="true" aria-label="المساعد الذكي بعد الولادة">
+            <div class="assistant-dialog-head"><span><img src="https://dokyy2.github.io/smart-assistant/assets/images/assistant-logo.png" alt=""> المساعد الذكي</span><button type="button" data-close-assistant aria-label="إغلاق">×</button></div>
+            <iframe class="assistant-frame" title="المساعد الذكي للأم والطفل" data-src="https://dokyy2.github.io/smart-assistant/" loading="lazy"></iframe>
+        </section>
+    </div>
 
     <section class="section" id="reviews">
         <div style="text-align:center; margin-bottom:22px;">
@@ -320,8 +333,8 @@
 <footer class="footer">
     Future Reservation System © 2026 - <span class="footer-clinic-name">Dr. Doaa Shaban Clinic</span>
     <div class="footer-meta" aria-label="معلومات الإصدار والتحديث">
-        <span class="footer-version"><i class="fa-solid fa-code-branch" aria-hidden="true"></i> الإصدار V2.1.0</span>
-        <span class="footer-updated"><i class="fa-regular fa-calendar" aria-hidden="true"></i> آخر تحديث: 4 نوفمبر 2026</span>
+        <span class="footer-version"><i class="fa-solid fa-code-branch" aria-hidden="true"></i> نسخة تجربة V2.5.0</span>
+        <span class="footer-updated"><i class="fa-regular fa-calendar" aria-hidden="true"></i> آخر تحديث: 5 نوفمبر 2026</span>
     </div>
 </footer>
 
@@ -329,20 +342,13 @@
     <i class="fa-brands fa-whatsapp"></i>
 </a>
 
-<button class="memory-flyer" type="button" aria-label="افتحي ألبوم الذكريات">
-    <div class="memory-heart">
-        <i class="fa-regular fa-heart"></i>
-    </div>
-
-    <div class="memory-title">
-        الذكريات
-    </div>
-
-    <div class="memory-shine"></div>
-</button>	
+<button class="back-to-top" id="backToTop" type="button" aria-label="العودة إلى أعلى الصفحة" title="العودة إلى أعلى الصفحة" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+</button>
 
 <script src="js/main.js"></script>
 <script src="js/gallery.js"></script>
 
 </body>
 </html>
+

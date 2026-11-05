@@ -1,141 +1,134 @@
 (() => {
-    const modal = document.getElementById("albumModal");
-    if (!modal) return;
-    document.documentElement.dataset.galleryReady = "true";
+    const viewer = document.getElementById("storyViewer");
+    const triggers = [...document.querySelectorAll(".clinic-story")];
+    if (!viewer || !triggers.length) return;
 
-    const pages = [...modal.querySelectorAll(".album-page")];
-    const currentLabel = document.getElementById("albumCurrent");
-    const totalLabel = document.getElementById("albumTotal");
-    let currentPage = 0;
-    let locked = false;
+    const image = document.getElementById("storyViewerImage");
+    const kicker = document.getElementById("storyViewerKicker");
+    const title = document.getElementById("storyViewerTitle");
+    const caption = document.getElementById("storyViewerCaption");
+    const progress = document.getElementById("storyProgress");
+    const count = document.getElementById("storyViewerCount");
+    const pauseButton = document.getElementById("storyPause");
+    const STORY_DURATION = 6500;
+    let currentIndex = 0;
+    let timer = null;
+    let paused = false;
+    let activeTrigger = null;
+    let touchStartX = 0;
 
-    totalLabel.textContent = String(pages.length);
+    triggers.forEach(button => button.setAttribute("aria-haspopup", "dialog"));
 
-    function showPage(nextIndex) {
-        if (locked || nextIndex === currentPage) return;
-        locked = true;
-
-        const oldPage = pages[currentPage];
-        const normalized = (nextIndex + pages.length) % pages.length;
-        oldPage.classList.add("is-turning");
-
-        window.setTimeout(() => {
-            oldPage.classList.remove("is-active", "is-turning");
-            currentPage = normalized;
-            pages[currentPage].classList.add("is-active");
-            currentLabel.textContent = String(currentPage + 1);
-            locked = false;
-        }, 360);
+    function renderProgress() {
+        progress.innerHTML = triggers.map((_, index) => {
+            const state = index < currentIndex ? " is-complete" : index === currentIndex ? " is-active" : "";
+            return `<span class="story-progress-segment${state}"><i></i></span>`;
+        }).join("");
+        const activeBar = progress.querySelector(".is-active");
+        if (activeBar) activeBar.style.setProperty("--story-duration", `${STORY_DURATION}ms`);
     }
 
-    function openAlbum() {
-        modal.classList.add("is-open");
-        modal.setAttribute("aria-hidden", "false");
-        document.body.classList.add("album-open");
-        hideMemoryFlyer(false);
-        modal.querySelector(".album-close").focus();
+    function scheduleAdvance() {
+        window.clearTimeout(timer);
+        if (!paused) timer = window.setTimeout(() => showStory(currentIndex + 1), STORY_DURATION);
     }
 
-    function closeAlbum() {
-        modal.classList.remove("is-open");
-        modal.setAttribute("aria-hidden", "true");
-        document.body.classList.remove("album-open");
+    function updatePauseButton() {
+        pauseButton.setAttribute("aria-pressed", String(paused));
+        pauseButton.setAttribute("aria-label", paused ? "استئناف عرض القصص" : "إيقاف عرض القصص مؤقتًا");
+        pauseButton.innerHTML = paused
+            ? '<i class="fa-solid fa-play" aria-hidden="true"></i>'
+            : '<i class="fa-solid fa-pause" aria-hidden="true"></i>';
     }
 
-    window.openStoryAlbum = openAlbum;
-    window.closeStoryAlbum = closeAlbum;
+    function showStory(index, focusClose = false) {
+        currentIndex = (index + triggers.length) % triggers.length;
+        const source = triggers[currentIndex].dataset;
+        image.src = source.image;
+        image.alt = source.alt || "ذكرى من العيادة";
+        kicker.textContent = source.kicker || "";
+        title.textContent = source.title || "";
+        caption.textContent = source.caption || "";
+        count.textContent = `${currentIndex + 1} / ${triggers.length}`;
+        renderProgress();
+        triggers.forEach((button, buttonIndex) => button.classList.toggle("is-current", buttonIndex === currentIndex));
+        scheduleAdvance();
+        if (focusClose) document.querySelector(".story-viewer-close").focus();
+    }
 
-    document.addEventListener("click", event => {
-        if (event.target.closest("[data-open-album]")) {
-            hideMemoryFlyer(false);
-            openAlbum();
-        }
-        if (event.target.closest("[data-close-album]")) closeAlbum();
+    function openStory(index, trigger) {
+        activeTrigger = trigger || triggers[index];
+        paused = false;
+        updatePauseButton();
+        viewer.classList.add("is-open");
+        viewer.setAttribute("aria-hidden", "false");
+        document.body.classList.add("story-viewer-open");
+        showStory(index, true);
+    }
+
+    function closeStory() {
+        window.clearTimeout(timer);
+        viewer.classList.remove("is-open");
+        viewer.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("story-viewer-open");
+        if (activeTrigger) activeTrigger.focus();
+    }
+
+    function goNext() { paused = false; updatePauseButton(); viewer.classList.remove("is-paused"); showStory(currentIndex + 1); }
+    function goPrevious() { paused = false; updatePauseButton(); viewer.classList.remove("is-paused"); showStory(currentIndex - 1); }
+
+    triggers.forEach((button, index) => button.addEventListener("click", () => openStory(index, button)));
+    viewer.querySelectorAll("[data-story-close]").forEach(button => button.addEventListener("click", closeStory));
+    document.getElementById("storyNext").addEventListener("click", goNext);
+    document.getElementById("storyPrev").addEventListener("click", goPrevious);
+    pauseButton.addEventListener("click", () => {
+        paused = !paused;
+        viewer.classList.toggle("is-paused", paused);
+        updatePauseButton();
+        if (paused) window.clearTimeout(timer);
+        else scheduleAdvance();
     });
-    modal.querySelector("[data-album-next]").addEventListener("click", () => showPage(currentPage + 1));
-    modal.querySelector("[data-album-prev]").addEventListener("click", () => showPage(currentPage - 1));
 
     document.addEventListener("keydown", event => {
-        if (!modal.classList.contains("is-open")) return;
-        if (event.key === "Escape") closeAlbum();
-        if (event.key === "ArrowLeft") showPage(currentPage + 1);
-        if (event.key === "ArrowRight") showPage(currentPage - 1);
+        if (!viewer.classList.contains("is-open")) return;
+        if (event.key === "Escape") closeStory();
+        if (event.key === "ArrowLeft") goNext();
+        if (event.key === "ArrowRight") goPrevious();
+        if (event.key === "Tab") {
+            const focusable = [...viewer.querySelectorAll('button:not([disabled]):not([tabindex="-1"])')];
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
     });
 
-    let touchStartX = 0;
-    modal.addEventListener("touchstart", event => {
+    viewer.addEventListener("touchstart", event => {
+        if (event.target.closest("button")) return;
         touchStartX = event.changedTouches[0].clientX;
     }, { passive: true });
-    modal.addEventListener("touchend", event => {
+    viewer.addEventListener("touchend", event => {
+        if (!touchStartX || event.target.closest("button")) return;
         const distance = event.changedTouches[0].clientX - touchStartX;
-        if (Math.abs(distance) < 50) return;
-        showPage(currentPage + (distance < 0 ? 1 : -1));
+        touchStartX = 0;
+        if (Math.abs(distance) < 48) return;
+        if (distance < 0) goNext();
+        else goPrevious();
     }, { passive: true });
 
     const observer = new IntersectionObserver(entries => {
         entries.forEach(entry => {
             if (entry.isIntersecting) entry.target.classList.add("is-visible");
         });
-    }, { threshold: 0.18 });
+    }, { threshold: 0.15 });
     document.querySelectorAll(".reveal-on-scroll").forEach(element => observer.observe(element));
+    document.documentElement.dataset.galleryReady = "true";
     document.documentElement.dataset.galleryBound = "true";
-
-    const memoryFlyer = document.querySelector(".memory-flyer");
-    let flyerTimer = null;
-
-    function isSplashVisible() {
-        const splash = document.getElementById("splash");
-        if (!splash) return false;
-
-        const style = window.getComputedStyle(splash);
-        return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) > 0;
-    }
-
-    function isAlbumOpen() {
-        return modal.classList.contains("is-open") || window.location.hash === "#albumModal";
-    }
-
-    function showMemoryFlyerWhenAllowed() {
-        if (!memoryFlyer || sessionStorage.getItem("albumFlyerUsed") === "true") return;
-
-        if (isSplashVisible() || isAlbumOpen()) {
-            flyerTimer = window.setTimeout(showMemoryFlyerWhenAllowed, 500);
-            return;
-        }
-
-        memoryFlyer.style.display = "flex";
-        window.requestAnimationFrame(() => {
-            memoryFlyer.classList.add("is-visible");
-            memoryFlyer.classList.remove("is-hiding");
-        });
-    }
-
-    function hideMemoryFlyer(markAsUsed = false) {
-        if (!memoryFlyer) return;
-        if (markAsUsed) sessionStorage.setItem("albumFlyerUsed", "true");
-
-        window.clearTimeout(flyerTimer);
-        memoryFlyer.classList.remove("is-visible");
-        memoryFlyer.classList.add("is-hiding");
-
-        window.setTimeout(() => {
-            if (!memoryFlyer.classList.contains("is-visible")) {
-                memoryFlyer.style.display = "none";
-            }
-        }, 560);
-    }
-
-    if (memoryFlyer) {
-        if (sessionStorage.getItem("albumFlyerUsed") === "true") {
-            memoryFlyer.style.display = "none";
-        } else {
-            flyerTimer = window.setTimeout(showMemoryFlyerWhenAllowed, 5000);
-        }
-
-        memoryFlyer.addEventListener("click", () => {
-            sessionStorage.setItem("albumFlyerUsed", "true");
-            hideMemoryFlyer(true);
-            openAlbum();
-        });
-    }
+    window.openClinicStory = openStory;
 })();
+

@@ -10,6 +10,13 @@ function doGet(e) {
       return jsonOutput(getBookingStats(e.parameter.date));
     }
 
+    if (mode === "presence") {
+      const presence = updateActiveVisitors(e.parameter.visitor);
+      return e.parameter.callback
+        ? jsonpOutput(presence, e.parameter.callback)
+        : jsonOutput(presence);
+    }
+
     return jsonOutput({
       status: "ready",
       message: "Dr. Doaa Shaban booking system is running"
@@ -21,6 +28,52 @@ function doGet(e) {
       message: err.toString()
     });
   }
+}
+
+function updateActiveVisitors(visitorId) {
+  const id = String(visitorId || "");
+  if (!/^[a-f0-9]{32}$/.test(id)) {
+    return { status: "invalid", activeUsers: 0, moreThanFive: false };
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(3000);
+  try {
+    const properties = PropertiesService.getScriptProperties();
+    const key = "CLINIC_ACTIVE_VISITORS";
+    const now = Date.now();
+    const ttlMs = 75000;
+    let visitors = {};
+    try { visitors = JSON.parse(properties.getProperty(key) || "{}"); } catch (_) { visitors = {}; }
+
+    Object.keys(visitors).forEach((visitor) => {
+      if (!visitors[visitor] || now - Number(visitors[visitor]) > ttlMs) delete visitors[visitor];
+    });
+    visitors[id] = now;
+
+    // Six short-lived IDs are enough to distinguish 1–5 from 5+ without storing visitor data.
+    const recent = Object.entries(visitors).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 6);
+    const cappedVisitors = {};
+    recent.forEach((entry) => { cappedVisitors[entry[0]] = entry[1]; });
+    visitors = cappedVisitors;
+    properties.setProperty(key, JSON.stringify(visitors));
+    const activeUsers = Object.keys(visitors).length;
+    return {
+      status: "success",
+      activeUsers: Math.min(activeUsers, 5),
+      moreThanFive: activeUsers > 5
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function jsonpOutput(obj, callback) {
+  const safeCallback = String(callback || "");
+  if (!/^[A-Za-z_$][A-Za-z0-9_$]{0,80}$/.test(safeCallback)) return jsonOutput({ status: "invalid" });
+  return ContentService
+    .createTextOutput(safeCallback + "(" + JSON.stringify(obj) + ");")
+    .setMimeType(ContentService.MimeType.JAVASCRIPT);
 }
 
 function doPost(e) {
@@ -40,45 +93,42 @@ function doPost(e) {
     ]);
 
     const birthSheet = getOrCreateSheet(ss, "Sheet3", [
-      "ID", "Name", "Phone", "Expected Delivery Date", "Registration Time", "Message", "Source", "Status"
+      "ID", "Name", "Phone", "Expected Delivery Date", "Registration Time", "Message", "Source", "WhatsApp", "Status"
     ]);
 
     const data = JSON.parse(e.postData.contents || "{}");
+    const requestType = normalizeText(data.type || data.source || "");
+    const isContact = isContactRequest(requestType);
+    const isBirth = isBirthRequest(requestType);
+    const validationMessage = validateIncomingBooking(data, isContact);
 
-        /* =======================================
-       تعديل: إجازة عيد الأضحى المبارك
-       من 26 مايو 2026 حتى 31 مايو 2026
-       والعودة للعمل يوم الثلاثاء 2 يونيو 2026
-       ======================================= */
-    if (data.bookingDate) {
-      const reqDate = safeDate(data.bookingDate);
+    if (validationMessage) {
+      return jsonOutput({ status: "invalid", message: validationMessage });
+    }
+
+    if (!isContact) {
+      const reqDate = parseClinicDate(data.bookingDate);
+      const today = Utilities.formatDate(new Date(), TIMEZONE, "yyyy-MM-dd");
       const reqKey = Utilities.formatDate(reqDate, TIMEZONE, "yyyy-MM-dd");
-      const weekday = Number(Utilities.formatDate(reqDate, TIMEZONE, "u"));
+      if (reqKey < today) {
+        return jsonOutput({ status: "invalid", message: "لا يمكن اختيار تاريخ سابق لليوم." });
+      }
 
-      if (weekday === 1 || weekday === 4 || weekday === 5) {
+      // يوم الإغلاق يمنع مواعيد الزيارة، لكنه لا يمنع إدخال موعد الولادة المتوقع.
+      const weekday = Number(Utilities.formatDate(reqDate, TIMEZONE, "u"));
+      if (!isBirth && (weekday === 1 || weekday === 4 || weekday === 5)) {
         return jsonOutput({
           status: "holiday",
           message: "الإجازة الأسبوعية للعيادة أيام الاثنين والخميس والجمعة. من فضلك اختر يوماً آخر للحجز."
         });
       }
-
-      if (reqKey >= "2026-05-26" && reqKey <= "2026-05-31") {
-        return jsonOutput({
-          status: "holiday",
-          message: "العيادة إجازة من الثلاثاء 26 مايو 2026 حتى الأحد 31 مايو 2026، والعودة للعمل يوم الثلاثاء 2 يونيو 2026. كل عام وأنتم بخير 🎉"
-        });
-      }
     }
-    
-    /* ======================================= */
 
-    const requestType = normalizeText(data.type || data.source || "");
-
-    if (isContactRequest(requestType)) {
+    if (isContact) {
       return handleContactLead(contactsSheet, data);
     }
 
-    if (isBirthRequest(requestType)) {
+    if (isBirth) {
       return handleBirthBooking(birthSheet, data);
     }
 
@@ -121,6 +171,7 @@ function doPost(e) {
       data.message || "-",
       attachmentInfo.name || "-"
     ]);
+    applyBookingRowWorkflow(sheet, sheet.getLastRow(), 8, 13);
 
     sendNewBookingEmail({
       id: displayID,
@@ -174,8 +225,10 @@ function handleBirthBooking(sheet, data) {
     registrationTime,
     data.message || "-",
     data.source || "حجز ولادة",
+    "",
     "جديد"
   ]);
+  applyBookingRowWorkflow(sheet, sheet.getLastRow(), 9, 8);
 
   sendBirthBookingEmail({
     id: nextId,
@@ -613,6 +666,56 @@ function getOrCreateSheet(ss, name, headers) {
   return sheet;
 }
 
+function validateIncomingBooking(data, isContact) {
+  const name = String(data.name || "").trim();
+  const phone = cleanPhone(data.phone);
+  if (name.split(/\s+/).filter(Boolean).length < 3) {
+    return "من فضلك أدخل الاسم الثلاثي.";
+  }
+  if (!/^01\d{9}$/.test(phone)) {
+    return "يرجى إدخال رقم موبايل مصري صحيح من 11 رقمًا يبدأ بـ 01.";
+  }
+  if (!isContact && !parseClinicDate(data.bookingDate)) {
+    return "يرجى اختيار تاريخ صحيح.";
+  }
+  return "";
+}
+
+function parseClinicDate(value) {
+  const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+  return date;
+}
+
+function applyBookingRowWorkflow(sheet, row, statusColumn, whatsappColumn) {
+  const rowOne = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 2)).getDisplayValues()[0].join(" ").toLowerCase();
+  const headerRow = /\b(id|name|phone)\b|الاسم|الهاتف/.test(rowOne) ? 1 : 2;
+  if (!sheet.getRange(headerRow, whatsappColumn).getValue()) {
+    sheet.getRange(headerRow, whatsappColumn).setValue("واتساب");
+  }
+
+  const statusCell = sheet.getRange(row, statusColumn);
+  const options = ["جديد", "تم التواصل", "مؤكد", "ملغي", "تم الحضور"];
+  statusCell.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(options, true).setAllowInvalid(false).build());
+  const statusColors = {
+    "جديد": "#dbeafe",
+    "تم التواصل": "#fef3c7",
+    "مؤكد": "#dcfce7",
+    "ملغي": "#fee2e2",
+    "تم الحضور": "#f3e8ff"
+  };
+  statusCell.setBackground(statusColors[statusCell.getValue()] || "#dbeafe");
+
+  const phoneCell = "C" + row;
+  const waFormula = '=IF(' + phoneCell + '="","",HYPERLINK("https://wa.me/20"&RIGHT(REGEXREPLACE(' + phoneCell + ',"[^0-9]",""),10),"فتح واتساب"))';
+  sheet.getRange(row, whatsappColumn).setFormula(waFormula).setFontColor("#128c7e").setFontWeight("bold");
+}
+
 function buildBookingId(type, seq) {
   const normalizedType = normalizeText(type);
 
@@ -670,7 +773,12 @@ function safeDate(value) {
 }
 
 function cleanPhone(phone) {
-  return (phone || "").toString().replace(/'/g, "").replace(/\s/g, "").trim();
+  return (phone || "").toString()
+    .replace(/[٠-٩۰-۹]/g, digit => {
+      const code = digit.charCodeAt(0);
+      return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
+    })
+    .replace(/\D/g, "");
 }
 
 function normalizeText(value) {
@@ -690,3 +798,4 @@ function jsonOutput(obj) {
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
+

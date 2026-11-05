@@ -1,14 +1,15 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP_Kllz_3jkLxGj2hJpNAQ6Vt4I_JOU9EnC0LB471hFJitfEoxQLdsbec8P7hcmraC/exec";
 const CLINIC_WHATSAPP = "201125337717";
+const IS_LOCAL_PREVIEW = location.protocol === "file:" || ["localhost", "127.0.0.1"].includes(location.hostname);
 const signatureHtml = `<div class="form-signature">Future Reservation System © 2026</div>`;
 
 let currentLang = "ar";
-let themes = ["default", "pink", "purple", "mint", "rose"];
-let currentThemeIndex = 0;
-let isDark = true;
+const themes = ["lagoon", "lavender", "peach", "sky", "sage", "berry", "honey"];
 let currentBookingType = "first";
-let demandTimer = null;
-let flipInterval = null;
+let lastPetalScroll = 0;
+let lastPetalAt = 0;
+let activePetals = 0;
+let presenceTimer = null;
 
 const dict = {
     ar: {
@@ -62,11 +63,12 @@ const dict = {
         holidayTitle: "تنبيه المواعيد",
         holidayMsg: "الإجازة الأسبوعية للعيادة أيام الاثنين والخميس والجمعة. من فضلكِ اختاري يوماً آخر للحجز.",
         understood: "فهمت",
-        clickToStart: "اضغطي للبدء",
+        clickToStart: "جاري تجهيز الموقع",
+        splashWait: "لحظات ونبدأ معكِ",
         groupMedical: "الكشوفات الطبية",
         groupServices: "الخدمات الإضافية",
         groupSpecial: "أقسام مميزة",
-        toggleMode: "تغيير المظهر (داكن/فاتح)"
+        
     },
     en: {
         brandName: "Dr. Doaa Shaban",
@@ -119,11 +121,12 @@ const dict = {
         holidayTitle: "Appointment Alert",
         holidayMsg: "The clinic is closed every Monday, Thursday, and Friday. Please choose another booking day.",
         understood: "OK",
-        clickToStart: "Tap to Start",
+        clickToStart: "Preparing the website",
+        splashWait: "Just a moment and we will begin",
         groupMedical: "Medical Visits",
         groupServices: "Extra Services",
         groupSpecial: "Special Sections",
-        toggleMode: "Toggle Mode (Dark/Light)"
+        
     }
 };
 
@@ -155,9 +158,9 @@ const formText = {
         birthBtn: "حجز الولادة",
         contactBtn: "تسجيل بياناتي",
         back: "رجوع للخدمات",
-        demand: "يوجد 3 أشخاص يستخدمون نظام الحجز الآن",
+        demand: "سيتم مراجعة طلبك والتواصل معكِ لتأكيد الموعد.",
         nameErr: "من فضلك اكتبي الاسم ثلاثي",
-        phoneErr: "رقم الهاتف يجب أن يكون 11 رقم",
+        phoneErr: "أدخلي رقم موبايل مصري صحيحًا من 11 رقمًا يبدأ بـ 01",
         pregTitle: "حاسبة الحمل",
         pregLead: "اختاري أول يوم في آخر دورة لحساب عمر الحمل التقريبي.",
         pregDate: "تاريخ أول يوم في آخر دورة",
@@ -193,9 +196,9 @@ const formText = {
         birthBtn: "Book Delivery",
         contactBtn: "Register My Details",
         back: "Back to services",
-        demand: "3 people are using the booking system now",
+        demand: "The clinic will review your request and contact you to confirm.",
         nameErr: "Please enter full name",
-        phoneErr: "Phone number must be 11 digits",
+        phoneErr: "Enter a valid 11-digit Egyptian mobile number starting with 01",
         pregTitle: "Pregnancy Calculator",
         pregLead: "Choose the first day of your last period to estimate pregnancy age.",
         pregDate: "First day of last period",
@@ -230,8 +233,14 @@ const visitDesc = {
 };
 
 window.addEventListener("load", () => {
-    currentThemeIndex = Math.floor(Math.random() * themes.length);
-    setTheme(themes[currentThemeIndex]);
+    applyRandomTheme();
+
+    if (IS_LOCAL_PREVIEW) {
+        document.getElementById("localPreviewBanner").hidden = false;
+    }
+    initScrollDecorations();
+    initAssistantFloat();
+    initPresenceCounter();
 
     renderBookingStart();
     animateStats();
@@ -239,24 +248,141 @@ window.addEventListener("load", () => {
     setInterval(updateClock, 1000);
     applyLanguage();
 
-    // غلق قائمة الألوان عند الضغط خارجها
-    document.addEventListener("click", function(event) {
-        let menu = document.getElementById("themeMenu");
-        let btn = document.querySelector(".control-group .fa-palette").parentElement;
-        if (menu && btn && !menu.contains(event.target) && !btn.contains(event.target)) {
-            menu.classList.remove("open");
-        }
-    });
+    updateBackToTop();
+    window.addEventListener("scroll", updateBackToTop, { passive: true });
+    const splash = document.getElementById("splash");
+    splash.classList.add("loading");
+    window.setTimeout(startExperience, 3000);
 });
 
 function startExperience() {
     let splash = document.getElementById("splash");
+    if (!splash || splash.classList.contains("hide")) return;
     splash.classList.add("hide");
-    setTimeout(() => { splash.style.display = "none"; }, 800);
+    setTimeout(() => { splash.style.display = "none"; }, 700);
 }
 
-function toggleThemeMenu() {
-    document.getElementById("themeMenu").classList.toggle("open");
+function initAssistantFloat() {
+    const section = document.getElementById("assistant");
+    const float = document.getElementById("assistantFloat");
+    const modal = document.getElementById("assistantModal");
+    const trigger = document.getElementById("assistantOpen");
+    if (!section || !float || !modal || !trigger) return;
+    let reached = false;
+    const setDocked = (visible) => {
+        if (visible) reached = true;
+        float.hidden = !reached;
+        float.classList.toggle("is-docked-to-page", visible);
+        if (visible) hideAssistantHint();
+        else if (reached && !float.dataset.hintShown) showAssistantHint();
+    };
+    if ("IntersectionObserver" in window) {
+        const observer = new IntersectionObserver(entries => {
+            for (const entry of entries) setDocked(entry.isIntersecting);
+        }, { threshold: 0.16, rootMargin: "-8% 0px -8% 0px" });
+        observer.observe(section);
+    } else {
+        const update = () => setDocked(section.getBoundingClientRect().top < innerHeight && section.getBoundingClientRect().bottom > 0);
+        window.addEventListener("scroll", update, { passive: true });
+        update();
+    }
+    trigger.addEventListener("click", () => {
+        hideAssistantHint();
+        modal.hidden = false;
+        trigger.setAttribute("aria-expanded", "true");
+        document.body.classList.add("assistant-modal-open");
+        const frame = modal.querySelector("iframe");
+        if (!frame.getAttribute("src")) frame.src = frame.dataset.src;
+    });
+    modal.querySelectorAll("[data-close-assistant]").forEach(button => button.addEventListener("click", () => {
+        modal.hidden = true;
+        trigger.setAttribute("aria-expanded", "false");
+        document.body.classList.remove("assistant-modal-open");
+        trigger.focus();
+    }));
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && !modal.hidden) {
+            modal.hidden = true;
+            trigger.setAttribute("aria-expanded", "false");
+            document.body.classList.remove("assistant-modal-open");
+            trigger.focus();
+        }
+    });
+}
+
+function showAssistantHint() {
+    const float = document.getElementById("assistantFloat");
+    const hint = document.getElementById("assistantHint");
+    if (!float || !hint || float.hidden || float.dataset.hintShown) return;
+    float.dataset.hintShown = "true";
+    hint.hidden = false;
+    requestAnimationFrame(() => hint.classList.add("show"));
+    window.setTimeout(hideAssistantHint, 3200);
+}
+
+function hideAssistantHint() {
+    const hint = document.getElementById("assistantHint");
+    if (!hint) return;
+    hint.classList.remove("show");
+    window.setTimeout(() => { hint.hidden = true; }, 350);
+}
+
+function getPresenceVisitorId() {
+    const key = "clinicPresenceVisitorId";
+    try {
+        let id = sessionStorage.getItem(key);
+        if (!id) {
+            const bytes = new Uint8Array(16);
+            crypto.getRandomValues(bytes);
+            id = Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
+            sessionStorage.setItem(key, id);
+        }
+        return id;
+    } catch {
+        return `${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`.padEnd(32, "0").slice(0, 32);
+    }
+}
+
+function initPresenceCounter() {
+    const pill = document.getElementById("visitorPresence");
+    if (!pill) return;
+    const copy = pill.querySelector(".presence-copy");
+    const pips = pill.querySelector(".presence-pips");
+    if (IS_LOCAL_PREVIEW) {
+        copy.textContent = currentLang === "ar" ? "عداد الزائرات يتفعّل بعد نشر تحديث الخادم" : "Live visitor count activates after the server update is published";
+        pips.innerHTML = "<i></i><i></i><i></i>";
+        pill.hidden = false;
+        pill.classList.add("is-preview");
+        return;
+    }
+    const visitorId = getPresenceVisitorId();
+    let failedBeforeResponse = true;
+    window.clinicPresenceCallback = (result) => {
+        failedBeforeResponse = false;
+        if (!result || result.status !== "success") return;
+        const count = Math.max(0, Math.min(5, Number(result.activeUsers) || 0));
+        pips.innerHTML = Array.from({ length: count }, () => "<i></i>").join("");
+        copy.textContent = count === 0
+            ? (currentLang === "ar" ? "أنتِ أول زائرة الآن 🌷" : "You are the first visitor 🌷")
+            : (result.moreThanFive
+                ? (currentLang === "ar" ? "معكِ ٥ زائرات أو أكثر الآن 💗" : "5 or more visitors are here 💗")
+                : (currentLang === "ar" ? `معكِ ${count} ${count === 1 ? "زائرة" : "زائرات"} الآن 💗` : `${count} visitor${count === 1 ? "" : "s"} here 💗`));
+        pill.hidden = false;
+    };
+    const heartbeat = () => {
+        if (document.visibilityState !== "visible" || window.__clinicPresenceInFlight) return;
+        window.__clinicPresenceInFlight = true;
+        const script = document.createElement("script");
+        const timeout = window.setTimeout(() => { script.remove(); window.__clinicPresenceInFlight = false; }, 9000);
+        script.onerror = () => { clearTimeout(timeout); script.remove(); window.__clinicPresenceInFlight = false; };
+        script.onload = () => { clearTimeout(timeout); script.remove(); window.__clinicPresenceInFlight = false; };
+        script.src = `${SCRIPT_URL}?mode=presence&visitor=${encodeURIComponent(visitorId)}&callback=clinicPresenceCallback&ts=${Date.now()}`;
+        document.head.appendChild(script);
+        if (failedBeforeResponse) window.setTimeout(() => { if (pill.hidden) pill.hidden = true; }, 9500);
+    };
+    heartbeat();
+    presenceTimer = window.setInterval(heartbeat, 30000);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") heartbeat(); });
 }
 
 function t(key) { return formText[currentLang][key] || key; }
@@ -267,6 +393,12 @@ function toggleLanguage() {
     document.getElementById("langBtn").innerText = currentLang === "ar" ? "EN" : "AR";
     document.documentElement.lang = currentLang;
     document.body.classList.toggle("en-mode", currentLang === "en");
+    const backToTop = document.getElementById("backToTop");
+    if (backToTop) {
+        const label = currentLang === "ar" ? "العودة إلى أعلى الصفحة" : "Back to top";
+        backToTop.setAttribute("aria-label", label);
+        backToTop.title = label;
+    }
     applyLanguage();
     renderBookingStart();
 }
@@ -278,21 +410,26 @@ function applyLanguage() {
     });
 }
 
-function toggleDarkMode() {
-    isDark = !isDark;
-    document.documentElement.setAttribute("data-mode", isDark ? "dark" : "light");
-    document.getElementById("themeMenu").classList.remove("open");
+function applyRandomTheme() {
+    let previousTheme = "";
+    const savedInWindow = window.name.match(/(?:^|;)clinicLastTheme=([^;]*)/);
+    if (savedInWindow) {
+        try { previousTheme = decodeURIComponent(savedInWindow[1]); } catch (error) {}
+    }
+    if (!previousTheme) try { previousTheme = sessionStorage.getItem("clinicLastTheme") || ""; } catch (error) {}
+    if (!previousTheme) try { previousTheme = localStorage.getItem("clinicLastTheme") || ""; } catch (error) {}
+    const choices = themes.filter(theme => theme !== previousTheme);
+    const theme = choices[Math.floor(Math.random() * choices.length)];
+    document.documentElement.setAttribute("data-theme", theme);
+    try { localStorage.setItem("clinicLastTheme", theme); } catch (error) {}
+    try { sessionStorage.setItem("clinicLastTheme", theme); } catch (error) {}
+    const windowState = window.name.replace(/(?:^|;)clinicLastTheme=[^;]*/, "").replace(/^;/, "");
+    window.name = [windowState, `clinicLastTheme=${encodeURIComponent(theme)}`].filter(Boolean).join(";");
 }
 
-function setTheme(theme) {
-    if (theme === "default") document.documentElement.removeAttribute("data-theme");
-    else document.documentElement.setAttribute("data-theme", theme);
-    document.getElementById("themeMenu").classList.remove("open");
-}
-
-function nextTheme() {
-    currentThemeIndex = (currentThemeIndex + 1) % themes.length;
-    setTheme(themes[currentThemeIndex]);
+function updateBackToTop() {
+    const button = document.getElementById("backToTop");
+    if (button) button.classList.toggle("visible", window.scrollY > 500);
 }
 
 function updateClock() {
@@ -318,16 +455,52 @@ function animateStats() {
     });
 }
 
-function todayISO() { return new Date().toISOString().split("T")[0]; }
+function todayISO() {
+    const now = new Date();
+    const pad = value => String(value).padStart(2, "0");
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+function localDateFromISO(value) {
+    const [year, month, day] = (value || "").split("-").map(Number);
+    return new Date(year, month - 1, day);
+}
+
+function normalizeDigits(value) {
+    return String(value || "").replace(/[٠-٩۰-۹]/g, digit => {
+        const code = digit.charCodeAt(0);
+        return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
+    });
+}
+
+function initScrollDecorations() {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const layer = document.getElementById("scrollDecorations");
+    const symbols = ["🌸", "♡", "✿", "♥"];
+    window.addEventListener("scroll", () => {
+        const now = Date.now();
+        if (Math.abs(window.scrollY - lastPetalScroll) < 55 || now - lastPetalAt < 115 || activePetals >= 16) return;
+        lastPetalScroll = window.scrollY;
+        lastPetalAt = now;
+        activePetals++;
+        const petal = document.createElement("span");
+        petal.className = "scroll-particle";
+        petal.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        petal.style.left = `${8 + Math.random() * 84}%`;
+        petal.style.setProperty("--drift", `${Math.round(Math.random() * 90 - 45)}px`);
+        const tones = ["--primary-color", "--medical-blue", "--accent-pink"];
+        petal.style.color = getComputedStyle(document.documentElement).getPropertyValue(tones[Math.floor(Math.random() * tones.length)]).trim();
+        layer.appendChild(petal);
+        window.setTimeout(() => { petal.remove(); activePetals = Math.max(0, activePetals - 1); }, 2600);
+    }, { passive: true });
+}
 
 function renderBookingStart() {
-    clearInterval(demandTimer);
-    clearInterval(flipInterval);
-
     document.getElementById("bookingArea").innerHTML = `
         <div class="booking-panel">
             <div class="booking-head">
-                <h2>${t("chooseTitle")}</h2>
+                <span class="booking-step-kicker">${currentLang === "ar" ? "خطوة ١ · اختاري الخدمة" : "STEP 1 · CHOOSE A SERVICE"}</span>
+                <h2>${t("chooseTitle")} <span aria-hidden="true">🌸</span></h2>
                 <p>${t("chooseLead")}</p>
             </div>
 
@@ -356,9 +529,9 @@ function renderBookingStart() {
                 ${visitCard("pregnancy", "fa-baby-carriage", t("pregnancy"))}
                 ${visitCard("labs", "fa-vial-circle-check", t("labs"))}
             </div>
+            <div class="booking-reassurance"><span aria-hidden="true">💗</span>${currentLang === "ar" ? "اختاري الخدمة المناسبة، وبعدها اكتبي بيانات التواصل الضرورية فقط. العيادة هتتواصل معاكي لتأكيد التفاصيل." : "Choose a service, then share only the contact details needed. The clinic will reach out to confirm."}</div>
         </div>
     `;
-    startRandomFlips();
 }
 
 function visitCard(type, icon, label, special = false) {
@@ -366,34 +539,12 @@ function visitCard(type, icon, label, special = false) {
     const desc = visitDesc[currentLang][type];
     
     return `
-        <div class="flip-card ${special ? "special" : ""} ${familyClass}" onclick="selectVisit('${type}')">
-            <div class="flip-card-inner">
-                <div class="flip-card-front">
-                    <i class="fa-solid ${icon}"></i>
-                    <span>${label}</span>
-                </div>
-                <div class="flip-card-back">
-                    <p>${desc}</p>
-                </div>
-            </div>
-        </div>
+        <button class="visit-option ${special ? "special" : ""} ${familyClass}" type="button" onclick="selectVisit('${type}')">
+            <span class="visit-option-icon"><i class="fa-solid ${icon}" aria-hidden="true"></i></span>
+            <span class="visit-option-copy"><strong>${label}</strong><span>${desc}</span></span>
+            <span class="visit-option-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-left"></i></span>
+        </button>
     `;
-}
-
-function startRandomFlips() {
-    flipInterval = setInterval(() => {
-        const cards = document.querySelectorAll('.flip-card-inner');
-        if(cards.length === 0) return;
-        
-        cards.forEach(c => c.classList.remove('force-flip'));
-        
-        const randomCard = cards[Math.floor(Math.random() * cards.length)];
-        randomCard.classList.add('force-flip');
-        
-        setTimeout(() => {
-            if(randomCard) randomCard.classList.remove('force-flip');
-        }, 2000);
-    }, 4000);
 }
 
 function selectVisit(type) {
@@ -434,33 +585,34 @@ function renderBookingForm() {
     const isContacts = currentBookingType === "contacts";
     const today = todayISO();
 
-    clearInterval(demandTimer);
-    clearInterval(flipInterval);
-
     document.getElementById("bookingArea").innerHTML = `
         <div class="booking-panel" id="activeForm">
             <div class="booking-head">
+                <span class="booking-step-kicker">${currentLang === "ar" ? "خطوة ٢ · بياناتك بأمان" : "STEP 2 · YOUR DETAILS"}</span>
                 <h2 style="font-size:clamp(1.8rem, 4vw, 2.5rem); padding: 5px 20px;">${visitLabel(currentBookingType)}</h2>
                 <p id="liveBookingHint">${isContacts ? t("contactsDesc") : t("demand")}</p>
+                <div class="booking-privacy-note"><i class="fa-solid fa-heart-circle-check" aria-hidden="true"></i> ${isContacts
+                    ? (currentLang === "ar" ? "ستُستخدم بيانات الاتصال للتواصل من العيادة." : "Your contact details will be used by the clinic to reach you.")
+                    : (currentLang === "ar" ? "طلب الحجز مبدئي؛ ستتواصل العيادة معكِ لتأكيد الموعد. اكتبي فقط المعلومات اللازمة للتواصل." : "This is a booking request; the clinic will contact you to confirm. Share only the information needed to arrange it.")}</div>
             </div>
 
             <div class="form-grid">
                 <div class="form-field">
-                    <label>${t("name")}</label>
-                    <input type="text" id="pName" placeholder="${t("name")}" oninput="checkNameInput(this)">
+                    <label for="pName">${t("name")}</label>
+                    <input type="text" id="pName" placeholder="${t("name")}" autocomplete="name" required aria-required="true" oninput="checkNameInput(this)">
                     <div id="nameErr" class="error-hint">${t("nameErr")}</div>
                 </div>
 
                 <div class="form-field">
-                    <label>${t("phone")}</label>
-                    <input type="tel" id="pPhone" maxlength="11" placeholder="011xxxxxxxx" oninput="checkPhoneInput(this)">
+                    <label for="pPhone">${t("phone")}</label>
+                    <input type="tel" id="pPhone" inputmode="numeric" autocomplete="tel" maxlength="11" pattern="01[0-9]{9}" required aria-required="true" placeholder="011xxxxxxxx" oninput="checkPhoneInput(this)">
                     <div id="phoneErr" class="error-hint">${t("phoneErr")}</div>
                 </div>
 
                 ${!isContacts ? `
                 <div class="form-field full">
-                    <label>${isBirth ? t("deliveryDate") : (isLabs ? t("contactDate") : t("bookingDate"))}</label>
-                    <input type="date" id="pBookingDate" min="${today}" onchange="checkWeekend(this)">
+                    <label for="pBookingDate">${isBirth ? t("deliveryDate") : (isLabs ? t("contactDate") : t("bookingDate"))}</label>
+                    <input type="date" id="pBookingDate" min="${today}" required aria-required="true" onchange="checkWeekend(this)">
                 </div>
                 ` : ""}
 
@@ -505,13 +657,11 @@ function renderBookingForm() {
         </div>
     `;
 
-    if (!isContacts) simulateDemand();
     document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function renderPregnancyCalc() {
     const today = todayISO();
-    clearInterval(flipInterval);
     
     document.getElementById("bookingArea").innerHTML = `
         <div class="booking-panel">
@@ -599,67 +749,39 @@ function calculatePregnancy() {
     }, 1000);
 }
 
-function simulateDemand() {
-    let count = 3;
-    demandTimer = setInterval(() => {
-        const el = document.getElementById("liveBookingHint");
-        if (!el) {
-            clearInterval(demandTimer);
-            return;
-        }
-        count = Math.max(1, count + (Math.random() > 0.5 ? 1 : -1));
-        el.innerText = currentLang === "ar"
-            ? "يوجد " + count + " أشخاص يستخدمون نظام الحجز الآن"
-            : count + " people are using the booking system now";
-    }, 3000);
-}
-
 function toggleUpload(el) {
     document.getElementById("uploadBox").style.display = el.checked ? "block" : "none";
 }
 
 function checkNameInput(el) {
     const err = document.getElementById("nameErr");
-    err.style.display = el.value.trim() && el.value.trim().split(/\s+/).length < 3 ? "block" : "none";
+    const invalid = el.value.trim() && el.value.trim().split(/\s+/).length < 3;
+    err.style.display = invalid ? "block" : "none";
+    el.setAttribute("aria-invalid", invalid ? "true" : "false");
 }
 
 function checkPhoneInput(el) {
-    el.value = el.value.replace(/[^0-9]/g, "");
+    el.value = normalizeDigits(el.value).replace(/[^0-9]/g, "").slice(0, 11);
     const err = document.getElementById("phoneErr");
-    err.style.display = el.value.length > 0 && el.value.length < 11 ? "block" : "none";
+    const invalid = el.value.length > 0 && !/^01\d{9}$/.test(el.value);
+    err.style.display = invalid ? "block" : "none";
+    el.setAttribute("aria-invalid", invalid ? "true" : "false");
 }
 
 function checkWeekend(el) {
     if (!el.value) return;
 
-    /* =======================================
-       تعديل: إجازة عيد الأضحى المبارك
-       من 26 مايو 2026 حتى 31 مايو 2026
-       والعودة للعمل يوم الثلاثاء 2 يونيو 2026
-       ======================================= */
-    const parts = el.value.split("-").map(Number);
-    const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
-    selectedDate.setHours(0, 0, 0, 0);
-
-    const holidayStart = new Date(2026, 4, 26);
-    const holidayEnd = new Date(2026, 4, 31);
-    holidayStart.setHours(0, 0, 0, 0);
-    holidayEnd.setHours(23, 59, 59, 999);
-
-    if (selectedDate >= holidayStart && selectedDate <= holidayEnd) {
-        showSoftAlert(
-            currentLang === "ar" ? "إجازة عيد الأضحى" : "Eid Al-Adha Holiday",
-            currentLang === "ar"
-                ? "العيادة إجازة من الثلاثاء 26 مايو 2026 حتى الأحد 31 مايو 2026، والعودة للعمل يوم الثلاثاء 2 يونيو 2026. كل عام وأنتم بخير 🎉"
-                : "The clinic is closed from Tuesday, May 26, 2026 to Sunday, May 31, 2026, and will reopen on Tuesday, June 2, 2026. Happy Eid 🎉"
-        );
+    const selectedDate = localDateFromISO(el.value);
+    const today = localDateFromISO(todayISO());
+    if (selectedDate < today) {
+        showSoftAlert(t("alertTitle"), currentLang === "ar" ? "لا يمكن اختيار تاريخ سابق لليوم." : "Please choose today or a future date.");
         el.value = "";
         return;
     }
-    /* ======================================= */
 
+    const isExpectedDeliveryDate = currentBookingType === "birth";
     const day = selectedDate.getDay();
-    if (day === 1 || day === 4 || day === 5) {
+    if (!isExpectedDeliveryDate && (day === 1 || day === 4 || day === 5)) {
         document.getElementById("fridayAlert").style.display = "flex";
         el.value = "";
         return;
@@ -674,11 +796,17 @@ function closeFri() {
 function showSoftAlert(title, msg) {
     document.getElementById("softAlertTitle").innerText = title;
     document.getElementById("softAlertMsg").innerText = msg;
-    document.getElementById("softAlert").style.display = "flex";
+    const alert = document.getElementById("softAlert");
+    alert.style.display = "flex";
+    alert.classList.remove("notification-arrive");
+    void alert.offsetWidth;
+    alert.classList.add("notification-arrive");
 }
 
 function closeSoftAlert() {
-    document.getElementById("softAlert").style.display = "none";
+    const alert = document.getElementById("softAlert");
+    alert.style.display = "none";
+    alert.classList.remove("notification-arrive");
 }
 
 function check15Days() {
@@ -702,16 +830,23 @@ function check15Days() {
 
 function validateRequired(isBirth = false) {
     const name = document.getElementById("pName").value.trim();
-    const phone = document.getElementById("pPhone").value;
+    const phoneEl = document.getElementById("pPhone");
+    const phone = normalizeDigits(phoneEl.value).replace(/[^0-9]/g, "");
+    phoneEl.value = phone;
     const dateEl = document.getElementById("pBookingDate");
     const date = dateEl ? dateEl.value : "";
     const lastVisit = document.getElementById("pLastVisit") ? document.getElementById("pLastVisit").value : "";
     const isContacts = currentBookingType === "contacts";
 
     if (!isContacts && date) {
-        const [year, month, day] = date.split("-").map(Number);
-        const weekday = new Date(year, month - 1, day).getDay();
-        if (weekday === 1 || weekday === 4 || weekday === 5) {
+        const selectedDate = localDateFromISO(date);
+        const today = localDateFromISO(todayISO());
+        if (selectedDate < today) {
+            showSoftAlert(t("alertTitle"), currentLang === "ar" ? "لا يمكن اختيار تاريخ سابق لليوم." : "Please choose today or a future date.");
+            return null;
+        }
+        const weekday = selectedDate.getDay();
+        if (!isBirth && (weekday === 1 || weekday === 4 || weekday === 5)) {
             showSoftAlert(t("holidayTitle"), t("holidayMsg"));
             return null;
         }
@@ -719,7 +854,7 @@ function validateRequired(isBirth = false) {
 
     let errors = [];
     if (name.split(/\s+/).length < 3) errors.push(t("name"));
-    if (phone.length < 11) errors.push(t("phone"));
+    if (!/^01\d{9}$/.test(phone)) errors.push(t("phone"));
     if (!isContacts && !date) errors.push(isBirth ? t("deliveryDate") : t("bookingDate"));
     if (currentBookingType === "consult" && !lastVisit) errors.push(t("lastVisit"));
 
@@ -745,9 +880,13 @@ function fileToBase64(file) {
 }
 
 function showProcessing() {
-    const steps = currentLang === "ar"
-        ? ["جارٍ إرسال البيانات...", "جارٍ مراجعة الموعد...", "جارٍ تأكيد الحجز..."]
-        : ["Sending data...", "Reviewing appointment...", "Confirming booking..."];
+    const steps = IS_LOCAL_PREVIEW
+        ? (currentLang === "ar"
+            ? ["جارٍ تجهيز المعاينة المحلية...", "جارٍ مراجعة البيانات...", "جارٍ عرض النتيجة التجريبية..."]
+            : ["Preparing local preview...", "Reviewing the details...", "Showing the simulated result..."])
+        : (currentLang === "ar"
+            ? ["جارٍ إرسال البيانات...", "جارٍ مراجعة الموعد...", "جارٍ تأكيد الحجز..."]
+            : ["Sending data...", "Reviewing appointment...", "Confirming booking..."]);
 
     let index = 0;
 
@@ -797,17 +936,31 @@ async function submitBooking() {
         attachmentBase64: attachment.attachmentBase64
     };
 
+    if (IS_LOCAL_PREVIEW) {
+        clearInterval(progressTimer);
+        showSuccess(valid, `LOCAL-${Math.floor(1000 + Math.random() * 9000)}`, visitLabel(currentBookingType), message, hasAttachment);
+        return;
+    }
+
     try {
         const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
         const response = await res.json();
         clearInterval(progressTimer);
 
-        /* --- تعديل إجازة العيد --- */
         if (response.status === "holiday") {
             showSoftAlert(currentLang === "ar" ? "إجازة العيد" : "Eid Holiday", response.message);
             return;
         }
-        /* ----------------------- */
+        if (response.status === "invalid") {
+            showSoftAlert(t("alertTitle"), response.message || t("errData"));
+            return;
+        }
+        if (response.status !== "success" && response.status !== "duplicated") {
+            showSoftAlert(currentLang === "ar" ? "تعذر تسجيل الطلب" : "Request not registered", currentLang === "ar"
+                ? response.message || "لم يصل تأكيد التسجيل من النظام. حاولي مرة أخرى أو تواصلي مع العيادة."
+                : response.message || "The system did not confirm registration. Please try again or contact the clinic.");
+            return;
+        }
 
         const prefix = getBookingIdPrefix(currentBookingType);
         const rawId = String(response.id || response.bookingId || Math.floor(1000 + Math.random() * 9000));
@@ -816,11 +969,11 @@ async function submitBooking() {
 
         if (response.status === "duplicated") {
             const oldData = {
-                name: response.oldName || valid.name,
-                phone: response.oldPhone || valid.phone,
-                date: response.oldDate || valid.date || todayISO()
+                name: response.name || valid.name,
+                phone: response.phone || valid.phone,
+                date: response.date || valid.date || todayISO()
             };
-            const oldRawId = String(response.bookingId || finalId);
+            const oldRawId = String(response.id || response.bookingId || finalId);
             const oldCleanId = oldRawId.replace(/[^0-9]/g, '');
 
             showDuplicated(oldData, prefix + oldCleanId, response.message || (currentLang === "ar" ? "يوجد حجز مسبق بهذا الرقم." : "There is already a booking for this number."), hasAttachment, message);
@@ -830,9 +983,9 @@ async function submitBooking() {
         showSuccess(valid, finalId, visitLabel(currentBookingType), message, hasAttachment);
     } catch (e) {
         clearInterval(progressTimer);
-        const prefix = getBookingIdPrefix(currentBookingType);
-        const finalId = prefix + Math.floor(1000 + Math.random() * 9000);
-        showSuccess(valid, finalId, visitLabel(currentBookingType), message, hasAttachment);
+        showSoftAlert(currentLang === "ar" ? "تعذر إرسال الطلب" : "Unable to send request", currentLang === "ar"
+            ? "لم يصلنا تأكيد تسجيل الطلب. تحققي من الاتصال وحاولي مرة أخرى، أو تواصلي مع العيادة مباشرة."
+            : "We could not confirm that your request was registered. Check your connection and try again, or contact the clinic directly.");
     }
 }
 
@@ -840,8 +993,8 @@ async function submitBirth() {
     const valid = validateRequired(true);
     if (!valid) return;
 
-    const dueDate = new Date(valid.date);
-    const today = new Date();
+    const dueDate = localDateFromISO(valid.date);
+    const today = localDateFromISO(todayISO());
     const daysLeft = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
     const message = currentLang === "ar" ? "متبقي تقريباً " + Math.max(0, daysLeft) + " يوم" : "Approximately " + Math.max(0, daysLeft) + " days remaining";
     
@@ -858,17 +1011,31 @@ async function submitBirth() {
         attachmentBase64: ""
     };
 
+    if (IS_LOCAL_PREVIEW) {
+        clearInterval(progressTimer);
+        showBirthSuccess(valid, `LOCAL-${Math.floor(1000 + Math.random() * 9000)}`, message);
+        return;
+    }
+
     try {
         const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
         const response = await res.json();
         clearInterval(progressTimer);
 
-        /* --- تعديل إجازة العيد --- */
         if (response.status === "holiday") {
             showSoftAlert(currentLang === "ar" ? "إجازة العيد" : "Eid Holiday", response.message);
             return;
         }
-        /* ----------------------- */
+        if (response.status === "invalid") {
+            showSoftAlert(t("alertTitle"), response.message || t("errData"));
+            return;
+        }
+        if (response.status !== "success" && response.status !== "duplicated") {
+            showSoftAlert(currentLang === "ar" ? "تعذر تسجيل الطلب" : "Request not registered", currentLang === "ar"
+                ? response.message || "لم يصل تأكيد التسجيل من النظام. حاولي مرة أخرى أو تواصلي مع العيادة."
+                : response.message || "The system did not confirm registration. Please try again or contact the clinic.");
+            return;
+        }
 
         const prefix = getBookingIdPrefix("birth");
         const rawId = String(response.id || response.bookingId || Math.floor(1000 + Math.random() * 9000));
@@ -877,11 +1044,11 @@ async function submitBirth() {
 
         if (response.status === "duplicated") {
             const oldData = {
-                name: response.oldName || valid.name,
-                phone: response.oldPhone || valid.phone,
-                date: response.oldDate || valid.date || todayISO()
+                name: response.name || valid.name,
+                phone: response.phone || valid.phone,
+                date: response.date || valid.date || todayISO()
             };
-            const oldRawId = String(response.bookingId || finalId);
+            const oldRawId = String(response.id || response.bookingId || finalId);
             const oldCleanId = oldRawId.replace(/[^0-9]/g, '');
 
             showDuplicated(oldData, prefix + oldCleanId, response.message || (currentLang === "ar" ? "يوجد حجز مسبق بهذا الرقم." : "There is already a booking for this number."), false, message);
@@ -891,9 +1058,9 @@ async function submitBirth() {
         showBirthSuccess(valid, finalId, message);
     } catch (e) {
         clearInterval(progressTimer);
-        const prefix = getBookingIdPrefix("birth");
-        const finalId = prefix + Math.floor(1000 + Math.random() * 9000);
-        showBirthSuccess(valid, finalId, message);
+        showSoftAlert(currentLang === "ar" ? "تعذر إرسال الطلب" : "Unable to send request", currentLang === "ar"
+            ? "لم يصلنا تأكيد تسجيل الطلب. تحققي من الاتصال وحاولي مرة أخرى، أو تواصلي مع العيادة مباشرة."
+            : "We could not confirm that your request was registered. Check your connection and try again, or contact the clinic directly.");
     }
 }
 
@@ -916,15 +1083,17 @@ function showBirthSuccess(valid, finalId, message) {
 
     document.getElementById("bookingArea").innerHTML = `
         <div class="result-card">
+            <div class="result-celebration" aria-hidden="true">💗 ✨ 🌸 ✨ 💗</div>
             <div class="result-icon"><i class="fa-solid fa-baby"></i></div>
-            <h2 style="color:var(--dark-pink);">${currentLang === "ar" ? "تم تسجيل طلب حجز الولادة" : "Delivery booking request registered"}</h2>
+            <h2 style="color:var(--dark-pink);">${IS_LOCAL_PREVIEW ? (currentLang === "ar" ? "اكتملت معاينة النموذج ✨" : "Preview complete ✨") : (currentLang === "ar" ? "تم تسجيل طلب حجز الولادة 🎉" : "Delivery booking request registered 🎉")}</h2>
             ${detailsHtml(data)}
-            <div class="notice-board">${currentLang === "ar" ? "برجاء التواصل مع العيادة لتحديد تفاصيل حجز الولادة وموعد الحضور المناسب." : "Please contact the clinic to arrange delivery booking details."}</div>
-            <a href="${waUrl}" target="_blank" class="premium-wa-link"><i class="fa-brands fa-whatsapp"></i> ${currentLang === "ar" ? "إرسال البيانات للعيادة" : "Send details to clinic"}</a>
+            <div class="notice-board ${IS_LOCAL_PREVIEW ? "local-preview-result" : ""}">${IS_LOCAL_PREVIEW ? (currentLang === "ar" ? "محاكاة محلية فقط: لم يتم إرسال الحجز أو حفظه في الشيت، ولم تُرسل أي رسالة." : "Local preview only: this request was not sent or saved, and no message was sent.") : (currentLang === "ar" ? "برجاء التواصل مع العيادة لتحديد تفاصيل حجز الولادة وموعد الحضور المناسب." : "Please contact the clinic to arrange delivery booking details.")}</div>
+            ${!IS_LOCAL_PREVIEW ? `<a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="premium-wa-link"><i class="fa-brands fa-whatsapp"></i> ${currentLang === "ar" ? "إرسال البيانات للعيادة" : "Send details to clinic"}</a>` : ""}
             <button class="inline-back-btn" onclick="renderBookingStart()">${currentLang === "ar" ? "رجوع للرئيسية" : "Back"}</button>
         </div>
     `;
     document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "center" });
+    celebrateBooking();
     handleVibrate();
 }
 
@@ -937,16 +1106,22 @@ function buildWhatsappText(data) {
 function detailsHtml(data) {
     return `
         <div class="details-box">
-            <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "رقم الحجز" : "Booking ID"}</span><span class="detail-value highlight-value">${data.id}</span></div>
-            <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "نوع الطلب" : "Type"}</span><span class="detail-value">${data.type}</span></div>
-            <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "الاسم" : "Name"}</span><span class="detail-value">${data.name}</span></div>
-            <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "الهاتف" : "Phone"}</span><span class="detail-value">${data.phone}</span></div>
-            <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "تاريخ الحجز" : "Booking date"}</span><span class="detail-value highlight-value">${data.date}</span></div>
-            <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "وقت التسجيل" : "Registration time"}</span><span class="detail-value">${data.regTime}</span></div>
+            <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "رقم الحجز" : "Booking ID"}</span><span class="detail-value highlight-value">${escapeHtml(data.id)}</span></div>
+            <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "نوع الطلب" : "Type"}</span><span class="detail-value">${escapeHtml(data.type)}</span></div>
+            <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "الاسم" : "Name"}</span><span class="detail-value">${escapeHtml(data.name)}</span></div>
+            <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "الهاتف" : "Phone"}</span><span class="detail-value">${escapeHtml(data.phone)}</span></div>
+            <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "تاريخ الحجز" : "Booking date"}</span><span class="detail-value highlight-value">${escapeHtml(data.date)}</span></div>
+            <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "وقت التسجيل" : "Registration time"}</span><span class="detail-value">${escapeHtml(data.regTime)}</span></div>
             <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "المرفقات" : "Attachments"}</span><span class="detail-value">${data.hasAttachment ? (currentLang === "ar" ? "يوجد مرفقات" : "Attached") : (currentLang === "ar" ? "لا يوجد" : "None")}</span></div>
-            ${data.message ? `<div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "الرسالة" : "Message"}</span><span class="detail-value">${data.message}</span></div>` : ""}
+            ${data.message ? `<div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "الرسالة" : "Message"}</span><span class="detail-value">${escapeHtml(data.message)}</span></div>` : ""}
         </div>
     `;
+}
+
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[char]);
 }
 
 function showSuccess(valid, finalId, typeAr, message, hasAttachment) {
@@ -976,20 +1151,45 @@ function showSuccess(valid, finalId, typeAr, message, hasAttachment) {
             ? "برجاء إرسال بيانات الحجز للعيادة عبر واتساب لتحديد ساعة الحضور. يعتبر الحجز غير مؤكد نهائياً بدون التواصل مع العيادة. ولإلغاء أو تعديل الحجز برجاء التواصل مع العيادة."
             : "Please send booking details to the clinic via WhatsApp to confirm attendance time. Booking is not fully confirmed without clinic confirmation. For cancellation or changes, please contact the clinic.";
     }
+    if (IS_LOCAL_PREVIEW) {
+        noticeBoardHtml = currentLang === "ar"
+            ? "محاكاة محلية فقط: لم يتم إرسال الحجز أو حفظه في الشيت، ولم تُرسل أي رسالة."
+            : "Local preview only: this request was not sent or saved, and no message was sent.";
+    }
 
     document.getElementById("bookingArea").innerHTML = `
         <div class="result-card">
+            <div class="result-celebration" aria-hidden="true">💗 ✨ 🌸 ✨ 💗</div>
             <div class="result-icon"><i class="fa-solid fa-calendar-check"></i></div>
-            <h2 style="color:var(--dark-pink);">${currentLang === "ar" ? "تم تسجيل البيانات بنجاح" : "Details registered successfully"}</h2>
+            <h2 style="color:var(--dark-pink);">${IS_LOCAL_PREVIEW ? (currentLang === "ar" ? "اكتملت معاينة النموذج ✨" : "Preview complete ✨") : (currentLang === "ar" ? "تم تسجيل البيانات بنجاح 🎉" : "Details registered successfully 🎉")}</h2>
             ${detailsHtml(data)}
-            <div class="notice-board">${noticeBoardHtml}</div>
-            ${(typeAr !== formText.ar.contacts && typeAr !== formText.en.contacts) ? `<a href="${waUrl}" target="_blank" class="premium-wa-link"><i class="fa-brands fa-whatsapp"></i> ${currentLang === "ar" ? "إرسال البيانات للعيادة" : "Send details to clinic"}</a>` : ""}
+            <div class="notice-board ${IS_LOCAL_PREVIEW ? "local-preview-result" : ""}">${noticeBoardHtml}</div>
+            ${(!IS_LOCAL_PREVIEW && typeAr !== formText.ar.contacts && typeAr !== formText.en.contacts) ? `<a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="premium-wa-link"><i class="fa-brands fa-whatsapp"></i> ${currentLang === "ar" ? "إرسال البيانات للعيادة" : "Send details to clinic"}</a>` : ""}
             <button class="inline-back-btn" onclick="renderBookingStart()">${currentLang === "ar" ? "رجوع للرئيسية" : "Back"}</button>
         </div>
     `;
 
     document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "center" });
+    celebrateBooking();
     handleVibrate();
+}
+
+function celebrateBooking() {
+    const layer = document.getElementById("bookingCelebration");
+    if (!layer || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const symbols = ["💗", "🌸", "✨", "💕", "🌷", "💖"];
+    layer.replaceChildren();
+    layer.classList.add("is-active");
+    for (let i = 0; i < 24; i++) {
+        const piece = document.createElement("span");
+        piece.className = "celebration-piece";
+        piece.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        piece.style.setProperty("--x", `${Math.round(Math.random() * 100)}vw`);
+        piece.style.setProperty("--delay", `${Math.random() * 420}ms`);
+        piece.style.setProperty("--drift", `${Math.round((Math.random() - .5) * 180)}px`);
+        layer.appendChild(piece);
+    }
+    window.setTimeout(() => { layer.classList.remove("is-active"); layer.replaceChildren(); }, 2400);
 }
 
 function showDuplicated(oldData, finalId, msg, hasAttachment, message) {
@@ -999,7 +1199,7 @@ function showDuplicated(oldData, finalId, msg, hasAttachment, message) {
         <div class="result-card" style="border-color:var(--error-red);">
             <div class="result-icon" style="background:linear-gradient(135deg,#ef4444,#be123c);"><i class="fa-solid fa-circle-exclamation"></i></div>
             <h2 style="color:var(--error-red); margin-bottom: 5px;">${currentLang === "ar" ? "يوجد حجز مسبق بالفعل" : "Existing booking found"}</h2>
-            <p style="font-weight:800;line-height:1.8; color:var(--text-main); margin-bottom: 20px;">${msg}</p>
+            <p style="font-weight:800;line-height:1.8; color:var(--text-main); margin-bottom: 20px;">${escapeHtml(msg)}</p>
             
             <div class="details-box">
                 <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "رقم الكشف" : "Visit ID"}</span><span class="detail-value highlight-value">${finalId}</span></div>
@@ -1021,3 +1221,4 @@ function showDuplicated(oldData, finalId, msg, hasAttachment, message) {
 function handleVibrate() {
     if ("vibrate" in navigator) navigator.vibrate(60);
 }
+
