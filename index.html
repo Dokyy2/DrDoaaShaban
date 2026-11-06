@@ -64,6 +64,24 @@
     </div>
 </div>
 
+<div class="pregnancy-nudge" id="pregnancyNudge" hidden>
+    <button class="pregnancy-nudge-backdrop" type="button" data-close-pregnancy-nudge aria-label="إغلاق البطاقة"></button>
+    <section class="pregnancy-nudge-card" role="dialog" aria-modal="true" aria-labelledby="pregnancyNudgeTitle" aria-describedby="pregnancyNudgeText">
+        <button class="pregnancy-nudge-close" type="button" data-close-pregnancy-nudge aria-label="إغلاق"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        <div class="pregnancy-nudge-confetti" aria-hidden="true">✦　♡　✿　✧</div>
+        <div class="pregnancy-nudge-art" aria-hidden="true"></div>
+        <span class="pregnancy-nudge-kicker" data-i18n="pregnancyNudgeKicker">هدية صغيرة لكِ</span>
+        <h2 id="pregnancyNudgeTitle" data-i18n="pregnancyNudgeTitle">رحلتك للأمومة 💗</h2>
+        <p id="pregnancyNudgeText" data-i18n="pregnancyNudgeText">احسبي فاضل قد إيه على مقابلة صغيرك، وشوفي رحلتك وصلت لكام في المية.</p>
+        <button class="pregnancy-nudge-cta" id="pregnancyNudgeCta" type="button"><span class="pregnancy-nudge-mini-art" aria-hidden="true"></span><span data-i18n="pregnancyNudgeCta">احسبي رحلتك</span><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+        <span class="pregnancy-nudge-foot" data-i18n="pregnancyNudgeFoot">حساب تقريبي لعمر الحمل وموعد الولادة</span>
+    </section>
+</div>
+
+<button class="pregnancy-float" id="pregnancyFloat" type="button" aria-label="افتحي حاسبة الحمل" title="احسبي رحلتك" hidden>
+    <span class="pregnancy-float-art" aria-hidden="true"></span><span class="pregnancy-float-label" data-i18n="pregnancyFloatLabel">حاسبة الحمل</span>
+</button>
+
 <header class="topbar">
     <div class="brand">
         <strong data-i18n="brandName">د. دعاء شعبان</strong>
@@ -343,7 +361,7 @@
             <i class="fa-solid fa-arrow-up-right-from-square footer-signature-arrow" aria-hidden="true"></i>
         </a>
         <div class="footer-meta" aria-label="معلومات الإصدار والتحديث">
-            <span class="footer-version"><i class="fa-solid fa-code-branch" aria-hidden="true"></i> الإصدار V2.6.0</span>
+            <span class="footer-version"><i class="fa-solid fa-code-branch" aria-hidden="true"></i> الإصدار V2.7.0</span>
             <span class="footer-updated"><i class="fa-regular fa-calendar" aria-hidden="true"></i> آخر تحديث: 6 نوفمبر 2026</span>
         </div>
     </div>
@@ -362,4 +380,3 @@
 
 </body>
 </html>
-

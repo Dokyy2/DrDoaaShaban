@@ -66,6 +66,12 @@ const dict = {
         understood: "فهمت",
         clickToStart: "جاري تجهيز الموقع",
         splashWait: "لحظات ونبدأ معكِ",
+        pregnancyNudgeKicker: "هدية صغيرة لكِ",
+        pregnancyNudgeTitle: "رحلتك للأمومة 💗",
+        pregnancyNudgeText: "احسبي فاضل قد إيه على مقابلة صغيرك، وشوفي رحلتك وصلت لكام في المية.",
+        pregnancyNudgeCta: "احسبي رحلتك",
+        pregnancyNudgeFoot: "حساب تقريبي لعمر الحمل وموعد الولادة",
+        pregnancyFloatLabel: "حاسبة الحمل",
         groupMedical: "الكشوفات الطبية",
         groupServices: "الخدمات الإضافية",
         groupSpecial: "أقسام مميزة",
@@ -124,6 +130,12 @@ const dict = {
         understood: "OK",
         clickToStart: "Preparing the website",
         splashWait: "Just a moment and we will begin",
+        pregnancyNudgeKicker: "A little gift for you",
+        pregnancyNudgeTitle: "Your journey to motherhood 💗",
+        pregnancyNudgeText: "See how far along your journey is and how long until you meet your little one.",
+        pregnancyNudgeCta: "Check your journey",
+        pregnancyNudgeFoot: "An estimate of pregnancy age and due date",
+        pregnancyFloatLabel: "Pregnancy calculator",
         groupMedical: "Medical Visits",
         groupServices: "Extra Services",
         groupSpecial: "Special Sections",
@@ -242,6 +254,7 @@ window.addEventListener("load", () => {
     initScrollDecorations();
     initAssistantFloat();
     initPresenceCounter();
+    initPregnancyNudge();
     initInSiteNavigation();
 
     renderBookingStart();
@@ -542,6 +555,53 @@ function applyLanguage() {
     });
 }
 
+function pregnancyMascotArt() {
+    return `<img src="assets/images/Calc.jpg" alt="" aria-hidden="true" loading="lazy">`;
+}
+
+function initPregnancyNudge() {
+    const nudge = document.getElementById("pregnancyNudge");
+    const float = document.getElementById("pregnancyFloat");
+    if (!nudge || !float) return;
+    const art = pregnancyMascotArt();
+    nudge.querySelector(".pregnancy-nudge-art").innerHTML = art;
+    nudge.querySelector(".pregnancy-nudge-mini-art").innerHTML = art;
+    float.querySelector(".pregnancy-float-art").innerHTML = art;
+
+    const openCalculator = () => {
+        dismissPregnancyNudge();
+        document.getElementById("booking")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.setTimeout(() => selectVisit("pregnancy"), 420);
+    };
+    document.getElementById("pregnancyNudgeCta")?.addEventListener("click", openCalculator);
+    float.addEventListener("click", openCalculator);
+    nudge.querySelectorAll("[data-close-pregnancy-nudge]").forEach(button => button.addEventListener("click", dismissPregnancyNudge));
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && !nudge.hidden) dismissPregnancyNudge();
+    });
+
+    window.setTimeout(() => {
+        float.hidden = false;
+        let alreadyShown = false;
+        try { alreadyShown = sessionStorage.getItem("clinicPregnancyNudgeShown") === "1"; } catch (error) {}
+        const bookingStarted = currentBookingView !== "start" || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "");
+        if (alreadyShown || bookingStarted || document.visibilityState !== "visible") return;
+        try { sessionStorage.setItem("clinicPregnancyNudgeShown", "1"); } catch (error) {}
+        nudge.hidden = false;
+        document.body.classList.add("pregnancy-nudge-open");
+        nudge.querySelector(".pregnancy-nudge-close")?.focus({ preventScroll: true });
+    }, 7200);
+}
+
+function dismissPregnancyNudge() {
+    const nudge = document.getElementById("pregnancyNudge");
+    if (!nudge || nudge.hidden) return;
+    nudge.classList.add("is-closing");
+    document.body.classList.remove("pregnancy-nudge-open");
+    window.setTimeout(() => { nudge.hidden = true; nudge.classList.remove("is-closing"); }, 320);
+    document.getElementById("pregnancyFloat")?.focus({ preventScroll: true });
+}
+
 function applyRandomTheme() {
     let previousTheme = "";
     const savedInWindow = window.name.match(/(?:^|;)clinicLastTheme=([^;]*)/);
@@ -672,7 +732,7 @@ function visitCard(type, icon, label, special = false) {
     
     return `
         <button class="visit-option ${special ? "special" : ""} ${familyClass}" type="button" onclick="selectVisit('${type}')">
-            <span class="visit-option-icon"><i class="fa-solid ${icon}" aria-hidden="true"></i></span>
+            <span class="visit-option-icon ${type === "pregnancy" ? "pregnancy-option-icon" : ""}">${type === "pregnancy" ? pregnancyMascotArt() : `<i class="fa-solid ${icon}" aria-hidden="true"></i>`}</span>
             <span class="visit-option-copy"><strong>${label}</strong><span>${desc}</span></span>
             <span class="visit-option-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-left"></i></span>
         </button>
@@ -1392,4 +1452,3 @@ function showDuplicated(oldData, finalId, msg, hasAttachment, message) {
 function handleVibrate() {
     if ("vibrate" in navigator) navigator.vibrate(60);
 }
-

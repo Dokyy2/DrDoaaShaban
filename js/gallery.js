@@ -137,4 +137,3 @@
     window.openClinicStory = openStory;
     window.closeClinicStory = closeStory;
 })();
-

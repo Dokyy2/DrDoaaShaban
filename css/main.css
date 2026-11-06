@@ -2511,3 +2511,40 @@ html[dir="ltr"] .visit-option:hover .visit-option-arrow { transform:translateX(3
 .pregnancy-result-card .pregnancy-prayer { max-width:680px; margin:20px auto 0; border:1px solid color-mix(in srgb,var(--accent-pink) 12%,var(--border-soft)); border-radius:17px; background:color-mix(in srgb,var(--card-bg) 90%,transparent); }
 @media (max-width:520px) { .pregnancy-journey { grid-template-columns:auto 1fr; gap:11px; padding:12px; }.pregnancy-week-count { grid-column:2; font-size:.82rem; }.pregnancy-journey-ring { width:54px; height:54px; }.pregnancy-journey-ring span { width:43px; height:43px; }.pregnancy-trimester { font-size:.63rem; padding:8px 4px; }.booking-data-notice { padding:13px 12px; } }
 
+/* Pregnancy journey welcome card */
+.pregnancy-nudge[hidden],.pregnancy-float[hidden] { display:none!important; }
+.pregnancy-nudge { position:fixed; inset:0; z-index:1200; display:grid; place-items:center; padding:24px; perspective:1200px; }
+.pregnancy-nudge-backdrop { position:absolute; inset:0; border:0; background:radial-gradient(circle at 50% 45%,rgba(58,30,55,.28),rgba(30,20,36,.72)); backdrop-filter:blur(8px); animation:nudgeBackdropIn .35s ease both; }
+.pregnancy-nudge-card { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; width:min(390px,100%); max-height:min(690px,calc(100dvh - 42px)); overflow:auto; padding:25px 25px 22px; border:1px solid rgba(255,255,255,.9); border-radius:32px; background:radial-gradient(circle at 12% 10%,rgba(255,255,255,.95),transparent 38%),linear-gradient(145deg,#fff9e9 0%,#fff0f6 52%,#f4eaff 100%); box-shadow:0 30px 100px rgba(34,15,40,.36),inset 0 1px 0 #fff; text-align:center; transform-origin:50% 85%; animation:nudgeCardIn .72s cubic-bezier(.18,.9,.25,1.18) both,nudgeFloat 5s ease-in-out 1s infinite; }
+.pregnancy-nudge.is-closing .pregnancy-nudge-card { animation:nudgeCardOut .28s ease both; }
+.pregnancy-nudge-close { position:absolute; top:13px; inset-inline-end:13px; z-index:3; display:grid; place-items:center; width:37px; height:37px; border:1px solid rgba(135,86,128,.14); border-radius:50%; color:#7d5774; background:rgba(255,255,255,.82); cursor:pointer; }
+.pregnancy-nudge-confetti { position:absolute; top:21px; left:22px; color:#d982a4; font-size:1.08rem; letter-spacing:3px; transform:rotate(-13deg); }
+.pregnancy-nudge-art { display:grid; place-items:center; width:min(270px,100%); height:202px; margin:3px auto 9px; overflow:hidden; border:1px solid rgba(255,255,255,.9); border-radius:27px; background:linear-gradient(145deg,#f1d9ff,#ffe4f1); box-shadow:0 13px 24px rgba(171,91,135,.16); animation:nudgeArtBob 3s ease-in-out infinite; }
+.pregnancy-nudge-art img { display:block; width:100%; height:100%; object-fit:cover; object-position:center 42%; }
+.pregnancy-nudge-kicker { display:inline-flex; align-items:center; gap:6px; margin:2px 0 8px; padding:6px 13px; border:1px solid rgba(208,132,166,.22); border-radius:999px; color:#9a6682; background:rgba(255,255,255,.72); font-size:.76rem; font-weight:900; }
+.pregnancy-nudge-kicker::before,.pregnancy-nudge-kicker::after { content:"✿"; color:#e38eab; }
+.pregnancy-nudge-card h2 { margin:0; color:#754c75; font-size:clamp(1.42rem,5vw,1.78rem); font-weight:950; }
+.pregnancy-nudge-card p { max-width:300px; margin:9px auto 18px; color:#705f70; font-size:.92rem; font-weight:750; line-height:1.8; }
+.pregnancy-nudge-cta { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:59px; padding:8px 14px; border:1px solid rgba(255,255,255,.65); border-radius:19px; color:#fff; background:linear-gradient(115deg,#e75693,#a45bb8 54%,#687de1); box-shadow:0 12px 25px rgba(181,82,147,.27); font:inherit; font-weight:950; cursor:pointer; transition:transform .2s ease,box-shadow .2s ease; }
+.pregnancy-nudge-cta:hover { transform:translateY(-2px); box-shadow:0 16px 30px rgba(181,82,147,.34); }
+.pregnancy-nudge-mini-art { display:grid; place-items:center; width:43px; height:43px; overflow:hidden; border:1px solid rgba(255,255,255,.66); border-radius:13px; background:rgba(255,255,255,.22); }
+.pregnancy-nudge-mini-art img { display:block; width:100%; height:100%; object-fit:cover; object-position:31% 38%; }
+.pregnancy-nudge-cta>span:nth-child(2) { flex:1; }
+.pregnancy-nudge-foot { margin-top:11px; color:#998798; font-size:.69rem; font-weight:800; }
+.pregnancy-float { position:fixed; z-index:55; left:18px; bottom:154px; display:grid; justify-items:center; gap:0; width:74px; padding:5px 5px 7px; border:1px solid rgba(255,255,255,.84); border-radius:22px; color:#755075; background:linear-gradient(145deg,#fff8e8,#ffe9f2 58%,#efe7ff); box-shadow:0 9px 28px rgba(84,48,84,.2); cursor:pointer; animation:pregnancyFloatIn .55s cubic-bezier(.2,.8,.2,1) both,pregnancyFloatBob 4s ease-in-out 1s infinite; }
+.pregnancy-float-art { display:grid; place-items:center; width:59px; height:59px; }
+.pregnancy-float-art img { width:59px; height:59px; border-radius:17px; object-fit:cover; object-position:31% 38%; }
+.pregnancy-float-label { max-width:100%; font-size:.61rem; font-weight:950; line-height:1.2; }
+.pregnancy-option-icon { overflow:hidden; background:linear-gradient(145deg,#fff5d9,#ffe6f0)!important; }
+.pregnancy-option-icon img { width:48px; height:48px; border-radius:13px; object-fit:cover; object-position:31% 38%; transition:transform .25s ease; }
+.visit-option:hover .pregnancy-option-icon img { transform:scale(1.1) rotate(-5deg); }
+body.pregnancy-nudge-open { overflow:hidden; }
+@keyframes nudgeBackdropIn { from { opacity:0; } to { opacity:1; } }
+@keyframes nudgeCardIn { 0% { opacity:0; transform:translateY(48px) rotate(-9deg) scale(.78); } 68% { opacity:1; transform:translateY(-7px) rotate(3deg) scale(1.025); } 100% { opacity:1; transform:translateY(0) rotate(-2deg) scale(1); } }
+@keyframes nudgeFloat { 0%,100% { transform:translateY(0) rotate(-2deg); } 50% { transform:translateY(-7px) rotate(1deg); } }
+@keyframes nudgeCardOut { to { opacity:0; transform:translateY(25px) rotate(6deg) scale(.9); } }
+@keyframes nudgeArtBob { 0%,100% { transform:translateY(0) rotate(2deg); } 50% { transform:translateY(-5px) rotate(-2deg); } }
+@keyframes pregnancyFloatIn { from { opacity:0; transform:translateX(-14px) scale(.8); } to { opacity:1; transform:translateX(0) scale(1); } }
+@keyframes pregnancyFloatBob { 0%,100% { translate:0 0; } 50% { translate:0 -5px; } }
+@media (max-width:600px) { .pregnancy-nudge { padding:17px; }.pregnancy-nudge-card { width:min(360px,100%); max-height:calc(100dvh - 28px); padding:20px 20px 18px; border-radius:27px; }.pregnancy-nudge-art { width:min(260px,100%); height:185px; }.pregnancy-nudge-card p { font-size:.85rem; margin-bottom:14px; }.pregnancy-float { left:12px; bottom:150px; width:65px; border-radius:19px; }.pregnancy-float-art,.pregnancy-float-art img { width:51px; height:51px; } }
+@media (prefers-reduced-motion:reduce) { .pregnancy-nudge-backdrop,.pregnancy-nudge-card,.pregnancy-nudge-art,.pregnancy-float { animation:none!important; }.pregnancy-nudge-card { transform:none; }.pregnancy-nudge-cta,.pregnancy-option-icon img { transition:none; } }
