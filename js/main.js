@@ -1,7 +1,6 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP_Kllz_3jkLxGj2hJpNAQ6Vt4I_JOU9EnC0LB471hFJitfEoxQLdsbec8P7hcmraC/exec";
 const CLINIC_WHATSAPP = "201125337717";
 const IS_LOCAL_PREVIEW = location.protocol === "file:" || ["localhost", "127.0.0.1"].includes(location.hostname);
-const signatureHtml = `<div class="form-signature">Future Reservation System © 2026</div>`;
 
 let currentLang = "ar";
 const themes = ["lagoon", "lavender", "peach", "sky", "sage", "berry", "honey"];
@@ -10,6 +9,8 @@ let lastPetalScroll = 0;
 let lastPetalAt = 0;
 let activePetals = 0;
 let presenceTimer = null;
+let currentBookingView = "start";
+let lastPregnancyCalcDate = "";
 
 const dict = {
     ar: {
@@ -241,6 +242,7 @@ window.addEventListener("load", () => {
     initScrollDecorations();
     initAssistantFloat();
     initPresenceCounter();
+    initInSiteNavigation();
 
     renderBookingStart();
     animateStats();
@@ -254,6 +256,139 @@ window.addEventListener("load", () => {
     splash.classList.add("loading");
     window.setTimeout(startExperience, 3000);
 });
+
+function initInSiteNavigation() {
+    const initialSection = location.hash.replace(/^#/, "") || "home";
+    history.replaceState({ ...(history.state || {}), clinicSite: true, clinicSection: initialSection, clinicBookingView: "start" }, "", location.href);
+    let activeSection = initialSection;
+    let sectionTimer = 0;
+    let restoringSection = false;
+
+    const rememberSection = id => {
+        if (!id || id === activeSection || restoringSection) return;
+        window.clearTimeout(sectionTimer);
+        sectionTimer = window.setTimeout(() => {
+            if (id === activeSection || restoringSection) return;
+            activeSection = id;
+            const current = history.state && typeof history.state === "object" ? history.state : {};
+            history.pushState({ ...current, clinicSite: true, clinicSection: id }, "", location.href);
+        }, 260);
+    };
+
+    if ("IntersectionObserver" in window) {
+        const sectionObserver = new IntersectionObserver(entries => {
+            const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+            if (visible) rememberSection(visible.target.id);
+        }, { rootMargin: "-28% 0px -58% 0px", threshold: [0, 0.2, 0.45, 0.7] });
+        document.querySelectorAll("main > section[id], main > .hero[id]").forEach(section => sectionObserver.observe(section));
+    }
+
+    document.addEventListener("click", event => {
+        const link = event.target.closest('a[href^="#"]');
+        if (!link) return;
+        const id = link.getAttribute("href").slice(1);
+        const target = id && document.getElementById(id);
+        if (!target) return;
+        event.preventDefault();
+        window.clearTimeout(sectionTimer);
+        activeSection = id;
+        const nextState = { ...(history.state || {}), clinicSite: true, clinicSection: id };
+        if (id === "booking") nextState.clinicBookingView = "start";
+        history.pushState(nextState, "", `#${id}`);
+        if (id === "booking") renderBookingStart();
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    window.addEventListener("popstate", event => {
+        const state = event.state || {};
+        if (!state.clinicSite) return;
+        window.clearTimeout(sectionTimer);
+        activeSection = state.clinicSection || "home";
+        closeInSiteOverlaysOnBack(state);
+        if (state.clinicBookingView) restoreBookingView(state);
+        const section = document.getElementById(state.clinicSection || "home");
+        if (section) {
+            restoringSection = true;
+            section.scrollIntoView({ behavior: "smooth", block: "start" });
+            window.setTimeout(() => { restoringSection = false; }, 700);
+        }
+    });
+}
+
+function pushInSiteOverlay(overlay) {
+    const current = history.state && typeof history.state === "object" ? history.state : {};
+    if (current.clinicOverlay === overlay) return;
+    history.pushState({ ...current, clinicSite: true, clinicOverlay: overlay }, "", location.href);
+}
+
+function closeInSiteOverlaysOnBack(state) {
+    const storyViewer = document.getElementById("storyViewer");
+    if (storyViewer?.classList.contains("is-open") && state.clinicOverlay !== "story") window.closeClinicStory?.(true);
+    const modal = document.getElementById("assistantModal");
+    if (modal && !modal.hidden && state.clinicOverlay !== "assistant") closeAssistantModalFromHistory();
+}
+
+function closeAssistantModalFromHistory() {
+    const modal = document.getElementById("assistantModal");
+    const trigger = document.getElementById("assistantOpen");
+    if (!modal || !trigger) return;
+    modal.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("assistant-modal-open");
+    trigger.focus();
+}
+
+function pushBookingView(view, details = {}) {
+    const current = history.state && typeof history.state === "object" ? history.state : {};
+    history.pushState({ ...current, clinicSite: true, clinicSection: "booking", clinicBookingView: view, ...details }, "", location.href);
+    currentBookingView = view;
+}
+
+function pushBookingResult(view) {
+    const current = history.state && typeof history.state === "object" ? history.state : {};
+    const startState = { ...current, clinicSite: true, clinicSection: "booking", clinicBookingView: "start" };
+    history.replaceState(startState, "", location.href);
+    history.pushState({ ...startState, clinicBookingView: view }, "", location.href);
+    currentBookingView = view;
+}
+
+function goBackInSite() {
+    if (history.state?.clinicSite && history.state.clinicBookingView && history.state.clinicBookingView !== "start") {
+        history.back();
+        return;
+    }
+    renderBookingStart();
+    document.getElementById("bookingArea")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function restoreBookingView(state) {
+    const view = state.clinicBookingView;
+    currentBookingView = view;
+    if (view === "start") return renderBookingStart();
+    if (view === "form") {
+        currentBookingType = state.type || "first";
+        return renderBookingForm();
+    }
+    if (view === "pregnancyCalc") {
+        currentBookingType = "pregnancy";
+        return renderPregnancyCalc(lastPregnancyCalcDate);
+    }
+    if (view === "pregnancyResult") {
+        currentBookingType = "pregnancy";
+        return calculatePregnancyForDate(lastPregnancyCalcDate, false);
+    }
+    if ((view === "success" || view === "duplicated") && document.querySelector("#bookingArea .result-card")) return;
+    renderBookingStart();
+}
+
+function bookingDataNotice() {
+    const heading = "CLINIC DATA & PRIVACY NOTICE";
+    const copy = IS_LOCAL_PREVIEW
+        ? (currentLang === "ar" ? "معاينة محلية فقط — لا يتم إرسال أو حفظ البيانات." : "Local preview only — no information is sent or saved.")
+        : (currentLang === "ar" ? "بيانات الحجز تحت إدارة عيادة د. دعاء شعبان، وتُستخدم لمتابعة طلبك." : "Booking details are handled by Dr. Doaa Shaban Clinic to follow up on your request.");
+    const clinicName = currentLang === "ar" ? "عيادة د. دعاء شعبان" : "DR. DOAA SHABAN CLINIC";
+    return `<aside class="booking-data-notice" aria-label="${heading}"><span class="notice-heading"><i class="fa-solid fa-house-medical" aria-hidden="true"></i> ${heading}</span><p>${copy}</p><strong>${clinicName}</strong></aside>`;
+}
 
 function startExperience() {
     let splash = document.getElementById("splash");
@@ -288,6 +423,7 @@ function initAssistantFloat() {
     }
     trigger.addEventListener("click", () => {
         hideAssistantHint();
+        pushInSiteOverlay("assistant");
         modal.hidden = false;
         trigger.setAttribute("aria-expanded", "true");
         document.body.classList.add("assistant-modal-open");
@@ -295,17 +431,13 @@ function initAssistantFloat() {
         if (!frame.getAttribute("src")) frame.src = frame.dataset.src;
     });
     modal.querySelectorAll("[data-close-assistant]").forEach(button => button.addEventListener("click", () => {
-        modal.hidden = true;
-        trigger.setAttribute("aria-expanded", "false");
-        document.body.classList.remove("assistant-modal-open");
-        trigger.focus();
+        if (history.state?.clinicOverlay === "assistant") history.back();
+        else closeAssistantModalFromHistory();
     }));
     document.addEventListener("keydown", event => {
         if (event.key === "Escape" && !modal.hidden) {
-            modal.hidden = true;
-            trigger.setAttribute("aria-expanded", "false");
-            document.body.classList.remove("assistant-modal-open");
-            trigger.focus();
+            if (history.state?.clinicOverlay === "assistant") history.back();
+            else closeAssistantModalFromHistory();
         }
     });
 }
@@ -549,8 +681,13 @@ function visitCard(type, icon, label, special = false) {
 
 function selectVisit(type) {
     currentBookingType = type;
-    if (type === "pregnancy") renderPregnancyCalc();
-    else renderBookingForm();
+    if (type === "pregnancy") {
+        pushBookingView("pregnancyCalc", { type });
+        renderPregnancyCalc();
+    } else {
+        pushBookingView("form", { type });
+        renderBookingForm();
+    }
 }
 
 function visitLabel(type) {
@@ -650,17 +787,18 @@ function renderBookingForm() {
                 </button>
             </div>
 
-            <button class="inline-back-btn" onclick="renderBookingStart()">
+            ${bookingDataNotice()}
+
+            <button class="inline-back-btn" onclick="goBackInSite()">
                 <i class="fa-solid fa-arrow-right"></i> ${t("back")}
             </button>
-            ${signatureHtml}
         </div>
     `;
 
     document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function renderPregnancyCalc() {
+function renderPregnancyCalc(selectedDate = "") {
     const today = todayISO();
     
     document.getElementById("bookingArea").innerHTML = `
@@ -673,7 +811,7 @@ function renderPregnancyCalc() {
             <div class="form-grid">
                 <div class="form-field full">
                     <label>${t("pregDate")}</label>
-                    <input type="date" id="lastPeriodDate" max="${today}">
+                    <input type="date" id="lastPeriodDate" max="${today}" value="${selectedDate}">
                 </div>
             </div>
 
@@ -683,10 +821,9 @@ function renderPregnancyCalc() {
 
             <div id="pregnancyResult"></div>
 
-            <button class="inline-back-btn" onclick="renderBookingStart()">
+            <button class="inline-back-btn" onclick="goBackInSite()">
                 <i class="fa-solid fa-arrow-right"></i> ${t("back")}
             </button>
-            ${signatureHtml}
         </div>
     `;
     document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -694,6 +831,10 @@ function renderPregnancyCalc() {
 
 function calculatePregnancy() {
     const d = document.getElementById("lastPeriodDate").value;
+    calculatePregnancyForDate(d, true);
+}
+
+function calculatePregnancyForDate(d, addHistory = true) {
     if (!d) {
         showSoftAlert(t("alertTitle"), currentLang === "ar" ? "اختاري تاريخ أول يوم في آخر دورة" : "Please choose the first day of your last period");
         return;
@@ -709,6 +850,17 @@ function calculatePregnancy() {
     if (totalDays < 0) {
         showSoftAlert(t("alertTitle"), currentLang === "ar" ? "لا يمكن اختيار تاريخ في المستقبل." : "Cannot choose a future date.");
         return;
+    }
+
+    // Keep the menstrual-cycle date only in memory; do not place health data in browser history state.
+    lastPregnancyCalcDate = d;
+
+    if (addHistory) {
+        const current = history.state && typeof history.state === "object" ? history.state : {};
+        const calcState = { ...current, clinicSite: true, clinicSection: "booking", clinicBookingView: "pregnancyCalc" };
+        history.replaceState(calcState, "", location.href);
+        history.pushState({ ...calcState, clinicBookingView: "pregnancyResult" }, "", location.href);
+        currentBookingView = "pregnancyResult";
     }
 
     document.getElementById("pregnancyResult").innerHTML = `
@@ -732,6 +884,13 @@ function calculatePregnancy() {
             : `Month: <strong>${month}</strong> | Due Date: <strong style="color:#dc2626;">${dueText}</strong>`;
             
         const neonWeeks = `<div class="neon-text">${weeks} ${currentLang === "ar" ? "أسبوع" : "Weeks"} ${days > 0 ? (currentLang === "ar" ? "و " + days + " يوم" : "and " + days + " Days") : ""}</div>`;
+        const journeyPercent = Math.min(100, Math.round(totalDays / 280 * 100));
+        const trimesterIndex = weeks < 14 ? 0 : weeks < 28 ? 1 : 2;
+        const journeyTitle = currentLang === "ar" ? "رحلتك للأمومة" : "Your journey to motherhood";
+        const journeyLabel = currentLang === "ar" ? `${journeyPercent}% من رحلة الأربعين أسبوعًا` : `${journeyPercent}% of the 40-week journey`;
+        const weekCount = currentLang === "ar" ? `${weeks} من 40 أسبوعًا` : `${weeks} of 40 weeks`;
+        const trimesterLabels = currentLang === "ar" ? ["الثلث الأول", "الثلث الثاني", "الثلث الأخير"] : ["First trimester", "Second trimester", "Third trimester"];
+        const trimesterTrack = `<div class="pregnancy-trimester-track" aria-label="${currentLang === "ar" ? "مرحلة الحمل التقريبية" : "Approximate pregnancy stage"}">${trimesterLabels.map((label, index) => `<span class="pregnancy-trimester ${index === trimesterIndex ? "is-active" : ""}">${label}</span>`).join("")}</div>`;
 
         const prayer = currentLang === "ar"
             ? "اللهم سهّل حملها وولادتها، واحفظها هي وجنينها، وارزقها ساعة ولادة هينة وطفلاً سليماً معافى 🤰🏻🤲🏻."
@@ -741,6 +900,12 @@ function calculatePregnancy() {
             <div class="pregnancy-result-card">
                 <div class="baby-icon"><i class="fa-solid fa-baby-carriage"></i></div>
                 <h3>${t("pregResultTitle")}</h3>
+                <div class="pregnancy-journey" role="progressbar" aria-label="${journeyTitle}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${journeyPercent}">
+                    <div class="pregnancy-journey-ring" style="--progress:${journeyPercent}%"><span><i class="fa-solid fa-heart" aria-hidden="true"></i></span></div>
+                    <div class="pregnancy-journey-copy"><strong>${journeyTitle}</strong><span>${journeyLabel}</span></div>
+                    <b class="pregnancy-week-count">${weekCount}</b>
+                </div>
+                ${trimesterTrack}
                 ${neonWeeks}
                 <p class="result-text">${resultText}</p>
                 <div class="pregnancy-prayer">${prayer}</div>
@@ -1065,6 +1230,7 @@ async function submitBirth() {
 }
 
 function showBirthSuccess(valid, finalId, message) {
+    pushBookingResult("success");
     const now = new Date();
     const regTime = now.toLocaleString(currentLang === "ar" ? "ar-EG" : "en-US");
 
@@ -1088,8 +1254,9 @@ function showBirthSuccess(valid, finalId, message) {
             <h2 style="color:var(--dark-pink);">${IS_LOCAL_PREVIEW ? (currentLang === "ar" ? "اكتملت معاينة النموذج ✨" : "Preview complete ✨") : (currentLang === "ar" ? "تم تسجيل طلب حجز الولادة 🎉" : "Delivery booking request registered 🎉")}</h2>
             ${detailsHtml(data)}
             <div class="notice-board ${IS_LOCAL_PREVIEW ? "local-preview-result" : ""}">${IS_LOCAL_PREVIEW ? (currentLang === "ar" ? "محاكاة محلية فقط: لم يتم إرسال الحجز أو حفظه في الشيت، ولم تُرسل أي رسالة." : "Local preview only: this request was not sent or saved, and no message was sent.") : (currentLang === "ar" ? "برجاء التواصل مع العيادة لتحديد تفاصيل حجز الولادة وموعد الحضور المناسب." : "Please contact the clinic to arrange delivery booking details.")}</div>
+            ${bookingDataNotice()}
             ${!IS_LOCAL_PREVIEW ? `<a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="premium-wa-link"><i class="fa-brands fa-whatsapp"></i> ${currentLang === "ar" ? "إرسال البيانات للعيادة" : "Send details to clinic"}</a>` : ""}
-            <button class="inline-back-btn" onclick="renderBookingStart()">${currentLang === "ar" ? "رجوع للرئيسية" : "Back"}</button>
+            <button class="inline-back-btn" onclick="goBackInSite()">${currentLang === "ar" ? "رجوع للرئيسية" : "Back"}</button>
         </div>
     `;
     document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1125,6 +1292,7 @@ function escapeHtml(value) {
 }
 
 function showSuccess(valid, finalId, typeAr, message, hasAttachment) {
+    pushBookingResult("success");
     const now = new Date();
     const regTime = now.toLocaleString(currentLang === "ar" ? "ar-EG" : "en-US");
 
@@ -1164,8 +1332,9 @@ function showSuccess(valid, finalId, typeAr, message, hasAttachment) {
             <h2 style="color:var(--dark-pink);">${IS_LOCAL_PREVIEW ? (currentLang === "ar" ? "اكتملت معاينة النموذج ✨" : "Preview complete ✨") : (currentLang === "ar" ? "تم تسجيل البيانات بنجاح 🎉" : "Details registered successfully 🎉")}</h2>
             ${detailsHtml(data)}
             <div class="notice-board ${IS_LOCAL_PREVIEW ? "local-preview-result" : ""}">${noticeBoardHtml}</div>
+            ${bookingDataNotice()}
             ${(!IS_LOCAL_PREVIEW && typeAr !== formText.ar.contacts && typeAr !== formText.en.contacts) ? `<a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="premium-wa-link"><i class="fa-brands fa-whatsapp"></i> ${currentLang === "ar" ? "إرسال البيانات للعيادة" : "Send details to clinic"}</a>` : ""}
-            <button class="inline-back-btn" onclick="renderBookingStart()">${currentLang === "ar" ? "رجوع للرئيسية" : "Back"}</button>
+            <button class="inline-back-btn" onclick="goBackInSite()">${currentLang === "ar" ? "رجوع للرئيسية" : "Back"}</button>
         </div>
     `;
 
@@ -1193,6 +1362,7 @@ function celebrateBooking() {
 }
 
 function showDuplicated(oldData, finalId, msg, hasAttachment, message) {
+    pushBookingResult("duplicated");
     const waUrl = `https://wa.me/${CLINIC_WHATSAPP}`;
 
     document.getElementById("bookingArea").innerHTML = `
@@ -1211,8 +1381,9 @@ function showDuplicated(oldData, finalId, msg, hasAttachment, message) {
                     ? "لإلغاء الحجز أو تعديل الموعد برجاء التواصل مع العيادة مباشرة عبر واتساب."
                     : "To cancel or modify the booking, please contact the clinic directly via WhatsApp."}
             </div>
+            ${bookingDataNotice()}
             <a href="${waUrl}" target="_blank" class="premium-wa-link"><i class="fa-brands fa-whatsapp"></i> ${currentLang === "ar" ? "التواصل مع العيادة" : "Contact clinic"}</a>
-            <button class="inline-back-btn" onclick="renderBookingStart()">${currentLang === "ar" ? "رجوع للرئيسية" : "Back"}</button>
+            <button class="inline-back-btn" onclick="goBackInSite()">${currentLang === "ar" ? "رجوع للرئيسية" : "Back"}</button>
         </div>
     `;
     document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "center" });

@@ -2454,3 +2454,60 @@ body.assistant-modal-open { overflow:hidden; }
 @media (max-width:600px) { .visit-option { min-height:91px; gap:9px; padding:12px 10px; border-radius:17px; }.visit-option-icon { flex-basis:42px; width:42px; height:42px; border-radius:14px; }.visit-option-copy strong { font-size:.9rem; }.visit-option-copy>span { font-size:.74rem; }.assistant-float { left:13px; bottom:82px; }.assistant-orb { width:58px; height:58px; }.assistant-modal { align-items:end; padding:0; }.assistant-dialog { width:100%; height:calc(100dvh - 12px); border-radius:24px 24px 0 0; }.visitor-presence { margin-bottom:12px; font-size:.73rem; } }
 @media (prefers-reduced-motion:reduce) { .celebration-piece,.result-celebration,.assistant-orb,.presence-pips i { animation:none!important; }.visit-option,.assistant-float { transition:none!important; } }
 
+/* 2.6.0: balanced booking choices and reusable WhatsApp signature */
+.visit-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; perspective:none; }
+.visit-option { position:relative; display:grid; grid-template-columns:1fr; justify-items:center; align-content:center; gap:11px; min-height:176px; padding:22px 32px; text-align:center; }
+.visit-option-icon { flex:0 0 54px; width:54px; height:54px; border-radius:19px; font-size:1.25rem; }
+.visit-option-copy { justify-items:center; width:100%; gap:6px; }
+.visit-option-copy strong { font-size:1.04rem; line-height:1.55; }
+.visit-option-copy>span { max-width:31ch; font-size:.88rem; line-height:1.75; }
+.visit-option-arrow { position:absolute; inset-inline-end:16px; top:16px; font-size:.84rem; }
+.visit-option:hover .visit-option-arrow { transform:translateX(-3px); }
+html[dir="ltr"] .visit-option:hover .visit-option-arrow { transform:translateX(3px); }
+.footer { margin-top:36px; padding:30px 16px 38px; color:var(--text-soft); }
+.footer-signature { display:grid; justify-items:center; gap:11px; width:min(100%,600px); margin-inline:auto; }
+.footer-credit { direction:ltr; display:inline-flex; align-items:center; justify-content:flex-start; gap:11px; width:min(100%,560px); max-width:100%; padding:9px 14px; overflow:hidden; border:1px solid color-mix(in srgb,#c79b39 45%,var(--border-soft)); border-radius:19px; background:linear-gradient(145deg,var(--card-bg),color-mix(in srgb,#c79b39 8%,var(--card-bg))); color:#a87916; box-shadow:0 8px 22px color-mix(in srgb,#a87916 11%,transparent),inset 0 1px 0 rgba(255,255,255,.7); text-align:left; text-decoration:none; }
+.footer-credit:hover,.footer-credit:focus-visible { color:#79540d; border-color:#c79b39; transform:translateY(-2px); }
+.footer-whatsapp-mark { display:grid; flex:0 0 40px; place-items:center; width:40px; height:40px; border-radius:14px; background:linear-gradient(145deg,#f1d995,#d7ad50); color:#fff; box-shadow:0 5px 13px rgba(161,119,26,.22),inset 0 1px 0 rgba(255,255,255,.6); }
+.footer-whatsapp-mark svg { width:22px; height:22px; }
+.footer-signature-copy { display:grid; gap:1px; line-height:1.35; text-align:left; }
+.footer-signature-copy small { color:var(--text-soft); font-size:.59rem; font-weight:850; letter-spacing:.09em; }
+.footer-signature-copy strong { color:var(--text-main); font-size:.88rem; font-weight:950; letter-spacing:.02em; }
+.footer-signature-copy>span { color:#a87916; font-size:.62rem; font-weight:900; letter-spacing:.06em; }
+.footer-signature-arrow { margin-inline-start:auto; color:#b98c2e; font-size:.72rem; }
+.footer-meta { justify-content:center; gap:8px; }
+.footer-meta span { padding:7px 11px; border-radius:999px; font-size:.73rem; }
+@media (max-width:600px) {
+  .visit-grid { grid-template-columns:1fr; gap:12px; }
+  .visit-option { min-height:158px; padding:20px 30px; border-radius:20px; }
+  .visit-option-icon { flex-basis:50px; width:50px; height:50px; border-radius:17px; }
+  .visit-option-copy strong { font-size:1rem; }
+  .visit-option-copy>span { max-width:29ch; font-size:.84rem; }
+  .footer { padding-inline:12px; }
+  .footer-credit { gap:9px; padding:8px 11px; }
+  .footer-whatsapp-mark { flex-basis:38px; width:38px; height:38px; }
+  .footer-meta { flex-direction:column; }
+}
+@media (prefers-reduced-motion:reduce) { .footer-credit { transition:none!important; } }
+
+.booking-data-notice { display:grid; gap:4px; width:min(100%,600px); margin:16px auto 0; padding:11px 15px; border:1px solid color-mix(in srgb,#c79b39 40%,var(--border-soft)); border-radius:15px; background:linear-gradient(135deg,color-mix(in srgb,#f1d995 16%,var(--card-bg)),var(--card-bg)); text-align:center; box-shadow:0 6px 17px color-mix(in srgb,#a87916 8%,transparent); }
+.booking-data-notice .notice-heading { display:flex; align-items:center; justify-content:center; gap:7px; color:#94701f; font-size:.75rem; font-weight:950; letter-spacing:.07em; }
+.booking-data-notice p { margin:0; color:var(--text-soft); font-size:.79rem; font-weight:750; line-height:1.65; }
+.booking-data-notice strong { color:var(--text-main); font-size:.79rem; font-weight:950; letter-spacing:.035em; }
+.pregnancy-result-card { position:relative; isolation:isolate; overflow:hidden; padding:clamp(23px,4vw,38px); border:1px solid color-mix(in srgb,var(--accent-pink) 23%,var(--border-soft)); border-radius:30px; background:radial-gradient(circle at 92% 8%,color-mix(in srgb,var(--medical-blue) 11%,transparent),transparent 30%),radial-gradient(circle at 7% 90%,color-mix(in srgb,var(--accent-pink) 13%,transparent),transparent 31%),linear-gradient(145deg,var(--card-bg),color-mix(in srgb,#fff0f5 44%,var(--card-bg))); box-shadow:0 22px 55px color-mix(in srgb,var(--accent-pink) 15%,transparent); }
+.pregnancy-result-card::after { content:"✿"; position:absolute; z-index:-1; inset-inline-end:18px; top:-33px; color:color-mix(in srgb,var(--accent-pink) 12%,transparent); font-size:160px; line-height:1; transform:rotate(-18deg); }
+.pregnancy-journey { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:16px; max-width:560px; margin:0 auto 22px; padding:14px 18px; border:1px solid color-mix(in srgb,var(--accent-pink) 16%,var(--border-soft)); border-radius:22px; background:color-mix(in srgb,var(--card-bg) 88%,transparent); box-shadow:0 9px 25px color-mix(in srgb,var(--accent-pink) 8%,transparent); text-align:start; }
+.pregnancy-journey-ring { --progress:0%; display:grid; place-items:center; width:62px; height:62px; border-radius:50%; background:conic-gradient(var(--accent-pink) var(--progress),color-mix(in srgb,var(--accent-pink) 14%,var(--card-bg)) 0); }
+.pregnancy-journey-ring span { display:grid; place-items:center; width:49px; height:49px; border-radius:50%; background:var(--card-bg); color:var(--accent-pink); font-size:1.15rem; }
+.pregnancy-journey-copy { display:grid; gap:3px; }
+.pregnancy-journey-copy strong { color:var(--dark-pink); font-size:.95rem; font-weight:950; }
+.pregnancy-journey-copy span { color:var(--text-soft); font-size:.76rem; font-weight:800; }
+.pregnancy-week-count { color:var(--primary-color); font-size:1rem; font-weight:950; white-space:nowrap; }
+.pregnancy-trimester-track { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; max-width:560px; margin:0 auto 22px; }
+.pregnancy-trimester { padding:9px 7px; border:1px solid var(--border-soft); border-radius:14px; background:color-mix(in srgb,var(--card-bg) 80%,transparent); color:var(--text-soft); font-size:.71rem; font-weight:850; text-align:center; }
+.pregnancy-trimester.is-active { border-color:color-mix(in srgb,var(--accent-pink) 40%,var(--border-soft)); background:color-mix(in srgb,var(--accent-pink) 12%,var(--card-bg)); color:var(--dark-pink); box-shadow:0 5px 14px color-mix(in srgb,var(--accent-pink) 10%,transparent); }
+.pregnancy-result-card .neon-text { margin:12px auto; font-size:clamp(1.7rem,5vw,2.6rem); }
+.pregnancy-result-card .result-text { max-width:600px; margin:12px auto 18px; font-size:1rem; line-height:1.9; }
+.pregnancy-result-card .pregnancy-prayer { max-width:680px; margin:20px auto 0; border:1px solid color-mix(in srgb,var(--accent-pink) 12%,var(--border-soft)); border-radius:17px; background:color-mix(in srgb,var(--card-bg) 90%,transparent); }
+@media (max-width:520px) { .pregnancy-journey { grid-template-columns:auto 1fr; gap:11px; padding:12px; }.pregnancy-week-count { grid-column:2; font-size:.82rem; }.pregnancy-journey-ring { width:54px; height:54px; }.pregnancy-journey-ring span { width:43px; height:43px; }.pregnancy-trimester { font-size:.63rem; padding:8px 4px; }.booking-data-notice { padding:13px 12px; } }
+

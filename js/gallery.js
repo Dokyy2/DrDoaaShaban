@@ -58,6 +58,7 @@
 
     function openStory(index, trigger) {
         activeTrigger = trigger || triggers[index];
+        window.pushInSiteOverlay?.("story");
         paused = false;
         updatePauseButton();
         viewer.classList.add("is-open");
@@ -66,7 +67,11 @@
         showStory(index, true);
     }
 
-    function closeStory() {
+    function closeStory(fromHistory = false) {
+        if (!fromHistory && history.state?.clinicOverlay === "story") {
+            history.back();
+            return;
+        }
         window.clearTimeout(timer);
         viewer.classList.remove("is-open");
         viewer.setAttribute("aria-hidden", "true");
@@ -130,5 +135,6 @@
     document.documentElement.dataset.galleryReady = "true";
     document.documentElement.dataset.galleryBound = "true";
     window.openClinicStory = openStory;
+    window.closeClinicStory = closeStory;
 })();
 
