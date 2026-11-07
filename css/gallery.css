@@ -189,4 +189,3 @@ body.story-viewer-open { overflow: hidden; }
     .clinic-story-ring,.story-viewer,.story-dialog,.story-viewer-nav { transition-duration: .01ms; }
     .story-progress-segment.is-active::after { animation:none; width:100%; }
 }
-

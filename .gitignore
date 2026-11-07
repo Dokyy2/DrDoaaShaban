@@ -1,4 +1,5 @@
 # بيانات المرضى والنسخ الاحتياطية: تبقى محليًا فقط ولا تُرفع إلى GitHub.
+docs/ADMIN_REBUILD_*.md
 import/
 backups/
 exports/
