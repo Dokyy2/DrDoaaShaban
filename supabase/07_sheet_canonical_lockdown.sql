@@ -32,7 +32,7 @@ grant select (id, appointment_id, actor_id, event_type, old_status, new_status, 
   on public.appointment_events to authenticated;
 grant select (id, clinic_name, work_start, work_end, max_daily_slots,
   closed_weekdays, closed_dates, service_prices, finance_enabled,
-  finance_start_date, updated_at) on public.clinic_settings to authenticated;
+  updated_at) on public.clinic_settings to authenticated;
 grant select (id, source_event_id, appointment_id, alert_type, reason, matched_appointment_id,
   status, resolved_at, resolved_by, created_at) on public.booking_alerts to authenticated;
 grant select (id, appointment_id, changed_by, changed_by_name, old_amount_due,

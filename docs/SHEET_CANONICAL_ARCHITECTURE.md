@@ -20,8 +20,9 @@ Google Sheets and Supabase cannot share one atomic transaction. Sheet-first writ
 |---|---:|---:|
 | Read/process bookings, contact, status, schedule, waitlist | Yes | Yes |
 | Record visit completion and payment | Yes, per clinic workflow | Yes |
-| Read private clinical notes | No | Yes |
-| Finance reports, expenses, payment audit, clinic settings, user roles | No | Yes |
+| Read operational hours, closure days, capacity, service prices, and payment-workflow availability | Yes, as needed for clinic work | Yes |
+| Read private clinical notes, finance reports, expenses, and payment audit | No | Yes |
+| Change clinic settings/finance controls or user roles | No | Yes |
 
 The server validates roles on every write. Hiding a control in the browser is not authorization. Keep a maximum of five active accounts. New accounts default to `pending` until the doctor approves them.
 
@@ -62,4 +63,5 @@ The server validates roles on every write. Hiding a control in the browser is no
 - Apps Script Script Properties are configured privately. The service-role key must be rotated and replaced because a portion appeared in a shared screenshot. Do not paste service credentials in chat, source files, or GitHub.
 - Supabase migrations `add_monday_clinic_closure` and `function_privilege_hardening` are applied and verified. `closed_weekdays` is `[1,4,5]`; trigger-only functions no longer have web-role execute grants; `create_booking` remains `anon`-only while the old route is still active. Migration `07_sheet_canonical_lockdown.sql` must wait until the Apps Script bridge is deployed and verified.
 - A local review on 2026-11-08 found and corrected the private-note projection payload: the bridge now maps `patientId`/`actorId` to the actual Supabase `patient_id`/`updated_by` columns and validates a patient UUID. The live schema confirms that `patient_private_notes` and outbox idempotency columns are created by migration `07`, so notes/expenses/alerts cannot fully project until that guarded cutover.
+- The shared dashboard read omits the unused `finance_start_date` field and the cutover grant does not expose it. Secretaries retain only the operational price/payment-availability fields needed for their workflow; server-side checks still reserve setting changes, finance reports, private notes, and user-role administration for the doctor.
 - The bridge has only passed local syntax/guard checks so far. Do not create synthetic writes in the clinic workbook or call the Sheet-first design live until staging verifies writes, roles, outbox retry, and reconciliation.

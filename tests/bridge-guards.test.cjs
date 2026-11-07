@@ -6,6 +6,8 @@ const assert = require('node:assert/strict');
 
 const bridgePath = path.join(__dirname, '..', 'google-apps-script', 'commercial', 'Code.gs');
 const bridgeSource = fs.readFileSync(bridgePath, 'utf8');
+const dashboardSource = fs.readFileSync(path.join(__dirname, '..', 'dashboard', 'dashboard.js'), 'utf8');
+const lockdownSource = fs.readFileSync(path.join(__dirname, '..', 'supabase', '07_sheet_canonical_lockdown.sql'), 'utf8');
 
 function loadBridge(overrides = {}) {
   const sandbox = {
@@ -137,6 +139,12 @@ test('private-note action requires a valid patient UUID and doctor role', () => 
   const invalid = bridge.updatePrivateNote_({ patientId: 'not-a-uuid', phone: '01000000000' }, { role: 'doctor' });
   assert.equal(invalid.code, 'invalid_patient');
   assert.throws(() => bridge.updatePrivateNote_({ patientId: '12345678-1234-4234-8234-123456789abc', phone: '01000000000' }, { role: 'secretary' }), /الصلاحية غير كافية/);
+});
+
+test('shared dashboard settings read omits unused finance start date', () => {
+  assert.doesNotMatch(dashboardSource, /from\('clinic_settings'\)\.select\([^)]*finance_start_date/);
+  const settingsGrants = lockdownSource.match(/grant select[\s\S]*?on public\.clinic_settings to authenticated/gi) || [];
+  assert.equal(settingsGrants.some(grant => grant.includes('finance_start_date')), false);
 });
 
 test('rejects an unrecognized workflow status', () => {

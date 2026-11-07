@@ -112,7 +112,7 @@ async function loadData() {
   const [appointmentsRes, patientsRes, settingsRes, alertsRes, paymentAuditRes, expensesRes] = await Promise.all([
     fetchAllRows(() => supabase.from('appointments').select(`${appointmentFields}, patients(${patientFields}), appointment_events(id,event_type,note,old_status,new_status,created_at)`).order('created_at', { ascending:false })),
     fetchAllRows(() => supabase.from('patients').select(patientDirectoryFields).order('created_at', { ascending:false })),
-    supabase.from('clinic_settings').select('id,clinic_name,work_start,work_end,max_daily_slots,closed_weekdays,closed_dates,service_prices,finance_enabled,finance_start_date').eq('id', true).single(),
+    supabase.from('clinic_settings').select('id,clinic_name,work_start,work_end,max_daily_slots,closed_weekdays,closed_dates,service_prices,finance_enabled').eq('id', true).single(),
     supabase.from('booking_alerts').select('id,source_event_id,alert_type,reason,matched_appointment_id,status,resolved_at,resolved_by,created_at').order('created_at', { ascending:false }).limit(300),
     profile.role === 'doctor' ? supabase.from('payment_audit').select('id,appointment_id,changed_by,changed_by_name,old_amount_due,new_amount_due,old_amount_paid,new_amount_paid,old_payment_method,new_payment_method,old_payment_note,new_payment_note,changed_at').order('changed_at', { ascending:false }).limit(1500) : Promise.resolve({ data:[], error:null }),
     profile.role === 'doctor' ? supabase.from('clinic_expenses').select('id,expense_date,category,amount,note,created_by,created_at').order('expense_date', { ascending:false }).limit(1000) : Promise.resolve({ data:[], error:null })
