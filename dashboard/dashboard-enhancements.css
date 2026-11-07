@@ -121,3 +121,5 @@
   .menu button{flex:0 0 auto;padding:9px 10px;font-size:.72rem}
 }
 @media(prefers-reduced-motion:reduce){.menu button,.clickable-stats .stat,.request-card{transition:none!important}.request-card:hover,.menu button:hover,.clickable-stats .stat:hover{transform:none}}
+.settings-reconcile{margin-top:18px;padding:18px;border:1px solid var(--line,#dbe5ef);border-radius:16px;background:var(--surface-soft,#f8fbff)}.settings-reconcile b{display:block}.settings-reconcile p{margin:6px 0 12px;color:var(--muted,#64748b);font-size:.92rem}
+.bridge-warning{display:flex;gap:10px;align-items:center;margin:0 0 18px;padding:13px 16px;border:1px solid #f0cc79;border-radius:14px;background:#fff9e9;color:#704c10}.bridge-warning i{font-size:1.2rem}.bridge-warning b{display:block;margin-bottom:2px}

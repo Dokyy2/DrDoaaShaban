@@ -1,4 +1,3 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP_Kllz_3jkLxGj2hJpNAQ6Vt4I_JOU9EnC0LB471hFJitfEoxQLdsbec8P7hcmraC/exec";
 const CLINIC_WHATSAPP = "201125337717";
 const IS_LOCAL_PREVIEW = location.protocol === "file:" || ["localhost", "127.0.0.1"].includes(location.hostname);
 
@@ -370,6 +369,8 @@ function goBackInSite() {
         history.back();
         return;
     }
+    const bridgeUrl = String(window.CLINIC_BRIDGE?.url || "").trim();
+    if (!bridgeUrl) return;
     renderBookingStart();
     document.getElementById("bookingArea")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -521,7 +522,7 @@ function initPresenceCounter() {
         const timeout = window.setTimeout(() => { script.remove(); window.__clinicPresenceInFlight = false; }, 9000);
         script.onerror = () => { clearTimeout(timeout); script.remove(); window.__clinicPresenceInFlight = false; };
         script.onload = () => { clearTimeout(timeout); script.remove(); window.__clinicPresenceInFlight = false; };
-        script.src = `${SCRIPT_URL}?mode=presence&visitor=${encodeURIComponent(visitorId)}&callback=clinicPresenceCallback&ts=${Date.now()}`;
+        script.src = `${bridgeUrl}?mode=presence&visitor=${encodeURIComponent(visitorId)}&callback=clinicPresenceCallback&ts=${Date.now()}`;
         document.head.appendChild(script);
         if (failedBeforeResponse) window.setTimeout(() => { if (pill.hidden) pill.hidden = true; }, 9500);
     };
@@ -1097,9 +1098,10 @@ function fileToBase64(file) {
         const reader = new FileReader();
         reader.onload = () => resolve({
             attachmentName: file.name,
+            attachmentType: file.type,
             attachmentBase64: String(reader.result).split(",")[1] || ""
         });
-        reader.onerror = () => resolve({ attachmentName: file.name, attachmentBase64: "" });
+        reader.onerror = () => resolve({ attachmentName: file.name, attachmentType: file.type, attachmentBase64: "" });
         reader.readAsDataURL(file);
     });
 }
@@ -1144,23 +1146,15 @@ function isSupabaseConfigured() {
 }
 
 async function sendBooking(payload) {
-    if (!isSupabaseConfigured()) {
-        const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
-        if (!response.ok) throw new Error("تعذر الاتصال بخدمة الحجز");
-        return response.json();
-    }
-
-    const { url, anonKey } = window.CLINIC_SUPABASE;
-    const headers = { "Content-Type": "application/json", apikey: anonKey };
-    // Publishable keys are API keys, not JWTs; legacy anon keys are JWTs.
-    if (!anonKey.startsWith("sb_publishable_")) headers.Authorization = `Bearer ${anonKey}`;
-    const response = await fetch(`${url.replace(/\/+$/, "")}/rest/v1/rpc/create_booking`, {
+    const bridgeUrl = String(window.CLINIC_BRIDGE?.url || "").trim();
+    if (!bridgeUrl) throw new Error("خدمة الحجز الموحدة غير جاهزة بعد. يرجى المحاولة لاحقًا.");
+    const response = await fetch(bridgeUrl, {
         method: "POST",
-        headers,
-        body: JSON.stringify({ payload })
+        cache: "no-store",
+        body: JSON.stringify({ action: "booking.create", payload })
     });
     const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.message || "تعذر إرسال طلب الحجز");
+    if (!response.ok || result.status === "error") throw new Error(result.message || "تعذر إرسال طلب الحجز");
     return result;
 }
 
@@ -1230,13 +1224,9 @@ async function submitBooking() {
         const rawId = String(response.id || response.bookingId || Math.floor(1000 + Math.random() * 9000));
         const finalId = rawId.startsWith("BK-") ? rawId : prefix + rawId.replace(/[^0-9]/g, "");
         if (["duplicate", "duplicated"].includes(response.status)) {
-            const oldData = {
-                name: response.oldName || response.name || valid.name,
-                phone: response.oldPhone || response.phone || valid.phone,
-                date: response.oldDate || response.date || valid.date || todayISO()
-            };
-            const duplicateId = String(response.bookingId || response.id || finalId);
-            const duplicateFinalId = duplicateId.startsWith("BK-") ? duplicateId : prefix + duplicateId.replace(/[^0-9]/g, "");
+            const duplicateId = String(response.bookingId || response.id || "");
+            const duplicateFinalId = duplicateId ? (duplicateId.startsWith("BK-") ? duplicateId : prefix + duplicateId.replace(/[^0-9]/g, "")) : "";
+            const oldData = { date: "" };
             showDuplicated(oldData, duplicateFinalId, response.message || (currentLang === "ar" ? "يوجد حجز مسبق بهذا الرقم." : "There is already a booking for this number."), hasAttachment, message);
             return;
         }
@@ -1292,13 +1282,9 @@ async function submitBirth() {
         const rawId = String(response.id || response.bookingId || Math.floor(1000 + Math.random() * 9000));
         const finalId = rawId.startsWith("BK-") ? rawId : prefix + rawId.replace(/[^0-9]/g, "");
         if (["duplicate", "duplicated"].includes(response.status)) {
-            const oldData = {
-                name: response.oldName || response.name || valid.name,
-                phone: response.oldPhone || response.phone || valid.phone,
-                date: response.oldDate || response.date || valid.date || todayISO()
-            };
-            const duplicateId = String(response.bookingId || response.id || finalId);
-            const duplicateFinalId = duplicateId.startsWith("BK-") ? duplicateId : prefix + duplicateId.replace(/[^0-9]/g, "");
+            const duplicateId = String(response.bookingId || response.id || "");
+            const duplicateFinalId = duplicateId ? (duplicateId.startsWith("BK-") ? duplicateId : prefix + duplicateId.replace(/[^0-9]/g, "")) : "";
+            const oldData = { date: "" };
             showDuplicated(oldData, duplicateFinalId, response.message || (currentLang === "ar" ? "يوجد حجز مسبق بهذا الرقم." : "There is already a booking for this number."), false, message);
             return;
         }
@@ -1454,10 +1440,7 @@ function showDuplicated(oldData, finalId, msg, hasAttachment, message) {
             <h2 style="color:var(--error-red); margin-bottom: 5px;">${currentLang === "ar" ? "يوجد حجز مسبق بالفعل" : "Existing booking found"}</h2>
             <p style="font-weight:800;line-height:1.8; color:var(--text-main); margin-bottom: 20px;">${escapeHtml(msg)}</p>
 
-            <div class="details-box">
-                <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "رقم الكشف" : "Visit ID"}</span><span class="detail-value highlight-value">${finalId}</span></div>
-                <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "تاريخ التسجيل المسبق" : "Previous Registration"}</span><span class="detail-value">${oldData.date}</span></div>
-            </div>
+            ${finalId || oldData.date ? `<div class="details-box">${finalId ? `<div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "رقم الكشف" : "Visit ID"}</span><span class="detail-value highlight-value">${escapeHtml(finalId)}</span></div>` : ""}${oldData.date ? `<div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "تاريخ التسجيل المسبق" : "Previous Registration"}</span><span class="detail-value">${escapeHtml(oldData.date)}</span></div>` : ""}</div>` : ""}
 
             <div class="notice-board">
                 ${currentLang === "ar"
