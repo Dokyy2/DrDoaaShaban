@@ -1,42 +1,43 @@
-# Dr Doaa Shaban Clinic — Administration edition
+# مشروع عيادة د. دعاء شعبان — نسخة الاختبار
 
-**Project version:** `v2.5.0`  
-**Branch:** `with-admin`  
-**Status:** ready to publish on the existing `with-admin` branch.
+مشروع مستقل يجمع تجربة الحجز المحسنة من `v2.7.0` مع مدخل فريق مرتبط بـ Supabase. يجري تجهيز نسخة اختبار على فرع منفصل في مستودع GitHub الحالي. لا توجد ملفات مرضى أو نسخ جداول بيانات في هذا المشروع.
 
-This edition carries the same `v2.5.0` clinic experience as `main`, with the administration dashboard added. It preserves the existing Supabase booking path and dashboard code; the patient-facing form continues to use the Supabase RPC when its public client configuration is available.
+## التشغيل المحلي
 
-## Included in v2.5.0
+من مجلد المشروع الرئيسي شغّلي: `python -m http.server 8765 --bind 127.0.0.1`
 
-- Clear, stationary booking-service choices and a two-step cue.
-- Heart/flower celebration after a completed booking, plus refreshed alerts.
-- The five-photo story rail and viewer.
-- The health assistant logo, scroll-aware floating orb, and embedded assistant window.
-- A visitor counter capped at five visible visitors. The local Apps Script presence endpoint has not been deployed, so the live counter remains inactive until that endpoint is deployed.
-- The dashboard at `dashboard/`, authenticated through the existing Supabase project.
+- واجهة المشروع: `http://127.0.0.1:8765/03%20-%20Commercial%20Local%20Admin%20Build/`
+- بوابة فريق العيادة تتطلب تسجيل دخول، ولا يظهر رابطها في قوائم موقع الحجز.
 
-## Switching the same GitHub Pages URL
+عند تشغيل نموذج الحجز على localhost، يعرض الموقع نتيجة محاكاة ولا يرسل أو يحفظ طلبًا. بوابة الفريق تتصل بمشروع Supabase المضبوط بعد تسجيل الدخول؛ الملخص قراءة فقط.
 
-The root page is intentionally different by branch:
+## ما تم دمجه حتى الآن
 
-- `main` serves the no-dashboard edition.
-- `with-admin` serves this edition and includes the `dashboard/` page.
+- واجهة الحجز وملفاتها من أساس `v2.7.0`، بما فيها حاسبة الحمل، بطاقة رحلة الحمل، الثيمات، الحركات، وميزة الرجوع داخل الموقع.
+- رابط لوحة الإدارة للكمبيوتر والهاتف.
+- لوحة Supabase الحالية وملفاتها، وإعداد Supabase العام، ووثائق الإعداد والأمان وترقيات القاعدة وصور QR.
+- مسار الحجز يرسل إلى Supabase RPC `create_booking` عند توفر الإعداد، مع بقاء Apps Script كمسار احتياطي كما في النسخة الإدارية السابقة. معاينة localhost تعطل الإرسال وتعرض محاكاة آمنة.
+- إعداد SQL محلي يضيف الاثنين إلى الإجازة الأسبوعية ويحافظ على أيام الإغلاق المخصصة. لم يتم تشغيله على قاعدة البيانات.
 
-To switch which edition GitHub Pages serves, open repository **Settings → Pages → Build and deployment → Deploy from a branch**, choose `main` or `with-admin`, choose `/(root)`, and save. Both editions then use the same Pages URL; changing the selected branch changes the edition at that URL. Do not merge `with-admin` into `main` to switch versions.
+## إعادة بناء لوحة الإدارة
 
-The dashboard depends on the existing Supabase project and its active access policies. This repository contains only the public client configuration; it must never contain a service-role/secret key or patient exports. Keep Supabase RLS and authorized staff access in place.
+النسخة الحالية من البوابة مستقلة عن لوحة الإدارة السابقة وتبدأ بالقراءة فقط.
 
-## Local preview safety
+### بوابة الفريق الجديدة — 0.1.1
 
-Opening this edition via `file://` or localhost shows a preview banner and simulates booking completion. The preview does not send booking requests to Supabase or Apps Script. The visitor counter also stays simulated until the server endpoint is deployed.
+المسار `staff-access/` يحتوي الواجهة الجديدة وتسجيل دخول Supabase وملخصًا حيًا للقراءة فقط بعد دخول حساب بدور `doctor` أو `secretary`. القراءة تستخدم أعمدة محددة ولا تجلب الملاحظات الداخلية أو المرفقات. الأقسام الأخرى ما زالت هياكل تصميم، ولا توجد في هذا المسار إجراءات تعديل أو كتابة. لا يوجد رابط لها في قوائم موقع الحجز.
 
-## Key files
+تعتمد على `js/config.js` وسياسات RLS الحالية. تمت مراجعة دخول حقيقي وقراءة الملخص في 2026-11-07. لن يحتاج هذا الإصدار إلى ترحيل SQL ما دامت صلاحيات القراءة الموجودة تعمل كما هو متوقع. لم تُشغّل تغييرات على Supabase.
 
-- `index.html`, `css/main.css`, `css/gallery.css`, `js/gallery.js`: shared clinic interface at `v2.5.0`.
-- `js/main.js`: the existing administration-edition booking logic; keep its Supabase integration intact.
-- `js/admin-experience-v25.js`: shared UX upgrades layered over the administration logic.
-- `js/config.js`: public Supabase client configuration.
-- `dashboard/`: staff dashboard.
-- `supabase/`: schema and security migrations.
-- `google-apps-script/Code.gs`: local Apps Script source, including the pending presence endpoint.
+إخفاء رابط البوابة عن قوائم الموقع يخفيه عن زوار الحجز، لكنه لا يجعل مسار الملفات سرًا داخل مستودع عام. حماية البيانات تعتمد على تسجيل الدخول وسياسات RLS.
 
+قبل الرفع: اختبري تسجيل الدخول بالحسابات المخوّلة، وتحققي من عرض الملخص ومنع الحساب غير المخوّل، ثم راجعي نطاق الملفات العامة. لا ترفعي بيانات مرضى أو ملفات النسخ الاحتياطية أو أي مفتاح سري. إعداد الاستضافة الخاصة والدومين ما زال مطلوبًا؛ النشر الفعلي ما زال غير منفذ.
+
+## الخطوات القادمة
+
+1. استكمال مطابقة جداول ودوال وسياسات Supabase مع ملفات SQL المحفوظة والمحلية، قراءة فقط.
+2. تثبيت صلاحيات المستخدمين وقاعدة توزيع المواعيد والإشعارات.
+3. مراجعة بوابة `staff-access/` بحساب مخوّل، ثم استكمال الأقسام بقراءات محددة وصفحات بيانات قبل أي إجراءات كتابة.
+4. اقتراح وترقيم أي ترحيل قاعدة بيانات محليًا ومراجعته قبل تحديد بيئته أو تشغيله.
+
+لا تضعي بيانات مرضى أو مفاتيح `service_role` في ملفات الموقع. مستودع GitHub الحالي عام؛ لا ترفعي إليه أي بيانات شخصية أو أسرار.

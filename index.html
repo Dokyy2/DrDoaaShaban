@@ -22,7 +22,7 @@
 <body>
 
 <div class="local-preview-banner" id="localPreviewBanner" role="status" hidden>
-    معاينة محلية آمنة — لن يتم إرسال أو حفظ أي حجز
+    نسخة تجربة محلية — لن يتم إرسال الحجوزات أو حفظها في قاعدة البيانات أو الشيت
 </div>
 <div id="scrollDecorations" class="scroll-decorations" aria-hidden="true"></div>
 <div id="bookingCelebration" class="booking-celebration" aria-hidden="true"></div>
@@ -64,6 +64,24 @@
     </div>
 </div>
 
+<div class="pregnancy-nudge" id="pregnancyNudge" hidden>
+    <button class="pregnancy-nudge-backdrop" type="button" data-close-pregnancy-nudge aria-label="إغلاق البطاقة"></button>
+    <section class="pregnancy-nudge-card" role="dialog" aria-modal="true" aria-labelledby="pregnancyNudgeTitle" aria-describedby="pregnancyNudgeText">
+        <button class="pregnancy-nudge-close" type="button" data-close-pregnancy-nudge aria-label="إغلاق"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        <div class="pregnancy-nudge-confetti" aria-hidden="true">✦　♡　✿　✧</div>
+        <div class="pregnancy-nudge-art" aria-hidden="true"></div>
+        <span class="pregnancy-nudge-kicker" data-i18n="pregnancyNudgeKicker">هدية صغيرة لكِ</span>
+        <h2 id="pregnancyNudgeTitle" data-i18n="pregnancyNudgeTitle">رحلتك للأمومة 💗</h2>
+        <p id="pregnancyNudgeText" data-i18n="pregnancyNudgeText">احسبي فاضل قد إيه على مقابلة صغيرك، وشوفي رحلتك وصلت لكام في المية.</p>
+        <button class="pregnancy-nudge-cta" id="pregnancyNudgeCta" type="button"><span class="pregnancy-nudge-mini-art" aria-hidden="true"></span><span data-i18n="pregnancyNudgeCta">احسبي رحلتك</span><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+        <span class="pregnancy-nudge-foot" data-i18n="pregnancyNudgeFoot">حساب تقريبي لعمر الحمل وموعد الولادة</span>
+    </section>
+</div>
+
+<button class="pregnancy-float" id="pregnancyFloat" type="button" aria-label="افتحي حاسبة الحمل" title="احسبي رحلتك" hidden>
+    <span class="pregnancy-float-art" aria-hidden="true"></span><span class="pregnancy-float-label" data-i18n="pregnancyFloatLabel">حاسبة الحمل</span>
+</button>
+
 <header class="topbar">
     <div class="brand">
         <strong data-i18n="brandName">د. دعاء شعبان</strong>
@@ -78,7 +96,6 @@
         <a href="#assistant" class="smart-nav-hint" data-i18n="navAssistant">مساعدك بعد الولادة</a>
         <a href="#reviews" data-i18n="navReviews">آراء المرضى</a>
         <a href="#contact" data-i18n="navContact">العنوان</a>
-        <a href="dashboard/" target="_blank" rel="noopener noreferrer" class="admin-nav-link" data-i18n="navAdmin"><i class="fa-solid fa-lock"></i> لوحة الإدارة</a>
     </nav>
 
     <div class="control-group">
@@ -94,14 +111,13 @@
         <a href="#assistant" onclick="toggleMobileMenu()" data-i18n="navAssistant">مساعدك بعد الولادة</a>
         <a href="#reviews" onclick="toggleMobileMenu()" data-i18n="navReviews">آراء المرضى</a>
         <a href="#contact" onclick="toggleMobileMenu()" data-i18n="navContact">العنوان</a>
-        <a href="dashboard/" target="_blank" rel="noopener noreferrer" class="mobile-admin-link" data-i18n="navAdmin"><i class="fa-solid fa-lock"></i> لوحة الإدارة</a>
     </div>
 </header>
 
 <main>
     <section class="hero" id="home">
         <div class="hero-content">
-        
+
             <div class="hero-actions">
                 <a href="#booking" class="btn btn-primary"><i class="fa-solid fa-calendar-check"></i> <span data-i18n="bookNow">احجزي موعدك الآن</span></a>
                 <a href="https://wa.me/201125337717" target="_blank" class="btn btn-ghost"><i class="fa-brands fa-whatsapp"></i> <span data-i18n="whatsappNow">تواصلي واتساب</span></a>
@@ -312,7 +328,7 @@
             <div class="contact-line"><i class="fa-solid fa-location-dot"></i><div><b data-i18n="addressLabel">العنوان:</b><br><span data-i18n="addressText">اللبيني – الهرم، بجوار أولاد رجب</span></div></div>
             <div class="contact-line"><i class="fa-solid fa-phone"></i><div><b data-i18n="phoneLabel">للاستفسار أو التعديل:</b><br>01125337717</div></div>
             <div class="contact-line"><i class="fa-solid fa-clock"></i><div><b data-i18n="hoursLabel">مواعيد العمل:</b><br><span data-i18n="hoursText">من 4 مساءً إلى 10 مساءً</span><br><span data-i18n="holidayFooter">الإجازة الأسبوعية: الاثنين والخميس والجمعة</span></div></div>
-            
+
             <div class="social-links">
                 <a href="https://www.facebook.com/share/1BvSArkpXk/" target="_blank" class="social-icon fb" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
                 <a href="https://www.instagram.com/dr.doaa.shaban?igsh=MTNjNjJ1end3bzczeQ==" target="_blank" class="social-icon ig" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
@@ -333,10 +349,21 @@
 </main>
 
 <footer class="footer">
-    Future Reservation System © 2026 - <span class="footer-clinic-name">Dr. Doaa Shaban Clinic</span>
-    <div class="footer-meta" aria-label="معلومات الإصدار والتحديث">
-        <span class="footer-version"><i class="fa-solid fa-code-branch" aria-hidden="true"></i> V2.5.0 · نسخة لوحة الإدارة</span>
-        <span class="footer-updated"><i class="fa-regular fa-calendar" aria-hidden="true"></i> آخر تحديث: 5 نوفمبر 2026</span>
+    <div class="footer-signature">
+        <a class="footer-credit" href="https://wa.me/201021708011" target="_blank" rel="noopener noreferrer" aria-label="التواصل مع المهندس باسم أشرف عبر واتساب">
+            <span class="footer-whatsapp-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M12 2.4a9.6 9.6 0 0 0-8.18 14.63L2.7 21.6l4.72-1.08A9.6 9.6 0 1 0 12 2.4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M8.5 7.85c.16-.38.33-.39.61-.39h.52c.17 0 .36.03.44.27l.62 1.54c.08.2.05.39-.08.53l-.4.47c-.12.13-.25.26-.1.5.15.26.67 1.1 1.44 1.78.99.88 1.82 1.15 2.08 1.29.26.13.41.11.56-.07l.7-.82c.16-.19.34-.16.57-.08l1.45.68c.24.12.4.17.45.27.06.1.06.59-.14 1.16-.19.57-1.1 1.09-1.52 1.15-.4.06-.9.09-1.46-.09-.34-.11-.78-.26-1.34-.5-2.36-1.02-3.9-3.42-4.02-3.59-.12-.17-.96-1.27-.96-2.42 0-1.16.6-1.72.81-1.96Z" fill="currentColor"/>
+                </svg>
+            </span>
+            <span class="footer-signature-copy"><small>DESIGNED &amp; DEVELOPED BY</small><strong>Bassem Ashraf</strong><span>WHATSAPP · DIRECT CONTACT</span></span>
+            <i class="fa-solid fa-arrow-up-right-from-square footer-signature-arrow" aria-hidden="true"></i>
+        </a>
+        <div class="footer-meta" aria-label="معلومات الإصدار والتحديث">
+            <span class="footer-version"><i class="fa-solid fa-code-branch" aria-hidden="true"></i> نسخة تطوير محلية مبنية على V2.7.0</span>
+            <span class="footer-updated"><i class="fa-regular fa-calendar" aria-hidden="true"></i> آخر تحديث: 7 نوفمبر 2026</span>
+        </div>
     </div>
 </footer>
 
@@ -351,8 +378,6 @@
 <script src="js/config.js"></script>
 <script src="js/main.js"></script>
 <script src="js/gallery.js"></script>
-<script src="js/admin-experience-v25.js"></script>
 
 </body>
 </html>
-

@@ -54,7 +54,7 @@ create table public.clinic_settings (
   work_start time not null default '16:00',
   work_end time not null default '22:00',
   max_daily_slots integer not null default 20 check (max_daily_slots > 0),
-  closed_weekdays integer[] not null default array[4,5],
+  closed_weekdays integer[] not null default array[1,4,5],
   closed_dates date[] not null default '{}',
   updated_at timestamptz not null default now()
 );
@@ -117,7 +117,7 @@ begin
     return jsonb_build_object('status', 'error', 'message', 'حجم المرفق كبير جدًا. يرجى إرسال ملف أصغر من 5 ميجابايت.');
   end if;
   select * into v_settings from public.clinic_settings where id = true;
-  if v_date is not null and (extract(dow from v_date)::integer = any(v_settings.closed_weekdays) or v_date = any(v_settings.closed_dates)) then
+  if v_date is not null and v_type <> 'birth' and (extract(dow from v_date)::integer = any(v_settings.closed_weekdays) or v_date = any(v_settings.closed_dates)) then
     return jsonb_build_object('status', 'error', 'message', 'هذا اليوم غير متاح للحجز.');
   end if;
   if v_date is not null and v_type in ('first', 'follow', 'consult', 'aesthetic') then

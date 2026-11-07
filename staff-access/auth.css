@@ -1,0 +1,18 @@
+.empty-preview{padding:18px 10px;color:#929dad;text-align:center;font-size:11px;border-top:1px solid #f0f2f6}
+.login-dialog{width:min(430px,calc(100vw - 30px));border:1px solid #eee2e9;border-radius:24px;padding:0;color:#29394d;box-shadow:0 24px 80px #27354a35}
+.login-dialog::backdrop{background:#1e293b78;backdrop-filter:blur(4px)}
+.login-dialog form{padding:30px;display:grid;gap:12px}
+.login-mark{width:52px;height:52px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(145deg,#de6d9b,#9e69aa);color:white;font-size:27px;box-shadow:0 8px 18px #c77a9c44}
+.login-dialog h2{margin:0;font-size:21px}
+.login-dialog p{margin:-6px 0 3px;color:#8994a3;font-size:12px}
+.login-dialog label{display:grid;gap:6px;font-size:12px;font-weight:700;color:#536177}
+.login-dialog input{height:44px;border:1px solid #e3e8ef;border-radius:11px;padding:0 12px;font:inherit;direction:ltr;text-align:left;outline:none}
+.login-dialog input:focus{border-color:#c86891;box-shadow:0 0 0 3px #f7eaf1}
+.login-error{min-height:18px;color:#b34d70;font-size:11px}
+.login-dialog button:disabled{opacity:.6;cursor:wait}
+.connection-status{position:fixed;z-index:10;bottom:18px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;padding:10px 16px;border-radius:30px;background:#26374c;color:white;font-size:11px;box-shadow:0 8px 24px #26374c30;transition:.25s}
+.connection-status.visible{opacity:1;transform:translate(-50%,0)}
+.connection-status.is-error{background:#a94768}
+.footer-note{display:flex;justify-content:center;align-items:center;gap:9px}
+.logout-button{border:0;background:transparent;color:#ad5180;font:700 10px inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #d988ab;outline-offset:2px}

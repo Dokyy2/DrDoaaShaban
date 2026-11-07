@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8fc">
+  <title>بوابة فريق العيادة</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+  <div class="preview-banner" id="connectionBanner">واجهة داخلية — سجّلي الدخول لعرض ملخص من قاعدة العيادة · قراءة فقط</div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#today"><span class="brand-mark">✿</span><span><strong>عيادة د. دعاء شعبان</strong><small>مركز متابعة العيادة</small></span></a>
+      <nav aria-label="التنقل الرئيسي">
+        <button class="nav-item active" data-view="today">⌂ <span>نظرة اليوم</span></button>
+        <button class="nav-item" data-view="bookings">▣ <span>الحجوزات</span><b id="bookingBadge">—</b></button>
+        <button class="nav-item" data-view="patients">♙ <span>دليل المرضى</span></button>
+        <button class="nav-item" data-view="calendar">▦ <span>التقويم</span></button>
+        <button class="nav-item" data-view="followup">♡ <span>المتابعة</span><b id="followBadge">—</b></button>
+        <button class="nav-item" data-view="reports">▤ <span>التقارير</span></button>
+      </nav>
+      <div class="sidebar-foot"><span class="avatar">د</span><span><strong>مساحة العيادة</strong><small>معاينة محلية</small></span><span class="online-dot"></span></div>
+    </aside>
+    <main class="main-area">
+      <header class="topbar"><div><span class="eyebrow">السبت، ٧ نوفمبر ٢٠٢٦</span><h1 id="pageTitle">نظرة اليوم</h1></div><div class="top-actions"><button class="icon-button" aria-label="التنبيهات">♧<i></i></button><button class="profile-button"><span class="avatar small">د</span> د. دعاء <span>⌄</span></button></div></header>
+      <section id="todayPanel" class="today-panel">
+        <div class="welcome"><div><span class="eyebrow">صباح الخير</span><h2>خلّينا نبدأ اليوم بهدوء ✨</h2><p>ملخص عملي يساعد فريق العيادة يعرف الخطوة الجاية بسرعة.</p></div><div class="date-pill">◷ <span>السبت · ٧ نوفمبر</span></div></div>
+        <div class="metric-grid">
+          <article class="metric"><span class="metric-icon rose">▣</span><span class="metric-label">طلبات جديدة</span><strong id="newCount">—</strong><small>تحتاج مراجعة أولية</small></article>
+          <article class="metric"><span class="metric-icon amber">◷</span><span class="metric-label">تواصل مستحق</span><strong id="followCount">—</strong><small>طلبات مفتوحة للمتابعة</small></article>
+          <article class="metric"><span class="metric-icon teal">♡</span><span class="metric-label">مواعيد اليوم</span><strong id="todayCount">—</strong><small>حسب التاريخ المسجل</small></article>
+          <article class="metric"><span class="metric-icon violet">♧</span><span class="metric-label">تنبيهات متابعة</span><strong id="alertCount">—</strong><small>تنبيهات غير محلولة</small></article>
+        </div>
+        <div class="content-grid">
+          <section class="panel task-panel"><div class="panel-heading"><div><span class="eyebrow">قائمة العمل</span><h2>إيه الخطوة الجاية؟</h2></div><button class="text-button" data-view="bookings">كل الطلبات ←</button></div>
+            <div id="taskList"><div class="empty-preview">سجّلي الدخول لعرض ملخص الطلبات المصرح به.</div></div>
+          </section>
+          <section class="panel schedule-panel"><div class="panel-heading"><div><span class="eyebrow">جدول اليوم</span><h2>المواعيد القادمة</h2></div><button class="round-arrow" aria-label="عرض التقويم">←</button></div>
+            <div id="scheduleList"><div class="empty-preview">المواعيد ستظهر بعد تسجيل الدخول.</div></div>
+          </section>
+        </div>
+        <section class="panel focus-panel"><span class="focus-icon">✦</span><div><strong>اقتراح ذكي لليوم</strong><p>ابدأ بالطلبات الجديدة، وبعدها راجع قائمة التواصل المستحق. الترتيب قابل للتعديل حسب أسلوب العيادة.</p></div><span class="focus-label">اقتراح</span></section>
+      </section>
+      <section id="otherPanel" class="panel other-panel" hidden><span class="eyebrow">تصميم أولي</span><h2 id="otherTitle">القسم</h2><p>القسم ده لسه نموذج واجهة. هنحدد تفاصيله قبل ربطه ببيانات Supabase.</p><button class="primary-button" data-view="today">العودة لنظرة اليوم</button></section>
+      <footer class="footer-note"><span id="accountLabel">غير مسجل الدخول</span><button id="logoutButton" class="logout-button" hidden>تسجيل الخروج</button><span>•</span> لوحة محلية 0.1.1 · قراءة فقط</footer>
+    </main>
+  </div>
+  <dialog id="loginDialog" class="login-dialog"><form id="loginForm" method="dialog"><div class="login-mark">✿</div><span class="eyebrow">مساحة آمنة لفريق العيادة</span><h2>تسجيل الدخول</h2><p>الدخول متاح للحسابات المخوّلة فقط.</p><label>البريد الإلكتروني<input type="email" name="email" autocomplete="username" required></label><label>كلمة المرور<input type="password" name="password" autocomplete="current-password" required></label><div id="loginError" class="login-error" role="alert"></div><button class="primary-button" type="submit">دخول آمن</button></form></dialog>
+  <div id="connectionStatus" class="connection-status" role="status">جارٍ الاتصال الآمن…</div>
+  <script src="../js/config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
