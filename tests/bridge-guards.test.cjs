@@ -167,6 +167,43 @@ test('bridge health reports readiness without returning configuration values', (
   assert.equal(JSON.stringify(health).includes('synthetic-'), false);
 });
 
+test('staff authorization accepts only active doctor and secretary profiles', () => {
+  const bridge = loadBridge();
+  let role = 'doctor';
+  bridge.supabaseFetch_ = endpoint => endpoint === '/auth/v1/user'
+    ? { id: 'synthetic-user' }
+    : [{ id: 'synthetic-user', full_name: 'Synthetic Staff', role }];
+
+  assert.deepEqual(JSON.parse(JSON.stringify(bridge.authorizeStaff_('x'.repeat(48)))), {
+    ok: true, id: 'synthetic-user', name: 'Synthetic Staff', role: 'doctor'
+  });
+  role = 'secretary';
+  assert.equal(bridge.authorizeStaff_('x'.repeat(48)).ok, true);
+  role = 'pending';
+  assert.equal(bridge.authorizeStaff_('x'.repeat(48)).ok, false);
+  assert.equal(bridge.authorizeStaff_('short').ok, false);
+});
+
+test('retry trigger installation is idempotent and uses a 10-minute interval', () => {
+  let handlers = [];
+  let interval;
+  const bridge = loadBridge({
+    ScriptApp: {
+      getProjectTriggers: () => handlers.map(name => ({ getHandlerFunction: () => name })),
+      newTrigger: name => ({
+        timeBased() { return this; },
+        everyMinutes(value) { interval = value; return this; },
+        create() { handlers.push(name); return this; }
+      })
+    }
+  });
+
+  bridge.installRetryTrigger();
+  bridge.installRetryTrigger();
+  assert.deepEqual(handlers, ['retryPendingSyncs']);
+  assert.equal(interval, 10);
+});
+
 test('shared dashboard settings read omits unused finance start date', () => {
   assert.doesNotMatch(dashboardSource, /from\('clinic_settings'\)\.select\([^)]*finance_start_date/);
   const settingsGrants = lockdownSource.match(/grant select[\s\S]*?on public\.clinic_settings to authenticated/gi) || [];
