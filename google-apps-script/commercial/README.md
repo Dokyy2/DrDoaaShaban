@@ -12,6 +12,7 @@
 - Saves uploaded documents to a private Drive folder and stores its file ID in the Sheet; it serves attachment contents only to a verified doctor.
 - Keeps the visitor counter on short-lived random IDs in Apps Script properties; it does not record visitor names or IP addresses.
 - Stamps payment recorder identity and time on the server from the authenticated staff profile; client-supplied attribution fields are ignored.
+- The public health endpoint returns readiness booleans only; it confirms required Script Properties and the retry trigger without returning property values.
 
 ## Script Properties
 

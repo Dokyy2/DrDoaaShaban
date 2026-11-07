@@ -57,10 +57,16 @@ function doGet(e) {
   }
   if (mode !== 'health') return json_({ status: 'error', code: 'unsupported_mode' });
   const props = PropertiesService.getScriptProperties();
+  const requiredProperties = ['WORKBOOK_ID', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ANON_KEY', 'ATTACHMENTS_FOLDER_ID', 'NOTIFICATION_EMAIL'];
+  const configured = requiredProperties.every(function (key) { return Boolean(props.getProperty(key)); });
+  const retryTriggerInstalled = ScriptApp.getProjectTriggers().some(function (trigger) {
+    return trigger.getHandlerFunction() === 'retryPendingSyncs';
+  });
   return json_({
-    status: 'ready',
+    status: configured && retryTriggerInstalled ? 'ready' : 'needs_setup',
     edition: 'sheet-first-commercial',
-    configured: Boolean(props.getProperty('WORKBOOK_ID') && props.getProperty('SUPABASE_URL') && props.getProperty('SUPABASE_SERVICE_ROLE_KEY') && props.getProperty('SUPABASE_ANON_KEY')),
+    configured: configured,
+    retryTriggerInstalled: retryTriggerInstalled,
     timestamp: new Date().toISOString()
   });
 }

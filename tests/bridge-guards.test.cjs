@@ -141,6 +141,32 @@ test('private-note action requires a valid patient UUID and doctor role', () => 
   assert.throws(() => bridge.updatePrivateNote_({ patientId: '12345678-1234-4234-8234-123456789abc', phone: '01000000000' }, { role: 'secretary' }), /الصلاحية غير كافية/);
 });
 
+test('bridge health reports readiness without returning configuration values', () => {
+  const properties = {};
+  let triggerHandlers = [];
+  const bridge = loadBridge({
+    PropertiesService: { getScriptProperties: () => ({ getProperty: key => properties[key] || '' }) },
+    ScriptApp: { getProjectTriggers: () => triggerHandlers.map(name => ({ getHandlerFunction: () => name })) },
+    ContentService: {
+      MimeType: { JSON: 'application/json' },
+      createTextOutput: content => ({ content, setMimeType() { return this; } })
+    }
+  });
+
+  let health = JSON.parse(bridge.doGet({}).content);
+  assert.equal(health.status, 'needs_setup');
+  assert.equal(health.configured, false);
+  for (const name of ['WORKBOOK_ID', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ANON_KEY', 'ATTACHMENTS_FOLDER_ID', 'NOTIFICATION_EMAIL']) {
+    properties[name] = `synthetic-${name}`;
+  }
+  triggerHandlers = ['retryPendingSyncs'];
+  health = JSON.parse(bridge.doGet({}).content);
+  assert.equal(health.status, 'ready');
+  assert.equal(health.configured, true);
+  assert.equal(health.retryTriggerInstalled, true);
+  assert.equal(JSON.stringify(health).includes('synthetic-'), false);
+});
+
 test('shared dashboard settings read omits unused finance start date', () => {
   assert.doesNotMatch(dashboardSource, /from\('clinic_settings'\)\.select\([^)]*finance_start_date/);
   const settingsGrants = lockdownSource.match(/grant select[\s\S]*?on public\.clinic_settings to authenticated/gi) || [];
