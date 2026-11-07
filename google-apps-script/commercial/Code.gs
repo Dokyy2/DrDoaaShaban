@@ -57,7 +57,7 @@ function doGet(e) {
   }
   if (mode !== 'health') return json_({ status: 'error', code: 'unsupported_mode' });
   const props = PropertiesService.getScriptProperties();
-  const requiredProperties = ['WORKBOOK_ID', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ANON_KEY', 'ATTACHMENTS_FOLDER_ID', 'NOTIFICATION_EMAIL'];
+  const requiredProperties = ['WORKBOOK_ID', 'SUPABASE_URL', 'SUPABASE_SECRET_KEY', 'SUPABASE_PUBLISHABLE_KEY', 'ATTACHMENTS_FOLDER_ID', 'NOTIFICATION_EMAIL'];
   const configured = requiredProperties.every(function (key) { return Boolean(props.getProperty(key)); });
   const retryTriggerInstalled = ScriptApp.getProjectTriggers().some(function (trigger) {
     return trigger.getHandlerFunction() === 'retryPendingSyncs';
@@ -860,16 +860,16 @@ function sendClinicNotice_(sh, values) {
   }
 }
 
-function supabaseFetch_(path, method, body, bearer, useServiceRole, prefer) {
+function supabaseFetch_(path, method, body, bearer, useSecretKey, prefer) {
   const props = PropertiesService.getScriptProperties();
   const url = (props.getProperty('SUPABASE_URL') || '').replace(/\/+$/, '');
-  const service = props.getProperty('SUPABASE_SERVICE_ROLE_KEY') || '';
-  const anon = props.getProperty('SUPABASE_ANON_KEY') || '';
-  if (!url || !service || !anon) throw new Error('Supabase Script Properties are not configured.');
-  const apiKey = useServiceRole ? service : anon;
+  const secret = props.getProperty('SUPABASE_SECRET_KEY') || '';
+  const publishable = props.getProperty('SUPABASE_PUBLISHABLE_KEY') || '';
+  if (!url || !secret || !publishable) throw new Error('Supabase Script Properties are not configured.');
+  const apiKey = useSecretKey ? secret : publishable;
   const headers = { apikey: apiKey };
-  if (useServiceRole) headers.Authorization = 'Bearer ' + service;
-  else if (bearer) headers.Authorization = 'Bearer ' + bearer;
+  // New sb_secret keys are API keys, not JWTs: send them via apikey only.
+  if (!useSecretKey && bearer) headers.Authorization = 'Bearer ' + bearer;
   if (prefer) headers.Prefer = prefer;
   const options = { method: method, headers: headers, muteHttpExceptions: true };
   if (body !== null && body !== undefined) {

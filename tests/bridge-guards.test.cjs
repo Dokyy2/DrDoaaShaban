@@ -156,7 +156,7 @@ test('bridge health reports readiness without returning configuration values', (
   let health = JSON.parse(bridge.doGet({}).content);
   assert.equal(health.status, 'needs_setup');
   assert.equal(health.configured, false);
-  for (const name of ['WORKBOOK_ID', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ANON_KEY', 'ATTACHMENTS_FOLDER_ID', 'NOTIFICATION_EMAIL']) {
+  for (const name of ['WORKBOOK_ID', 'SUPABASE_URL', 'SUPABASE_SECRET_KEY', 'SUPABASE_PUBLISHABLE_KEY', 'ATTACHMENTS_FOLDER_ID', 'NOTIFICATION_EMAIL']) {
     properties[name] = `synthetic-${name}`;
   }
   triggerHandlers = ['retryPendingSyncs'];
@@ -165,6 +165,32 @@ test('bridge health reports readiness without returning configuration values', (
   assert.equal(health.configured, true);
   assert.equal(health.retryTriggerInstalled, true);
   assert.equal(JSON.stringify(health).includes('synthetic-'), false);
+});
+
+test('uses a Supabase secret key as apikey only and a publishable key with staff JWTs', () => {
+  const properties = {
+    SUPABASE_URL: 'https://clinic-test.supabase.co/',
+    SUPABASE_SECRET_KEY: 'sb_secret_synthetic',
+    SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_synthetic'
+  };
+  const requests = [];
+  const bridge = loadBridge({
+    PropertiesService: { getScriptProperties: () => ({ getProperty: key => properties[key] || '' }) },
+    UrlFetchApp: { fetch: (url, options) => {
+      requests.push({ url, options });
+      return { getResponseCode: () => 200, getContentText: () => '[]' };
+    } }
+  });
+
+  bridge.supabaseFetch_('/rest/v1/appointments', 'get', null, '', true);
+  assert.deepEqual(JSON.parse(JSON.stringify(requests[0].options.headers)), { apikey: 'sb_secret_synthetic' });
+  assert.equal(requests[0].url, 'https://clinic-test.supabase.co/rest/v1/appointments');
+
+  bridge.supabaseFetch_('/auth/v1/user', 'get', null, 'synthetic-staff-jwt', false);
+  assert.deepEqual(JSON.parse(JSON.stringify(requests[1].options.headers)), {
+    apikey: 'sb_publishable_synthetic',
+    Authorization: 'Bearer synthetic-staff-jwt'
+  });
 });
 
 test('staff authorization accepts only active doctor and secretary profiles', () => {

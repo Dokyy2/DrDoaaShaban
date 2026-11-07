@@ -22,8 +22,8 @@ Create a new Apps Script project and add these properties under **Project Settin
 |---|---|
 | `WORKBOOK_ID` | ID of the approved clinic workbook |
 | `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_ANON_KEY` | Supabase publishable/anon key used to validate staff sessions |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only service role key; never put it in browser config or GitHub |
+| `SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key used to validate staff sessions |
+| `SUPABASE_SECRET_KEY` | Server-only `sb_secret_...` key; sent via the `apikey` header only, never put it in browser config or GitHub |
 | `ATTACHMENTS_FOLDER_ID` | ID of a private Drive folder for uploaded documents |
 | `NOTIFICATION_EMAIL` | One approved clinic recipient, configured privately by the owner |
 
@@ -35,7 +35,7 @@ Only the project owner should be an Apps Script editor. The Drive folder should 
 - The separate Apps Script project contains the bridge code and the required Script Properties. The owner granted Google authorization and ran `doGet`; Apps Script reported execution completed.
 - The private Drive attachment folder is configured through `ATTACHMENTS_FOLDER_ID`. The owner also ran `installRetryTrigger()` successfully; `retryPendingSyncs` is installed on a 10-minute schedule. These setup steps do not verify a real booking or staff write.
 - This proves the basic handler runs. It does **not** yet prove workbook writes, Supabase projection, a web-app deployment, or live booking behavior.
-- A screenshot in the conversation showed part of the service-role key. The user has currently paused deployment at the key-rotation step. Treat the exposed key as compromised; do not deploy the bridge or make privileged integration calls until the owner rotates/replaces it in Supabase and Script Properties. Never copy the key into this repository or chat.
+- A screenshot in the conversation showed part of the legacy service-role key. The owner has created a replacement Supabase secret key, but its value has not yet been installed in Script Properties. This bridge now expects `SUPABASE_SECRET_KEY` and `SUPABASE_PUBLISHABLE_KEY`; add those properties privately, verify the bridge with synthetic data, then retire the compromised legacy key. Never copy any key into this repository or chat.
 - Original workbook sharing remains as the user chose (anyone with the link, temporarily). No workbook rows or permissions were changed during setup.
 - Read-only header review confirmed `Sheet2` as the contact-leads tab (name, phone, message/source, registration time), matching the legacy script. The separate `جهات الاتصال` tab is the name/phone directory and is not a write target. `Sheet1` remains booking requests and `Sheet3` birth requests. No sheet cell was changed during this review.
 

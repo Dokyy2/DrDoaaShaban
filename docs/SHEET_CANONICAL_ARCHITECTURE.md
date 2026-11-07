@@ -41,7 +41,7 @@ The server validates roles on every write. Hiding a control in the browser is no
 ## Credentials and deployment boundary
 
 - Public website contains only the Supabase publishable/anon key and the new Apps Script deployment URL.
-- Supabase `service_role` key, project secrets, and any webhook signing secret belong only in Apps Script Script Properties. They must never be committed or sent in chat.
+- Supabase secret API key (`sb_secret_...`), project secrets, and any webhook signing secret belong only in Apps Script Script Properties. Send the API key via the `apikey` header only; never commit it or send it in chat.
 - The new Apps Script project must use the approved workbook ID stored as a Script Property. Do not repoint the existing v2.7.0 endpoint.
 - Keep the deployed production branch and current Pages site unchanged during local integration and synthetic-data verification.
 
