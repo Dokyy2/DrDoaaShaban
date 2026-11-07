@@ -6,6 +6,33 @@
 
 begin;
 
+-- Role helpers must not be callable as public PostgREST RPCs. Keep them in an
+-- unexposed schema; authenticated sessions can execute them only for RLS.
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated;
+grant usage on schema private to authenticated;
+
+create or replace function private.is_staff() returns boolean
+language sql stable security definer set search_path = pg_catalog as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role in ('secretary', 'doctor')
+  );
+$$;
+
+create or replace function private.is_doctor() returns boolean
+language sql stable security definer set search_path = pg_catalog as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'doctor'
+  );
+$$;
+
+revoke all on function private.is_staff() from public, anon, authenticated;
+revoke all on function private.is_doctor() from public, anon, authenticated;
+grant execute on function private.is_staff() to authenticated;
+grant execute on function private.is_doctor() to authenticated;
+
 -- Add idempotency keys before column-level grants reference them.
 alter table public.appointment_events add column if not exists source_event_id text;
 alter table public.clinic_expenses add column if not exists source_event_id text;
@@ -33,7 +60,7 @@ grant select (id, appointment_id, actor_id, event_type, old_status, new_status, 
 grant select (id, clinic_name, work_start, work_end, max_daily_slots,
   closed_weekdays, closed_dates, service_prices, finance_enabled,
   updated_at) on public.clinic_settings to authenticated;
-grant select (id, source_event_id, appointment_id, alert_type, reason, matched_appointment_id,
+grant select (id, source_event_id, alert_type, reason, matched_appointment_id,
   status, resolved_at, resolved_by, created_at) on public.booking_alerts to authenticated;
 grant select (id, appointment_id, changed_by, changed_by_name, old_amount_due,
   new_amount_due, old_amount_paid, new_amount_paid, old_payment_method,
@@ -44,20 +71,42 @@ grant select (id, expense_date, category, amount, note, created_by, created_at)
 
 -- Row-level role boundaries complement column grants. Policies are read-only;
 -- all mutations must pass the Apps Script role check and Sheet-first write.
+drop policy if exists "staff creates patients" on public.patients;
 drop policy if exists "staff reads patients" on public.patients;
 drop policy if exists "staff updates patients" on public.patients;
+drop policy if exists "staff reads patient directory" on public.patients;
 create policy "staff reads patient directory" on public.patients
-  for select to authenticated using (public.is_staff());
+  for select to authenticated using (private.is_staff());
+drop policy if exists "staff creates appointments" on public.appointments;
+drop policy if exists "staff reads appointments" on public.appointments;
 drop policy if exists "staff updates appointments" on public.appointments;
+create policy "staff reads appointments" on public.appointments
+  for select to authenticated using (private.is_staff());
+drop policy if exists "staff reads appointment events" on public.appointment_events;
+drop policy if exists "staff reads events" on public.appointment_events;
 drop policy if exists "staff creates events" on public.appointment_events;
+create policy "staff reads appointment events" on public.appointment_events
+  for select to authenticated using (private.is_staff());
+drop policy if exists "staff reads booking alerts" on public.booking_alerts;
+drop policy if exists "staff updates booking alerts" on public.booking_alerts;
+create policy "staff reads booking alerts" on public.booking_alerts
+  for select to authenticated using (private.is_staff());
+drop policy if exists "staff reads settings" on public.clinic_settings;
+create policy "staff reads settings" on public.clinic_settings
+  for select to authenticated using (private.is_staff());
 drop policy if exists "doctor reads payment audit" on public.payment_audit;
 drop policy if exists "staff reads payment audit" on public.payment_audit;
 create policy "doctor reads payment audit" on public.payment_audit
-  for select to authenticated using (public.is_doctor());
+  for select to authenticated using (private.is_doctor());
 drop policy if exists "doctor manages clinic expenses" on public.clinic_expenses;
+drop policy if exists "doctor reads clinic expenses" on public.clinic_expenses;
 create policy "doctor reads clinic expenses" on public.clinic_expenses
-  for select to authenticated using (public.is_doctor());
+  for select to authenticated using (private.is_doctor());
 drop policy if exists "doctor updates settings" on public.clinic_settings;
+
+-- Once all policies have moved to private helpers, remove the old public RPCs.
+revoke all on function public.is_staff() from public, anon, authenticated;
+revoke all on function public.is_doctor() from public, anon, authenticated;
 
 -- Bridge writes use the service role, so auth.uid() is empty. The bridge stamps
 -- payment_recorded_by after validating the staff session; use that verified id
@@ -114,26 +163,15 @@ grant select (patient_id, private_note, updated_by, updated_at)
   on public.patient_private_notes to authenticated;
 drop policy if exists "doctor reads patient private notes" on public.patient_private_notes;
 create policy "doctor reads patient private notes" on public.patient_private_notes
-  for select to authenticated using (public.is_doctor());
+  for select to authenticated using (private.is_doctor());
 insert into public.patient_private_notes (patient_id, private_note)
 select id, private_note from public.patients
 where nullif(btrim(private_note), '') is not null
 on conflict (patient_id) do nothing;
 
--- Attachment bodies are fetched only when a doctor opens the appointment detail.
-create or replace function public.get_appointment_attachment(p_appointment_id bigint)
-returns table(attachment_base64 text, attachment_type text)
-language plpgsql stable security definer set search_path = public as $$
-begin
-  if not public.is_doctor() then
-    raise exception 'doctor role required' using errcode = '42501';
-  end if;
-  return query select a.attachment_base64, a.attachment_type
-    from public.appointments a where a.id = p_appointment_id;
-end;
-$$;
-revoke all on function public.get_appointment_attachment(bigint) from public, anon;
-grant execute on function public.get_appointment_attachment(bigint) to authenticated;
+-- Attachment bodies are fetched by the role-checked Apps Script bridge.
+-- Do not expose a SECURITY DEFINER attachment RPC in the public API schema.
+drop function if exists public.get_appointment_attachment(bigint);
 
 commit;
 

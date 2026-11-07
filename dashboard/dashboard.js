@@ -220,15 +220,9 @@ async function openAppointmentDetails(appointment) {
   if (profile?.role !== 'doctor' || !appointment.attachment_name || appointment.attachment_base64) return;
   let attachment = null;
   let attachmentError = null;
-  if (String(window.CLINIC_BRIDGE?.url || '').trim()) {
-    const result = await callSheetBridge('attachment.get', { bookingCode:appointment.booking_code });
-    attachment = result.data ? { attachment_base64:result.data.base64, attachment_type:result.data.mimeType } : null;
-    attachmentError = result.error;
-  } else {
-    const result = await supabase.rpc('get_appointment_attachment', { p_appointment_id:appointment.id });
-    attachment = Array.isArray(result.data) ? result.data[0] : result.data;
-    attachmentError = result.error;
-  }
+  const result = await callSheetBridge('attachment.get', { bookingCode:appointment.booking_code });
+  attachment = result.data ? { attachment_base64:result.data.base64, attachment_type:result.data.mimeType } : null;
+  attachmentError = result.error;
   const placeholder = document.querySelector(`[data-attachment-for="${Number(appointment.id)}"]`);
   if (!placeholder) return;
   if (attachmentError || !attachment?.attachment_base64) {

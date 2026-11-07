@@ -147,6 +147,15 @@ test('shared dashboard settings read omits unused finance start date', () => {
   assert.equal(settingsGrants.some(grant => grant.includes('finance_start_date')), false);
 });
 
+test('cutover keeps role helpers out of public RPCs and fetches attachments through the bridge', () => {
+  assert.match(lockdownSource, /create schema if not exists private/i);
+  assert.match(lockdownSource, /grant execute on function private\.is_staff\(\) to authenticated/i);
+  assert.match(lockdownSource, /revoke all on function public\.is_staff\(\) from public, anon, authenticated/i);
+  assert.match(lockdownSource, /drop function if exists public\.get_appointment_attachment\(bigint\)/i);
+  assert.match(dashboardSource, /callSheetBridge\('attachment\.get'/);
+  assert.doesNotMatch(dashboardSource, /rpc\('get_appointment_attachment'/);
+});
+
 test('rejects an unrecognized workflow status', () => {
   const bridge = loadBridge();
   assert.throws(() => bridge.sanitizeAppointmentUpdate_({ status: 'admin' }, 'doctor'), /حالة الحجز غير معتمدة/);
