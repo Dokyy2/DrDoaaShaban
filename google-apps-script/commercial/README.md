@@ -33,8 +33,9 @@ Only the project owner should be an Apps Script editor. The Drive folder should 
 
 - The user selected the original clinic workbook as the canonical source: `حجوزات العيادة` (the workbook ID is held in Apps Script Script Properties; credentials and patient data do not belong in this repository).
 - The separate Apps Script project contains the bridge code and the required Script Properties. The owner granted Google authorization and ran `doGet`; Apps Script reported execution completed.
+- The private Drive attachment folder is configured through `ATTACHMENTS_FOLDER_ID`. The owner also ran `installRetryTrigger()` successfully; `retryPendingSyncs` is installed on a 10-minute schedule. These setup steps do not verify a real booking or staff write.
 - This proves the basic handler runs. It does **not** yet prove workbook writes, Supabase projection, a web-app deployment, or live booking behavior.
-- A screenshot in the conversation showed part of the service-role key. Rotate it in Supabase and replace it in Script Properties before deployment or privileged database calls. Never copy the key into this repository or chat.
+- A screenshot in the conversation showed part of the service-role key. The user has currently paused deployment at the key-rotation step. Treat the exposed key as compromised; do not deploy the bridge or make privileged integration calls until the owner rotates/replaces it in Supabase and Script Properties. Never copy the key into this repository or chat.
 - Original workbook sharing remains as the user chose (anyone with the link, temporarily). No workbook rows or permissions were changed during setup.
 - Read-only header review confirmed `Sheet2` as the contact-leads tab (name, phone, message/source, registration time), matching the legacy script. The separate `جهات الاتصال` tab is the name/phone directory and is not a write target. `Sheet1` remains booking requests and `Sheet3` birth requests. No sheet cell was changed during this review.
 
@@ -51,7 +52,7 @@ Only the project owner should be an Apps Script editor. The Drive folder should 
 
 - Run the local bridge guard checks from the build root with `node --test tests/bridge-guards.test.cjs`. These checks use synthetic data and do not connect to Google Sheets, Drive, email, or Supabase.
 
-- The bridge code is installed in the separate Apps Script project and `doGet` completed once, but no web-app deployment or end-to-end booking/write test has been verified.
+- The bridge code is installed in the separate Apps Script project, `doGet` completed, and the retry trigger was installed; however, no web-app deployment or end-to-end booking/write test has been verified. `ATTACHMENTS_FOLDER_ID` is configured for a private Drive folder.
 - Historical Sheet rows without an explicit status header are treated conservatively as unresolved matches; booking requests with the same phone create a review alert instead of assuming those rows are closed.
 - Existing Supabase rows without an exact matching booking code cannot be edited through the bridge yet. The historical reconciliation report must identify and explicitly approve their mapping first.
 - Supabase migrations `20261107214532 add_monday_clinic_closure` and `20261107214631 function_privilege_hardening` are applied and verified. Monday is included without removing other configured closure days; trigger-only functions are not callable by web roles; the existing booking RPC remains callable by `anon` only. The Sheet-first lockdown migration `07` is deliberately not applied yet because the bridge is not deployed or end-to-end verified.
