@@ -269,6 +269,7 @@ test('historical reconciliation preview returns reviewable matches without writi
       const slice = rows.slice(row - 1, row - 1 + rowCount).map(line => line.slice(column - 1, column - 1 + columnCount));
       return {
         getDisplayValues: () => slice.map(line => line.map(value => String(value ?? ''))),
+        getValues: () => slice,
         getDisplayValue: () => String(rows[row - 1]?.[column - 1] ?? ''),
         getValue: () => rows[row - 1]?.[column - 1] ?? ''
       };
@@ -406,3 +407,4 @@ test('historical projection link preserves fields absent from the canonical Shee
   assert.equal(update.body.amount_paid, undefined);
   assert.equal(calls.some(call => call.url.includes('/patients?on_conflict=phone')), true);
 });
+
