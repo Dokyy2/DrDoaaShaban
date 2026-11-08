@@ -319,15 +319,22 @@ test('unauthorized reconciliation preview is denied before any write lock or wor
   assert.equal(lockRequested, false);
 });
 
-test('HtmlService RPC transport only accepts the clinic site and local preview origins', () => {
+test('Edge Function proxy restricts actions and browser origins and requires a staff bearer token', () => {
   assert.match(bridgeHtmlSource, /https:\/\/dokyy2\.github\.io/);
-  assert.match(bridgeHtmlSource, /http:\/\/127\.0\.0\.1:5500/);
-  assert.match(bridgeHtmlSource, /http:\/\/localhost:5500/);
-  assert.match(bridgeHtmlSource, /if \(!ALLOWED_PARENT_ORIGINS\.has\(event\.origin\)\) return/);
-  assert.match(bridgeHtmlSource, /google\.script\.run/);
-  assert.match(bridgeClientSource, /event\.source !== frame\.contentWindow/);
-  assert.match(bridgeClientSource, /frameOrigin/);
-  assert.doesNotMatch(bridgeClientSource, /fetch\s*\(/);
+  const edgeFunction = fs.readFileSync(path.join(__dirname, '..', 'supabase', 'functions', 'clinic-sheet-bridge', 'index.ts'), 'utf8');
+  assert.match(edgeFunction, /http:\/\/127\.0\.0\.1:5500/);
+  assert.match(edgeFunction, /http:\/\/localhost:5500/);
+  assert.match(edgeFunction, /const ALLOWED_ACTIONS = new Set/);
+  assert.match(edgeFunction, /!ALLOWED_ACTIONS\.has\(body\.action\)/);
+  assert.match(edgeFunction, /bearer\.length < 40/);
+  assert.match(edgeFunction, /accessToken: bearer/);
+  assert.match(edgeFunction, /redirect: "follow"/);
+  const functionConfig = fs.readFileSync(path.join(__dirname, '..', 'supabase', 'config.toml'), 'utf8');
+  assert.match(functionConfig, /\[functions\.clinic-sheet-bridge\][\s\S]*verify_jwt = false/);
+  assert.match(bridgeClientSource, /functions\/v1\/clinic-sheet-bridge/);
+  assert.match(bridgeClientSource, /headers\.Authorization = `Bearer \$\{accessToken\}`/);
+  assert.match(bridgeClientSource, /credentials: 'omit'/);
+  assert.match(bridgeClientSource, /fetch\s*\(/);
 });
 
 test('iframe bridge dispatches the read-only doctor preview without taking the write lock', () => {
