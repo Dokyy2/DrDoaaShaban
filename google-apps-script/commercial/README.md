@@ -36,7 +36,7 @@ Only the project owner should be an Apps Script editor. The Drive folder should 
 - Script Properties use `SUPABASE_SECRET_KEY` and `SUPABASE_PUBLISHABLE_KEY`; the old `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ANON_KEY` properties were removed. Supabase legacy API keys were disabled after migration to publishable/secret keys. Never add key values to source control or logs.
 - Supabase migration `20261108001453_sheet_canonical_lockdown` is applied. Supabase acts as a read projection; staff actions are validated and written to the Sheet first, then synchronized through the retryable outbox.
 - A private staging workbook was used for a synthetic booking and projection/retry verification. The synthetic booking and related rows were cleaned up; no synthetic rows were written to the original clinic workbook. The live bridge health endpoint was rechecked after the key correction and reports ready.
-- User authorized the original workbook as canonical and chose to leave its existing public-link sharing enabled temporarily. No workbook permissions or original patient rows were changed during this integration work.
+- The original clinic workbook remains canonical. On 2026-11-08, general link access was changed to restricted; only the owner and the directly invited clinic doctor retain direct access. Staff use the authenticated dashboard. No patient rows were changed during this sharing update.
 ## Completed deployment checkpoint
 
 1. A separate Apps Script project was configured and deployed as a Web App running as the owner, with public access for patient bookings.
