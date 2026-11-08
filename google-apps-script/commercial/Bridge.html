@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head><base target="_top"><meta charset="utf-8"></head>
+<body>
+<script>
+  const ALLOWED_PARENT_ORIGINS = new Set([
+    'https://dokyy2.github.io',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500'
+  ]);
+  window.addEventListener('message', function (event) {
+    if (!ALLOWED_PARENT_ORIGINS.has(event.origin)) return;
+    const message = event.data;
+    if (!message || message.type !== 'clinic-bridge-request' || typeof message.id !== 'string' || !message.request) return;
+    google.script.run
+      .withSuccessHandler(function (result) {
+        window.parent.postMessage({ type: 'clinic-bridge-response', id: message.id, result: result }, event.origin);
+      })
+      .withFailureHandler(function () {
+        window.parent.postMessage({ type: 'clinic-bridge-response', id: message.id, result: { status: 'error', code: 'bridge_error', message: 'تعذر إكمال الطلب لدى بوابة العيادة.' } }, event.origin);
+      })
+      .bridgeRpc(message.request);
+  });
+  window.parent.postMessage({ type: 'clinic-bridge-ready' }, '*');
+</script>
+</body>
+</html>

@@ -12,14 +12,12 @@ function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, char 
 function safePhone(value = '') { return String(value).replace(/\D/g, ''); }
 function privateNoteOf(patient) { const notes = patient?.patient_private_notes; return Array.isArray(notes) ? String(notes[0]?.private_note || '') : String(notes?.private_note || ''); }
 async function callSheetBridge(action, payload = {}) {
-  const bridgeUrl = String(window.CLINIC_BRIDGE?.url || '').trim();
-  if (!bridgeUrl) return { data:null, error:{ message:'بوابة الشيت المنفصلة لم تُجهّز بعد. لم يتم حفظ التغيير.' } };
+  if (!window.ClinicBridge?.call) return { data:null, error:{ message:'بوابة الشيت المنفصلة لم تُجهّز بعد. لم يتم حفظ التغيير.' } };
   const token = session?.access_token;
   if (!token) return { data:null, error:{ message:'انتهت جلسة الدخول. سجّلي الدخول مرة أخرى.' } };
   try {
-    const response = await fetch(bridgeUrl, { method:'POST', cache:'no-store', body:JSON.stringify({ action, accessToken:token, payload }) });
-    const data = await response.json();
-    if (!response.ok || data.status === 'error') return { data, error:{ message:data.message || 'تعذر حفظ التغيير في الشيت.' } };
+    const data = await window.ClinicBridge.call(action, payload, token);
+    if (!data || data.status === 'error') return { data, error:{ message:data?.message || 'تعذر حفظ التغيير في الشيت.' } };
     return { data, error:null };
   } catch (error) {
     return { data:null, error:{ message:'تعذر الاتصال ببوابة الشيت. راجعي الاتصال قبل إعادة المحاولة.' } };

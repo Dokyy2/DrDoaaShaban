@@ -51,6 +51,10 @@ const FIELD_ALIASES = {
 
 function doGet(e) {
   const mode = String(e && e.parameter && e.parameter.mode || 'health');
+  if (mode === 'rpc') {
+    return HtmlService.createHtmlOutputFromFile('Bridge')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
   if (mode === 'presence') {
     const presence = updateActiveVisitors_(e.parameter.visitor);
     return e.parameter.callback ? jsonp_(presence, e.parameter.callback) : json_(presence);
@@ -72,26 +76,59 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  const raw = String(e && e.postData && e.postData.contents || '{}');
+  let request;
+  try {
+    request = JSON.parse(raw);
+  } catch (err) {
+    return json_({ status: 'error', code: 'invalid_request', message: 'صيغة الطلب غير صحيحة.' });
+  }
+  return json_(processBridgeRequest_(request));
+}
+
+// Called by the same-origin HtmlService iframe to avoid cross-origin fetch
+// restrictions in GitHub Pages and local browser previews.
+function bridgeRpc(request) {
+  try {
+    return processBridgeRequest_(request);
+  } catch (err) {
+    return { status: 'error', code: 'bridge_error', message: safeError_(err) };
+  }
+}
+
+function processBridgeRequest_(request) {
+  let rawSize = 0;
+  try { rawSize = JSON.stringify(request || {}).length; } catch (_) { return fail_('invalid_request', 'صيغة الطلب غير صحيحة.'); }
+  if (rawSize > 8000000) return fail_('request_too_large', 'حجم الطلب أكبر من الحد المسموح.');
+  if (!request || typeof request !== 'object' || Array.isArray(request) || typeof request.action !== 'string') {
+    return fail_('invalid_request', 'صيغة الطلب غير صحيحة.');
+  }
+  // Reconciliation preview is read-only. Authenticate and authorize it without
+  // waiting for the global write lock, which may be held by the retry worker.
+  if (request.action === 'admin.reconcile.preview') {
+    try {
+      const staff = authorizeStaff_(request.accessToken);
+      if (!staff.ok) return fail_('unauthorized', 'انتهت الجلسة أو لا توجد صلاحية.');
+      return handleStaffAction_(request, staff);
+    } catch (err) {
+      return fail_('bridge_error', safeError_(err));
+    }
+  }
+
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(20000);
-    const raw = String(e && e.postData && e.postData.contents || '{}');
-    if (raw.length > 8000000) return fail_('request_too_large', 'حجم الطلب أكبر من الحد المسموح.');
-    const request = JSON.parse(raw);
-    if (!request || typeof request !== 'object' || typeof request.action !== 'string') {
-      return json_({ status: 'error', code: 'invalid_request', message: 'صيغة الطلب غير صحيحة.' });
-    }
     if (request.action === 'booking.create') {
       if (!allowPublicBooking_()) return fail_('rate_limited', 'طلبات كثيرة خلال وقت قصير. حاولي بعد قليل.');
-      return json_(createPublicBooking_(request.payload || {}));
+      return createPublicBooking_(request.payload || {});
     }
 
     const staff = authorizeStaff_(request.accessToken);
-    if (!staff.ok) return json_({ status: 'error', code: 'unauthorized', message: 'انتهت الجلسة أو لا توجد صلاحية.' });
+    if (!staff.ok) return fail_('unauthorized', 'انتهت الجلسة أو لا توجد صلاحية.');
     const result = handleStaffAction_(request, staff);
-    return json_(result);
+    return result;
   } catch (err) {
-    return json_({ status: 'error', code: 'bridge_error', message: safeError_(err) });
+    return fail_('bridge_error', safeError_(err));
   } finally {
     try { lock.releaseLock(); } catch (_) {}
   }
