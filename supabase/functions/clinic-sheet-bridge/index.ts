@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbyrZHXlwUVU4LiEnayilP3IhWqXUXgFlOc95ed9DTnznY4_vdqqidJkjdSxWU3rZw3GVw/exec";
+const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbxhvlJkSnzdRDzON8FleuHSkbRJ03CDrmArHa48w1-kIKVOLkcggXaDj6lFV9zVRlNQ/exec";
 const ALLOWED_ORIGINS = new Set([
   "https://dokyy2.github.io",
   "http://127.0.0.1:5500",
