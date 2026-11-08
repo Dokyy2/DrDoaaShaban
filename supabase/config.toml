@@ -1,0 +1,2 @@
+[functions.clinic-sheet-bridge]
+verify_jwt = false
