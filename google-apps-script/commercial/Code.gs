@@ -154,6 +154,24 @@ function createPublicBooking_(data) {
   if (!/^01\d{9}$/.test(phone)) return fail_('invalid_phone', 'رقم الهاتف غير صحيح.');
   const date = String(data.bookingDate || data.expectedDeliveryDate || '');
   if (!isContact && !validIsoDate_(date)) return fail_('invalid_date', 'اختاري تاريخًا صحيحًا.');
+  const requestedBookingCode = String(data.bookingCode || '').trim().toUpperCase();
+  if (requestedBookingCode && !(isContact ? /^C-[A-F0-9]{12}$/.test(requestedBookingCode) : /^BK-\d{8}-[A-F0-9]{8}$/.test(requestedBookingCode))) {
+    return fail_('invalid_booking_code', 'تعذر التحقق من رقم الطلب. حدّثي الصفحة وابدئي طلبًا جديدًا.');
+  }
+  if (requestedBookingCode) {
+    const existing = findBookingRow_(workbook_(), requestedBookingCode);
+    if (existing) {
+      const sameRequest = String(existing.values.full_name || '').trim() === name.trim()
+        && digits_(existing.values.phone) === phone
+        && String(existing.values.request_type || '') === type
+        && String(existing.values.requested_date || '') === date
+        && String(existing.values.message || '') === cleanText_(data.message, 1200);
+      if (!sameRequest) return fail_('booking_code_conflict', 'رقم الطلب مستخدم لبيانات مختلفة. تواصلي مع العيادة قبل إرسال طلب آخر.');
+      // A browser timeout may happen after the Sheet write. Return the same
+      // booking identity on retry instead of creating a second row.
+      return { status:'success', id:requestedBookingCode, code:requestedBookingCode, bookingCode:requestedBookingCode, syncStatus:'pending', message:'تم استلام الطلب مسبقًا، والعيادة ستراجعه.' };
+    }
+  }
   if (!isContact && !isBirth) {
     const parsed = new Date(date + 'T12:00:00');
     const day = Number(Utilities.formatDate(parsed, CLINIC_TZ, 'u')) % 7;
@@ -172,13 +190,13 @@ function createPublicBooking_(data) {
     const alert = { source_event_id: eventId, full_name: name, phone: phone, request_type: type, requested_date: date, reason: duplicate.needsReview ? 'يوجد سجل سابق لم تتم مطابقة حالته بعد.' : 'رقم الهاتف لديه حجز نشط بالفعل.', message: cleanText_(data.message, 1200), matched_booking_code: duplicate.bookingCode, status: 'new', created_at: new Date().toISOString() };
     const auditId = recordAudit_({ eventId: eventId, action: 'booking.duplicate', bookingCode: duplicate.bookingCode, role: 'public', summary: 'duplicate request alert added' });
     const id = enqueue_(auditId, 'booking.duplicate', eventId, alert);
-    const sync = processOutbox_(id);
-    if (!sync.sheetSaved) return fail_('sheet_write_failed', 'تعذر حفظ الطلب. حاولي مرة أخرى بعد قليل.');
+    const sheetSaved = saveOutboxActionToSheet_(id, 'booking.duplicate', eventId, alert);
+    if (!sheetSaved) return fail_('sheet_write_failed', 'تعذر حفظ الطلب. لم يتم تأكيد تسجيله؛ تواصلي مع العيادة قبل إعادة الإرسال.');
     // Never disclose the matched patient's name, phone, or date to an unauthenticated caller.
-    return { status: 'duplicated', code: duplicate.needsReview ? 'historical_match_review' : 'active_booking_exists', syncStatus: sync.ok ? 'synced' : 'pending', message: duplicate.needsReview ? 'وجدنا سجلًا سابقًا بهذا الرقم، والعيادة ستراجعه قبل إنشاء طلب مكرر.' : 'يوجد طلب نشط بهذا الرقم. تواصلي مع العيادة لتعديل الموعد.' };
+    return { status: 'duplicated', code: duplicate.needsReview ? 'historical_match_review' : 'active_booking_exists', syncStatus: 'pending', message: duplicate.needsReview ? 'وجدنا سجلًا سابقًا بهذا الرقم، والعيادة ستراجعه قبل إنشاء طلب مكرر.' : 'يوجد طلب نشط بهذا الرقم. تواصلي مع العيادة لتعديل الموعد.' };
   }
 
-  const bookingCode = isContact ? 'C-' + Utilities.getUuid().replace(/-/g, '').slice(0, 12).toUpperCase() : makeBookingCode_(date);
+  const bookingCode = requestedBookingCode || (isContact ? 'C-' + Utilities.getUuid().replace(/-/g, '').slice(0, 12).toUpperCase() : makeBookingCode_(date));
   const attachment = saveAttachment_(data, bookingCode);
   const values = {
     booking_code: bookingCode, full_name: name, phone: phone,
@@ -190,14 +208,28 @@ function createPublicBooking_(data) {
   };
   const auditId = recordAudit_({ action: 'booking.create', bookingCode: bookingCode, role: 'public', summary: 'booking row created' });
   const outboxId = enqueue_(auditId, 'booking.create', bookingCode, values);
-  const sync = processOutbox_(outboxId);
-  if (!sync.sheetSaved) return fail_('sheet_write_failed', 'تعذر حفظ الطلب. حاولي مرة أخرى بعد قليل.');
+  const sheetSaved = saveOutboxActionToSheet_(outboxId, 'booking.create', bookingCode, values);
+  if (!sheetSaved) return fail_('sheet_write_failed', 'تعذر حفظ الطلب. لم يتم تأكيد تسجيله؛ تواصلي مع العيادة قبل إعادة الإرسال.');
   return {
     status: 'success', id: bookingCode, code: bookingCode, bookingCode: bookingCode,
     name: name, phone: phone, type: type, date: date,
-    syncStatus: sync.ok ? 'synced' : 'pending',
-    message: sync.ok ? 'تم استلام طلبك بنجاح.' : 'تم حفظ طلبك لدى العيادة، وجارٍ تحديث النظام.'
+    syncStatus: 'pending',
+    message: 'تم تسجيل طلبك لدى العيادة، وجارٍ تحديث لوحة المتابعة.'
   };
+}
+
+function saveOutboxActionToSheet_(outboxId, action, key, values) {
+  const outbox = workbook_().getSheetByName(CLINIC_SHEETS.outbox);
+  const row = rowByValue_(outbox, 1, outboxId);
+  if (!row) return false;
+  try {
+    applySheetAction_(action, key, values);
+    outbox.getRange(row, 6, 1, 3).setValues([['pending', 0, '']]);
+    return true;
+  } catch (err) {
+    outbox.getRange(row, 6, 1, 3).setValues([['staged', 1, safeError_(err)]]);
+    return false;
+  }
 }
 
 function handleStaffAction_(request, staff) {
