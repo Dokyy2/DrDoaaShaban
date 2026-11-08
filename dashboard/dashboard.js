@@ -20,7 +20,9 @@ async function callSheetBridge(action, payload = {}) {
     if (!data || data.status === 'error') return { data, error:{ message:data?.message || 'تعذر حفظ التغيير في الشيت.' } };
     return { data, error:null };
   } catch (error) {
-    return { data:null, error:{ message:'تعذر الاتصال ببوابة الشيت. راجعي الاتصال قبل إعادة المحاولة.' } };
+    const message = String(error?.message || 'تعذر الاتصال ببوابة الشيت. راجعي الاتصال قبل إعادة المحاولة.').slice(0, 240);
+    console.warn('[ClinicBridge] Dashboard request failed:', error?.name || 'Error', message);
+    return { data:null, error:{ message } };
   }
 }
 async function fetchAllRows(buildQuery, pageSize = 1000, maxPages = 100) {
