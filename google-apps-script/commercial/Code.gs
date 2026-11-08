@@ -51,6 +51,10 @@ const FIELD_ALIASES = {
 
 function doGet(e) {
   const mode = String(e && e.parameter && e.parameter.mode || 'health');
+  if (mode === 'rpc') {
+    return HtmlService.createHtmlOutputFromFile('Bridge')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
   if (mode === 'presence') {
     const presence = updateActiveVisitors_(e.parameter.visitor);
     return e.parameter.callback ? jsonp_(presence, e.parameter.callback) : json_(presence);
@@ -72,26 +76,59 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  const raw = String(e && e.postData && e.postData.contents || '{}');
+  let request;
+  try {
+    request = JSON.parse(raw);
+  } catch (err) {
+    return json_({ status: 'error', code: 'invalid_request', message: 'صيغة الطلب غير صحيحة.' });
+  }
+  return json_(processBridgeRequest_(request));
+}
+
+// Called by the same-origin HtmlService iframe to avoid cross-origin fetch
+// restrictions in GitHub Pages and local browser previews.
+function bridgeRpc(request) {
+  try {
+    return processBridgeRequest_(request);
+  } catch (err) {
+    return { status: 'error', code: 'bridge_error', message: safeError_(err) };
+  }
+}
+
+function processBridgeRequest_(request) {
+  let rawSize = 0;
+  try { rawSize = JSON.stringify(request || {}).length; } catch (_) { return fail_('invalid_request', 'صيغة الطلب غير صحيحة.'); }
+  if (rawSize > 8000000) return fail_('request_too_large', 'حجم الطلب أكبر من الحد المسموح.');
+  if (!request || typeof request !== 'object' || Array.isArray(request) || typeof request.action !== 'string') {
+    return fail_('invalid_request', 'صيغة الطلب غير صحيحة.');
+  }
+  // Reconciliation preview is read-only. Authenticate and authorize it without
+  // waiting for the global write lock, which may be held by the retry worker.
+  if (request.action === 'admin.reconcile.preview') {
+    try {
+      const staff = authorizeStaff_(request.accessToken);
+      if (!staff.ok) return fail_('unauthorized', 'انتهت الجلسة أو لا توجد صلاحية.');
+      return handleStaffAction_(request, staff);
+    } catch (err) {
+      return fail_('bridge_error', safeError_(err));
+    }
+  }
+
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(20000);
-    const raw = String(e && e.postData && e.postData.contents || '{}');
-    if (raw.length > 8000000) return fail_('request_too_large', 'حجم الطلب أكبر من الحد المسموح.');
-    const request = JSON.parse(raw);
-    if (!request || typeof request !== 'object' || typeof request.action !== 'string') {
-      return json_({ status: 'error', code: 'invalid_request', message: 'صيغة الطلب غير صحيحة.' });
-    }
     if (request.action === 'booking.create') {
       if (!allowPublicBooking_()) return fail_('rate_limited', 'طلبات كثيرة خلال وقت قصير. حاولي بعد قليل.');
-      return json_(createPublicBooking_(request.payload || {}));
+      return createPublicBooking_(request.payload || {});
     }
 
     const staff = authorizeStaff_(request.accessToken);
-    if (!staff.ok) return json_({ status: 'error', code: 'unauthorized', message: 'انتهت الجلسة أو لا توجد صلاحية.' });
+    if (!staff.ok) return fail_('unauthorized', 'انتهت الجلسة أو لا توجد صلاحية.');
     const result = handleStaffAction_(request, staff);
-    return json_(result);
+    return result;
   } catch (err) {
-    return json_({ status: 'error', code: 'bridge_error', message: safeError_(err) });
+    return fail_('bridge_error', safeError_(err));
   } finally {
     try { lock.releaseLock(); } catch (_) {}
   }
@@ -174,6 +211,7 @@ function handleStaffAction_(request, staff) {
   if (action === 'admin.alert.resolve') return resolveAlert_(body, staff);
   if (action === 'attachment.get') return readAttachment_(body, staff);
   if (action === 'admin.reconcile.preview') { requireRole_(staff, 'doctor'); return runHistoricalReconciliationDryRun_(); }
+  if (action === 'admin.reconcile.link') { requireRole_(staff, 'doctor'); return linkHistoricalMatch_(body, staff); }
   return fail_('unsupported_action', 'الإجراء غير مدعوم.');
 }
 
@@ -371,6 +409,7 @@ function syncOutboxPayload_(action, key, payload) {
     if (!Array.isArray(result) || !result.length) throw new Error('alert event not found in Supabase mirror');
     return result;
   }
+  if (action === 'admin.reconcile.link') return applyHistoricalProjectionLink_(payload);
   throw new Error('Unsupported outbox action: ' + action);
 }
 
@@ -487,6 +526,7 @@ function applySheetAction_(action, key, payload) {
     writeObject_(sh, row, { status:'handled', resolved_at:new Date().toISOString(), resolved_by:payload.resolved_by });
     return;
   }
+  if (action === 'admin.reconcile.link') { appendAuditEventOnce_(payload.event || {}); return; }
   throw new Error('Unsupported Sheet action');
 }
 
@@ -510,13 +550,7 @@ function retryPendingSyncs() {
 
 function runHistoricalReconciliationDryRun_() {
   const ss = workbook_();
-  const dbRows = [];
-  for (let offset = 0; ; offset += 1000) {
-    const page = supabaseFetch_('/rest/v1/appointments?select=booking_code,request_type,requested_date,patients(phone)&order=id.asc&limit=1000&offset=' + offset, 'get', null, '', true);
-    if (!Array.isArray(page)) throw new Error('Could not read appointment mirror for dry-run reconciliation.');
-    dbRows.push.apply(dbRows, page);
-    if (page.length < 1000) break;
-  }
+  const dbRows = loadReconciliationRows_();
   const byCode = new Map();
   const byComposite = new Map();
   dbRows.forEach(function (row) {
@@ -526,8 +560,10 @@ function runHistoricalReconciliationDryRun_() {
     if (!byComposite.has(key)) byComposite.set(key, []);
     byComposite.get(key).push(row);
   });
-  const counts = { sheetRows:0, exactCodeMatches:0, uniqueCompositeCandidates:0, ambiguousCandidates:0, unmatched:0, duplicateSheetRows:0 };
+  const counts = { sheetRows:0, exactCodeMatches:0, uniqueCompositeCandidates:0, ambiguousCandidates:0, unmatched:0, duplicateSheetRows:0, duplicateSheetCodes:0 };
+  const details = { unique:[], ambiguous:[], unmatched:[] };
   const seenComposite = new Set();
+  const seenCodes = new Set();
   [CLINIC_SHEETS.appointment, CLINIC_SHEETS.birth].forEach(function (sheetName) {
     const sh = ss.getSheetByName(sheetName);
     if (!sh || sh.getLastRow() < 2) return;
@@ -539,24 +575,115 @@ function runHistoricalReconciliationDryRun_() {
       if (!code) continue;
       const row = readMapped_(sh, rowNum);
       counts.sheetRows++;
+      const base = { sheetName:sheetName, rowNumber:rowNum, bookingCode:code, fullName:cleanText_(row.full_name, 120), phone:digits_(row.phone), requestedDate:String(row.requested_date || ''), requestType:normalizeRequestType_(row.request_type) };
+      if (seenCodes.has(code)) { counts.duplicateSheetCodes++; continue; }
+      seenCodes.add(code);
       if (byCode.has(code)) { counts.exactCodeMatches++; continue; }
       const key = compositeKey_(digits_(row.phone), row.requested_date, normalizeRequestType_(row.request_type));
-      if (seenComposite.has(key)) counts.duplicateSheetRows++;
+      if (seenComposite.has(key)) { counts.duplicateSheetRows++; continue; }
       seenComposite.add(key);
       const candidates = byComposite.get(key) || [];
-      if (candidates.length === 1) counts.uniqueCompositeCandidates++;
-      else if (candidates.length > 1) counts.ambiguousCandidates++;
-      else counts.unmatched++;
+      if (candidates.length === 1) {
+        counts.uniqueCompositeCandidates++;
+        const candidate = candidates[0];
+        details.unique.push(Object.assign({}, base, { candidateAppointmentId:String(candidate.id), candidateBookingCode:String(candidate.booking_code || ''), candidateName:cleanText_(candidate.patients && candidate.patients.full_name, 120), candidatePhone:digits_(candidate.patients && candidate.patients.phone), candidateStatus:String(candidate.status || ''), candidateRequestedTime:String(candidate.requested_time || ''), candidateMessage:cleanText_(candidate.message, 500) }));
+      } else if (candidates.length > 1) {
+        counts.ambiguousCandidates++;
+        details.ambiguous.push(Object.assign({}, base, { candidates:candidates.slice(0, 10).map(function (candidate) { return { appointmentId:String(candidate.id), bookingCode:String(candidate.booking_code || ''), name:cleanText_(candidate.patients && candidate.patients.full_name, 120), phone:digits_(candidate.patients && candidate.patients.phone), status:String(candidate.status || ''), requestedTime:String(candidate.requested_time || ''), message:cleanText_(candidate.message, 500) }; }), candidateCount:candidates.length }));
+      } else {
+        counts.unmatched++;
+        details.unmatched.push(base);
+      }
     }
   });
-  return { status:'success', mode:'dry_run_only', counts:counts, note:'No Sheet or Supabase rows were changed. Candidate matches require human review before linking.' };
+  return { status:'success', mode:'dry_run_only', counts:counts, details:details, note:'No Sheet or Supabase rows were changed. Unique candidates require explicit doctor approval; ambiguous and unmatched rows are never linked automatically.' };
+}
+
+function loadReconciliationRows_() {
+  const rows = [];
+  for (let offset = 0; ; offset += 1000) {
+    const page = supabaseFetch_('/rest/v1/appointments?select=id,booking_code,request_type,requested_date,status,requested_time,message,patients(full_name,phone)&order=id.asc&limit=1000&offset=' + offset, 'get', null, '', true);
+    if (!Array.isArray(page)) throw new Error('Could not read appointment mirror for reconciliation.');
+    rows.push.apply(rows, page);
+    if (page.length < 1000) break;
+  }
+  return rows;
+}
+
+function readReconciliationSheetRow_(sheetName, rowNumber, bookingCode) {
+  if (![CLINIC_SHEETS.appointment, CLINIC_SHEETS.birth].includes(sheetName) || !Number.isInteger(rowNumber) || rowNumber < 2) throw new Error('Invalid historical row reference.');
+  const sh = workbook_().getSheetByName(sheetName);
+  if (!sh || rowNumber > sh.getLastRow()) throw new Error('Historical Sheet row no longer exists.');
+  const codeColumn = findHeader_(sh, FIELD_ALIASES.booking_code);
+  const currentCode = codeColumn ? String(sh.getRange(rowNumber, codeColumn).getDisplayValue() || '').trim() : '';
+  if (!currentCode || currentCode !== bookingCode) throw new Error('The Sheet row changed after preview. Run the preview again.');
+  const duplicate = findBookingRow_(workbook_(), currentCode);
+  if (!duplicate || duplicate.sheet.getName() !== sheetName || duplicate.row !== rowNumber) throw new Error('Duplicate or moved Sheet booking code; manual review is required.');
+  return readMapped_(sh, rowNumber);
+}
+
+function validateHistoricalCandidate_(payload) {
+  const values = readReconciliationSheetRow_(String(payload.sheetName || ''), Number(payload.rowNumber), cleanText_(payload.bookingCode, 80));
+  const candidateId = String(payload.candidateAppointmentId || '');
+  if (!/^\d{1,18}$/.test(candidateId)) throw new Error('Invalid Supabase appointment reference.');
+  const expectedCode = cleanText_(payload.candidateBookingCode, 80);
+  if (!expectedCode) throw new Error('The candidate booking code is missing.');
+  if (!/^01\d{9}$/.test(digits_(values.phone)) || !validIsoDate_(values.requested_date) || !['first','follow','consult','aesthetic','birth','labs'].includes(normalizeRequestType_(values.request_type))) throw new Error('The Sheet row lacks an exact phone, date, or request type for safe matching.');
+  const key = compositeKey_(digits_(values.phone), values.requested_date, normalizeRequestType_(values.request_type));
+  const rows = loadReconciliationRows_();
+  const matches = rows.filter(function (row) { return compositeKey_(digits_(row.patients && row.patients.phone), row.requested_date, row.request_type) === key; });
+  const candidate = matches.find(function (row) { return String(row.id) === candidateId; });
+  if (!candidate) throw new Error('The selected candidate is no longer an exact match. Run the preview again.');
+  if (matches.length > 1 && payload.allowAmbiguous !== true) throw new Error('This match is ambiguous and requires explicit doctor review.');
+  if (String(candidate.booking_code || '') !== String(values.booking_code) && String(candidate.booking_code || '') !== expectedCode) throw new Error('The Supabase candidate changed after preview.');
+  const codeMatches = rows.filter(function (row) { return String(row.booking_code || '') === String(values.booking_code); });
+  if (codeMatches.length && String(codeMatches[0].id) !== candidateId) throw new Error('This Sheet booking code is already assigned to another Supabase record.');
+  return { values:values, candidate:candidate, candidateCount:matches.length, manuallyReviewed:matches.length > 1, bookingCode:String(values.booking_code), key:key };
+}
+
+function linkHistoricalMatch_(payload, staff) {
+  requireRole_(staff, 'doctor');
+  const verified = validateHistoricalCandidate_(payload);
+  const event = { eventId:Utilities.getUuid(), bookingCode:verified.bookingCode, actorId:staff.id, actorName:staff.name, role:staff.role, action:'admin.reconcile.link', oldStatus:String(verified.candidate.status || ''), newStatus:statusCode_(verified.values.status || verified.candidate.status || 'new'), note:(verified.manuallyReviewed ? 'Doctor manually selected an ambiguous historical match: ' : 'Doctor approved unique historical Sheet match: ') + String(verified.candidate.booking_code || '—') + ' → ' + verified.bookingCode, createdAt:new Date().toISOString() };
+  const auditId = recordAudit_(event);
+  const approval = { event:event, sheetName:String(payload.sheetName), rowNumber:Number(payload.rowNumber), bookingCode:verified.bookingCode, candidateAppointmentId:String(verified.candidate.id), candidateBookingCode:String(verified.candidate.booking_code || ''), allowAmbiguous:verified.manuallyReviewed, approvedBy:staff.id };
+  const id = enqueue_(auditId, 'admin.reconcile.link', verified.bookingCode, approval);
+  const sync = processOutbox_(id);
+  return { status:sync.ok ? 'success' : 'pending', bookingCode:verified.bookingCode, sheetSaved:sync.sheetSaved, syncStatus:sync.ok ? 'synced' : 'pending', message:sync.ok ? 'تم اعتماد الربط وتحديث الإسقاط.' : 'تم تسجيل موافقة الربط، والمزامنة معلّقة وستُعاد تلقائيًا.' };
+}
+
+function applyHistoricalProjectionLink_(payload) {
+  const verified = validateHistoricalCandidate_(payload);
+  const values = verified.values;
+  const candidateId = String(verified.candidate.id);
+  const codeAlreadyLinked = String(verified.candidate.booking_code || '') === verified.bookingCode;
+  const projection = { booking_code:verified.bookingCode };
+  const textFields = ['last_visit_date','message','attachment_name','attachment_type','source','staff_note','requested_time','outcome_reason','outcome_note','contact_note','payment_method','payment_note'];
+  textFields.forEach(function (field) { if (Object.prototype.hasOwnProperty.call(values, field)) projection[field] = values[field] === '' ? null : values[field]; });
+  if (Object.prototype.hasOwnProperty.call(values, 'request_type')) projection.request_type = normalizeRequestType_(values.request_type);
+  if (Object.prototype.hasOwnProperty.call(values, 'requested_date')) projection.requested_date = values.requested_date || null;
+  if (Object.prototype.hasOwnProperty.call(values, 'status') && String(values.status || '').trim()) projection.status = statusCode_(values.status);
+  if (Object.prototype.hasOwnProperty.call(values, 'is_waitlist')) projection.is_waitlist = sheetBoolean_(values.is_waitlist);
+  if (Object.prototype.hasOwnProperty.call(values, 'clinic_birth_recorded')) projection.clinic_birth_recorded = sheetBoolean_(values.clinic_birth_recorded);
+  ['amount_due','amount_paid'].forEach(function (field) { if (Object.prototype.hasOwnProperty.call(values, field)) projection[field] = values[field] === '' || values[field] == null ? 0 : Number(values[field]); });
+  if (Object.prototype.hasOwnProperty.call(values, 'created_at') && values.created_at) projection.created_at = values.created_at;
+  ['amount_due','amount_paid'].forEach(function (field) { if (Object.prototype.hasOwnProperty.call(projection, field) && (!Number.isFinite(projection[field]) || projection[field] < 0)) throw new Error('Invalid payment values on the canonical Sheet row.'); });
+  if (!codeAlreadyLinked) {
+    const changed = supabaseFetch_('/rest/v1/appointments?id=eq.' + encodeURIComponent(candidateId) + '&select=id', 'patch', projection, '', true, 'return=representation');
+    if (!Array.isArray(changed) || changed.length !== 1) throw new Error('Could not update the approved projection row.');
+  }
+  const patient = supabaseFetch_('/rest/v1/patients?on_conflict=phone', 'post', { full_name:cleanText_(values.full_name, 120), phone:digits_(values.phone) }, '', true, 'resolution=merge-duplicates,return=representation');
+  if (!Array.isArray(patient) || patient.length !== 1) throw new Error('Could not synchronize the patient projection.');
+  const event = payload.event || {};
+  insertOnce_('appointment_events', 'source_event_id', event.eventId, { appointment_id:Number(candidateId), actor_id:payload.approvedBy || null, event_type:'historical_linked', old_status:verified.candidate.status || null, new_status:projection.status, note:cleanText_(event.note || 'Doctor approved historical Sheet match.', 1000), source_event_id:event.eventId });
+  return { status:'success', bookingCode:verified.bookingCode };
 }
 
 function compositeKey_(phone, date, type) { return [digits_(phone), String(date || '').slice(0, 10), normalizeRequestType_(type)].join('|'); }
 function normalizeRequestType_(value) {
   const text = normalizeHeader_(value);
   const aliases = {
-    'كشف اول مرة':'first', 'كشف اول مره':'first', 'first':'first',
+    'كشف اول مرة':'first', 'كشف أول مرة':'first', 'كشف اول مره':'first', 'كشف أول مره':'first', 'first':'first',
     'كشف متابعة':'follow', 'متابعة':'follow', 'follow':'follow',
     'استشارة متابعة':'consult', 'consult':'consult',
     'تجميل نسائي':'aesthetic', 'aesthetic':'aesthetic',

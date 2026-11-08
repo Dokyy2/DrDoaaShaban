@@ -7,6 +7,8 @@ const assert = require('node:assert/strict');
 const bridgePath = path.join(__dirname, '..', 'google-apps-script', 'commercial', 'Code.gs');
 const bridgeSource = fs.readFileSync(bridgePath, 'utf8');
 const dashboardSource = fs.readFileSync(path.join(__dirname, '..', 'dashboard', 'dashboard.js'), 'utf8');
+const bridgeHtmlSource = fs.readFileSync(path.join(__dirname, '..', 'google-apps-script', 'commercial', 'Bridge.html'), 'utf8');
+const bridgeClientSource = fs.readFileSync(path.join(__dirname, '..', 'js', 'bridge-client.js'), 'utf8');
 const lockdownSource = fs.readFileSync(path.join(__dirname, '..', 'supabase', '07_sheet_canonical_lockdown.sql'), 'utf8');
 
 function loadBridge(overrides = {}) {
@@ -248,4 +250,152 @@ test('cutover keeps role helpers out of public RPCs and fetches attachments thro
 test('rejects an unrecognized workflow status', () => {
   const bridge = loadBridge();
   assert.throws(() => bridge.sanitizeAppointmentUpdate_({ status: 'admin' }, 'doctor'), /حالة الحجز غير معتمدة/);
+});
+
+test('historical reconciliation preview returns reviewable matches without writing', () => {
+  const bridge = loadBridge();
+  const rows = [
+    ['ID','Name','Phone','Type','Booking Date'],
+    ['S-1','Unique Patient','01000000001','كشف أول مرة','2026-09-01'],
+    ['S-2','Ambiguous Patient','01000000002','كشف متابعة','2026-09-02'],
+    ['S-3','Unmatched Patient','01000000003','استشارة متابعة','2026-09-03'],
+    ['S-4','Duplicate Composite','01000000001','كشف أول مرة','2026-09-01'],
+    ['S-1','Duplicate Code','01000000004','كشف أول مرة','2026-09-04']
+  ];
+  const sheet = {
+    getLastRow: () => rows.length,
+    getLastColumn: () => rows[0].length,
+    getRange(row, column, rowCount = 1, columnCount = 1) {
+      const slice = rows.slice(row - 1, row - 1 + rowCount).map(line => line.slice(column - 1, column - 1 + columnCount));
+      return {
+        getDisplayValues: () => slice.map(line => line.map(value => String(value ?? ''))),
+        getDisplayValue: () => String(rows[row - 1]?.[column - 1] ?? ''),
+        getValue: () => rows[row - 1]?.[column - 1] ?? ''
+      };
+    }
+  };
+  const dbRows = [
+    { id: 41, booking_code:'DB-1', request_type:'first', requested_date:'2026-09-01', patients:{ full_name:'Unique Patient', phone:'01000000001' } },
+    { id: 42, booking_code:'DB-2A', request_type:'follow', requested_date:'2026-09-02', patients:{ full_name:'Ambiguous Patient', phone:'01000000002' } },
+    { id: 43, booking_code:'DB-2B', request_type:'follow', requested_date:'2026-09-02', patients:{ full_name:'Ambiguous Patient', phone:'01000000002' } }
+  ];
+  bridge.workbook_ = () => ({ getSheetByName: name => name === 'Sheet1' ? sheet : null });
+  bridge.loadReconciliationRows_ = () => dbRows;
+  const preview = bridge.runHistoricalReconciliationDryRun_();
+  assert.equal(preview.mode, 'dry_run_only');
+  assert.deepEqual(JSON.parse(JSON.stringify(preview.counts)), {
+    sheetRows:5, exactCodeMatches:0, uniqueCompositeCandidates:1, ambiguousCandidates:1,
+    unmatched:1, duplicateSheetRows:1, duplicateSheetCodes:1
+  });
+  assert.equal(preview.details.unique[0].candidateAppointmentId, '41');
+  assert.equal(preview.details.unique[0].rowNumber, 2);
+  assert.equal(preview.details.ambiguous[0].candidateCount, 2);
+  assert.equal(preview.details.unmatched[0].bookingCode, 'S-3');
+});
+
+test('doctor reconciliation preview does not wait for the global write lock', () => {
+  const bridge = loadBridge();
+  let lockRequested = false;
+  bridge.LockService = { getScriptLock() { lockRequested = true; return { waitLock() { throw new Error('lock must not be requested'); }, releaseLock() {} }; } };
+  bridge.json_ = value => value;
+  bridge.authorizeStaff_ = token => token === 'doctor-token'
+    ? { ok:true, id:'doctor-test', role:'doctor', name:'Doctor Test' }
+    : { ok:false };
+  bridge.runHistoricalReconciliationDryRun_ = () => ({ status:'preview', counts:{ sheetRows:0 } });
+  const response = bridge.doPost({ postData:{ contents:JSON.stringify({ action:'admin.reconcile.preview', accessToken:'doctor-token' }) } });
+  assert.equal(response.status, 'preview');
+  assert.equal(response.counts.sheetRows, 0);
+  assert.equal(lockRequested, false);
+});
+
+test('unauthorized reconciliation preview is denied before any write lock or workbook access', () => {
+  const bridge = loadBridge();
+  let lockRequested = false;
+  bridge.LockService = { getScriptLock() { lockRequested = true; return { waitLock() {}, releaseLock() {} }; } };
+  bridge.json_ = value => value;
+  bridge.authorizeStaff_ = () => ({ ok:false });
+  const response = bridge.doPost({ postData:{ contents:JSON.stringify({ action:'admin.reconcile.preview', accessToken:'invalid-token' }) } });
+  assert.equal(response.code, 'unauthorized');
+  assert.equal(lockRequested, false);
+});
+
+test('HtmlService RPC transport only accepts the clinic site and local preview origins', () => {
+  assert.match(bridgeHtmlSource, /https:\/\/dokyy2\.github\.io/);
+  assert.match(bridgeHtmlSource, /http:\/\/127\.0\.0\.1:5500/);
+  assert.match(bridgeHtmlSource, /http:\/\/localhost:5500/);
+  assert.match(bridgeHtmlSource, /if \(!ALLOWED_PARENT_ORIGINS\.has\(event\.origin\)\) return/);
+  assert.match(bridgeHtmlSource, /google\.script\.run/);
+  assert.match(bridgeClientSource, /event\.source !== frame\.contentWindow/);
+  assert.match(bridgeClientSource, /frameOrigin/);
+  assert.doesNotMatch(bridgeClientSource, /fetch\s*\(/);
+});
+
+test('iframe bridge dispatches the read-only doctor preview without taking the write lock', () => {
+  const bridge = loadBridge();
+  let lockRequested = false;
+  bridge.LockService = { getScriptLock() { lockRequested = true; throw new Error('preview must not lock'); } };
+  bridge.authorizeStaff_ = token => token === 'doctor-token'
+    ? { ok:true, id:'doctor-test', role:'doctor', name:'Doctor Test' }
+    : { ok:false };
+  bridge.runHistoricalReconciliationDryRun_ = () => ({ status:'preview', counts:{ sheetRows:2 } });
+  const response = bridge.bridgeRpc({ action:'admin.reconcile.preview', accessToken:'doctor-token', payload:{} });
+  assert.equal(response.status, 'preview');
+  assert.equal(response.counts.sheetRows, 2);
+  assert.equal(lockRequested, false);
+});
+
+test('historical linking revalidates a unique exact candidate and rejects ambiguity', () => {
+  const bridge = loadBridge();
+  const sheetValues = { booking_code:'S-1', full_name:'Patient', phone:'01000000001', request_type:'first', requested_date:'2026-09-01' };
+  const candidate = { id:41, booking_code:'DB-1', request_type:'first', requested_date:'2026-09-01', patients:{ full_name:'Patient', phone:'01000000001' } };
+  bridge.readReconciliationSheetRow_ = () => sheetValues;
+  bridge.loadReconciliationRows_ = () => [candidate];
+  const payload = { sheetName:'Sheet1', rowNumber:2, bookingCode:'S-1', candidateAppointmentId:'41', candidateBookingCode:'DB-1' };
+  assert.equal(bridge.validateHistoricalCandidate_(payload).candidate.id, 41);
+  const ambiguous = { ...candidate, id:42, booking_code:'DB-2' };
+  bridge.loadReconciliationRows_ = () => [candidate, ambiguous];
+  assert.throws(() => bridge.validateHistoricalCandidate_(payload), /ambiguous and requires explicit doctor review/);
+  assert.equal(bridge.validateHistoricalCandidate_({ ...payload, allowAmbiguous:true }).candidate.id, 41);
+  bridge.loadReconciliationRows_ = () => [candidate];
+  bridge.readReconciliationSheetRow_ = () => ({ ...sheetValues, phone:'01099999999' });
+  assert.throws(() => bridge.validateHistoricalCandidate_(payload), /selected candidate is no longer an exact match/);
+});
+
+test('only the doctor can approve a historical link and approval is queued for retry', () => {
+  const bridge = loadBridge();
+  let audit, queued;
+  bridge.validateHistoricalCandidate_ = () => ({ bookingCode:'S-1', values:{ status:'completed' }, candidate:{ id:41, booking_code:'DB-1', status:'new' } });
+  bridge.recordAudit_ = event => { audit = event; return event.eventId; };
+  bridge.enqueue_ = (id, action, key, payload) => { queued = { id, action, key, payload }; return id; };
+  bridge.processOutbox_ = () => ({ ok:true, sheetSaved:true });
+  const payload = { sheetName:'Sheet1', rowNumber:2, bookingCode:'S-1', candidateAppointmentId:'41', candidateBookingCode:'DB-1' };
+  assert.throws(() => bridge.linkHistoricalMatch_(payload, { role:'secretary' }), /الصلاحية غير كافية/);
+  const result = bridge.linkHistoricalMatch_(payload, { id:'doctor-id', name:'Doctor', role:'doctor' });
+  assert.equal(result.syncStatus, 'synced');
+  assert.equal(audit.action, 'admin.reconcile.link');
+  assert.equal(queued.action, 'admin.reconcile.link');
+  assert.equal(queued.payload.candidateAppointmentId, '41');
+});
+
+test('historical projection link preserves fields absent from the canonical Sheet', () => {
+  const bridge = loadBridge();
+  const calls = [];
+  bridge.validateHistoricalCandidate_ = () => ({
+    bookingCode:'S-1',
+    values:{ booking_code:'S-1', phone:'01000000001', full_name:'Patient', request_type:'first', requested_date:'2026-09-01' },
+    candidate:{ id:41, booking_code:'DB-1', status:'completed' }
+  });
+  bridge.supabaseFetch_ = (url, method, body, token, secret, prefer) => {
+    calls.push({ url, method, body, prefer });
+    if (method === 'patch') return [{ id:41 }];
+    return [{ id:'patient-id' }];
+  };
+  bridge.insertOnce_ = () => ({ id:1 });
+  const result = bridge.applyHistoricalProjectionLink_({ approvedBy:'doctor-id', event:{ eventId:'event-id', note:'approved' } });
+  assert.equal(result.status, 'success');
+  const update = calls.find(call => call.method === 'patch');
+  assert.equal(update.body.booking_code, 'S-1');
+  assert.equal(update.body.status, undefined);
+  assert.equal(update.body.amount_paid, undefined);
+  assert.equal(calls.some(call => call.url.includes('/patients?on_conflict=phone')), true);
 });

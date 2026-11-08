@@ -32,7 +32,7 @@ Only the project owner should be an Apps Script editor. The Drive folder should 
 ## Current live setup checkpoint — 2026-11-08
 
 - The clinic selected its original Google workbook as the canonical data source; Supabase is a synchronized projection for the administration app. The original workbook ID, patient rows, and all credentials stay outside this repository.
-- The separate Sheet-first Apps Script project is deployed as a public booking web app (deployment version 2). It runs as the owner, reports `configured: true`, and confirms the retry trigger is installed. Health check: `GET /exec` returns readiness metadata only.
+- The separate Sheet-first Apps Script project is deployed as a public booking web app (deployment version 4). It runs as the owner, reports `configured: true`, and confirms the retry trigger is installed. Health check: `GET /exec?mode=health` returns readiness metadata only.
 - Script Properties use `SUPABASE_SECRET_KEY` and `SUPABASE_PUBLISHABLE_KEY`; the old `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ANON_KEY` properties were removed. Supabase legacy API keys were disabled after migration to publishable/secret keys. Never add key values to source control or logs.
 - Supabase migration `20261108001453_sheet_canonical_lockdown` is applied. Supabase acts as a read projection; staff actions are validated and written to the Sheet first, then synchronized through the retryable outbox.
 - A private staging workbook was used for a synthetic booking and projection/retry verification. The synthetic booking and related rows were cleaned up; no synthetic rows were written to the original clinic workbook. The live bridge health endpoint was rechecked after the key correction and reports ready.
@@ -46,8 +46,13 @@ Only the project owner should be an Apps Script editor. The Drive folder should 
 5. The public health endpoint was rechecked after correcting Script Properties and reported ready with the retry trigger installed.
 ## Current limitations / release notes
 
+- The first live doctor preview on 2026-11-08 exposed two browser issues: the global write-lock timeout and cross-origin `fetch` failing between GitHub Pages and Apps Script. Deployment v4 adds an Apps Script HtmlService iframe RPC transport with an exact parent-origin allowlist and a `google.script.run` handler. The read-only doctor preview bypasses the global write lock; all approval/write actions retain the lock and each historical link revalidates current source data.
+- Apps Script v4 health is verified as `ready` with the retry trigger installed. The matching GitHub Pages `bridge-client.js` update is being published; end-to-end doctor preview verification follows deployment.
+- Regression tests confirm the iframe origin allowlist, doctor-only preview, no lock for preview, and denial for unauthorized requests. Local bridge suite passes 23/23.
+
 - Run the local bridge guard checks from the build root with `node --test tests/bridge-guards.test.cjs`. They use synthetic fixtures and do not contact Google Sheets, Drive, email, or Supabase.
 - Historical Sheet rows without an explicit status header are treated conservatively as unresolved matches; same-phone booking attempts create a review alert rather than assuming prior rows are closed.
-- Existing Supabase rows without an exact matching booking code cannot be edited through the bridge yet; historical reconciliation must explicitly approve their mapping first.
+- The deployed v3 dashboard's doctor-only reconciliation preview lists unique candidates, ambiguous candidates, and unmatched rows without writing. A unique or explicitly selected ambiguous candidate can be linked only after doctor confirmation and server-side revalidation of the current Sheet row, patient phone, date, request type, and booking-code uniqueness. The Sheet audit log records the decision; Supabase projection updates go through the retryable outbox. Ambiguous candidates are never linked automatically.
+- Deployment v4 was published on 2026-11-08 and keeps the existing `/exec` Web App URL. Health is ready. The dashboard bridge client update is prepared for the `with-admin` release; no doctor preview result or patient-row change has been confirmed after the transport fix.
 - Applied Supabase migrations include Monday closure, function privilege hardening, and Sheet-canonical lockdown. The Sheet is the source of truth and Supabase is a projection, not a second writable source.
 - The production Apps Script deployment URL is configured in `js/config.js`; credentials remain private in Script Properties.
