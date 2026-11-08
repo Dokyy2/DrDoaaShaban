@@ -247,6 +247,13 @@ const visitDesc = {
 window.addEventListener("load", () => {
     applyRandomTheme();
 
+    // Keep the splash dismissal independent from optional integrations below.
+    const splash = document.getElementById("splash");
+    if (splash) {
+        splash.classList.add("loading");
+        window.setTimeout(startExperience, 3000);
+    }
+
     if (IS_LOCAL_PREVIEW) {
         document.getElementById("localPreviewBanner").hidden = false;
     }
@@ -264,9 +271,6 @@ window.addEventListener("load", () => {
 
     updateBackToTop();
     window.addEventListener("scroll", updateBackToTop, { passive: true });
-    const splash = document.getElementById("splash");
-    splash.classList.add("loading");
-    window.setTimeout(startExperience, 3000);
 });
 
 function initInSiteNavigation() {
@@ -499,6 +503,11 @@ function initPresenceCounter() {
         pips.innerHTML = "<i></i><i></i><i></i>";
         pill.hidden = false;
         pill.classList.add("is-preview");
+        return;
+    }
+    const bridgeUrl = String(window.CLINIC_BRIDGE?.url || "").trim();
+    if (!bridgeUrl) {
+        pill.hidden = true;
         return;
     }
     const visitorId = getPresenceVisitorId();
