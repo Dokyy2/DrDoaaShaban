@@ -7,6 +7,8 @@ const assert = require('node:assert/strict');
 const bridgePath = path.join(__dirname, '..', 'google-apps-script', 'commercial', 'Code.gs');
 const bridgeSource = fs.readFileSync(bridgePath, 'utf8');
 const dashboardSource = fs.readFileSync(path.join(__dirname, '..', 'dashboard', 'dashboard.js'), 'utf8');
+const bridgeHtmlSource = fs.readFileSync(path.join(__dirname, '..', 'google-apps-script', 'commercial', 'Bridge.html'), 'utf8');
+const bridgeClientSource = fs.readFileSync(path.join(__dirname, '..', 'js', 'bridge-client.js'), 'utf8');
 const lockdownSource = fs.readFileSync(path.join(__dirname, '..', 'supabase', '07_sheet_canonical_lockdown.sql'), 'utf8');
 
 function loadBridge(overrides = {}) {
@@ -289,6 +291,57 @@ test('historical reconciliation preview returns reviewable matches without writi
   assert.equal(preview.details.unique[0].rowNumber, 2);
   assert.equal(preview.details.ambiguous[0].candidateCount, 2);
   assert.equal(preview.details.unmatched[0].bookingCode, 'S-3');
+});
+
+test('doctor reconciliation preview does not wait for the global write lock', () => {
+  const bridge = loadBridge();
+  let lockRequested = false;
+  bridge.LockService = { getScriptLock() { lockRequested = true; return { waitLock() { throw new Error('lock must not be requested'); }, releaseLock() {} }; } };
+  bridge.json_ = value => value;
+  bridge.authorizeStaff_ = token => token === 'doctor-token'
+    ? { ok:true, id:'doctor-test', role:'doctor', name:'Doctor Test' }
+    : { ok:false };
+  bridge.runHistoricalReconciliationDryRun_ = () => ({ status:'preview', counts:{ sheetRows:0 } });
+  const response = bridge.doPost({ postData:{ contents:JSON.stringify({ action:'admin.reconcile.preview', accessToken:'doctor-token' }) } });
+  assert.equal(response.status, 'preview');
+  assert.equal(response.counts.sheetRows, 0);
+  assert.equal(lockRequested, false);
+});
+
+test('unauthorized reconciliation preview is denied before any write lock or workbook access', () => {
+  const bridge = loadBridge();
+  let lockRequested = false;
+  bridge.LockService = { getScriptLock() { lockRequested = true; return { waitLock() {}, releaseLock() {} }; } };
+  bridge.json_ = value => value;
+  bridge.authorizeStaff_ = () => ({ ok:false });
+  const response = bridge.doPost({ postData:{ contents:JSON.stringify({ action:'admin.reconcile.preview', accessToken:'invalid-token' }) } });
+  assert.equal(response.code, 'unauthorized');
+  assert.equal(lockRequested, false);
+});
+
+test('HtmlService RPC transport only accepts the clinic site and local preview origins', () => {
+  assert.match(bridgeHtmlSource, /https:\/\/dokyy2\.github\.io/);
+  assert.match(bridgeHtmlSource, /http:\/\/127\.0\.0\.1:5500/);
+  assert.match(bridgeHtmlSource, /http:\/\/localhost:5500/);
+  assert.match(bridgeHtmlSource, /if \(!ALLOWED_PARENT_ORIGINS\.has\(event\.origin\)\) return/);
+  assert.match(bridgeHtmlSource, /google\.script\.run/);
+  assert.match(bridgeClientSource, /event\.source !== frame\.contentWindow/);
+  assert.match(bridgeClientSource, /frameOrigin/);
+  assert.doesNotMatch(bridgeClientSource, /fetch\s*\(/);
+});
+
+test('iframe bridge dispatches the read-only doctor preview without taking the write lock', () => {
+  const bridge = loadBridge();
+  let lockRequested = false;
+  bridge.LockService = { getScriptLock() { lockRequested = true; throw new Error('preview must not lock'); } };
+  bridge.authorizeStaff_ = token => token === 'doctor-token'
+    ? { ok:true, id:'doctor-test', role:'doctor', name:'Doctor Test' }
+    : { ok:false };
+  bridge.runHistoricalReconciliationDryRun_ = () => ({ status:'preview', counts:{ sheetRows:2 } });
+  const response = bridge.bridgeRpc({ action:'admin.reconcile.preview', accessToken:'doctor-token', payload:{} });
+  assert.equal(response.status, 'preview');
+  assert.equal(response.counts.sheetRows, 2);
+  assert.equal(lockRequested, false);
 });
 
 test('historical linking revalidates a unique exact candidate and rejects ambiguity', () => {

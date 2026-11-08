@@ -1146,15 +1146,9 @@ function isSupabaseConfigured() {
 }
 
 async function sendBooking(payload) {
-    const bridgeUrl = String(window.CLINIC_BRIDGE?.url || "").trim();
-    if (!bridgeUrl) throw new Error("خدمة الحجز الموحدة غير جاهزة بعد. يرجى المحاولة لاحقًا.");
-    const response = await fetch(bridgeUrl, {
-        method: "POST",
-        cache: "no-store",
-        body: JSON.stringify({ action: "booking.create", payload })
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || result.status === "error") throw new Error(result.message || "تعذر إرسال طلب الحجز");
+    if (!window.ClinicBridge?.call) throw new Error("خدمة الحجز الموحدة غير جاهزة بعد. يرجى المحاولة لاحقًا.");
+    const result = await window.ClinicBridge.call("booking.create", payload);
+    if (!result || result.status === "error") throw new Error(result?.message || "تعذر إرسال طلب الحجز");
     return result;
 }
 
