@@ -9,6 +9,7 @@ let lastPetalAt = 0;
 let activePetals = 0;
 let presenceTimer = null;
 let currentBookingView = "start";
+let currentBookingCode = "";
 let lastPregnancyCalcDate = "";
 
 const dict = {
@@ -360,6 +361,15 @@ function pushBookingView(view, details = {}) {
     currentBookingView = view;
 }
 
+function makeClientBookingCode(type, date = "") {
+    const random = typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID().replace(/-/g, "").toUpperCase()
+        : Array.from({ length: 12 }, () => Math.floor(Math.random() * 16).toString(16)).join("").toUpperCase();
+    if (type === "contacts") return `C-${random.slice(0, 12)}`;
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.replace(/-/g, "") : todayISO().replace(/-/g, "");
+    return `BK-${day}-${random.slice(0, 8)}`;
+}
+
 function pushBookingResult(view) {
     const current = history.state && typeof history.state === "object" ? history.state : {};
     const startState = { ...current, clinicSite: true, clinicSection: "booking", clinicBookingView: "start" };
@@ -385,6 +395,7 @@ function restoreBookingView(state) {
     if (view === "start") return renderBookingStart();
     if (view === "form") {
         currentBookingType = state.type || "first";
+        currentBookingCode = state.bookingCode || makeClientBookingCode(currentBookingType);
         return renderBookingForm();
     }
     if (view === "pregnancyCalc") {
@@ -592,11 +603,8 @@ function initPregnancyNudge() {
 
     window.setTimeout(() => {
         float.hidden = false;
-        let alreadyShown = false;
-        try { alreadyShown = sessionStorage.getItem("clinicPregnancyNudgeShown") === "1"; } catch (error) {}
         const bookingStarted = currentBookingView !== "start" || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "");
-        if (alreadyShown || bookingStarted || document.visibilityState !== "visible") return;
-        try { sessionStorage.setItem("clinicPregnancyNudgeShown", "1"); } catch (error) {}
+        if (bookingStarted || document.visibilityState !== "visible") return;
         nudge.hidden = false;
         document.body.classList.add("pregnancy-nudge-open");
         nudge.querySelector(".pregnancy-nudge-close")?.focus({ preventScroll: true });
@@ -755,7 +763,8 @@ function selectVisit(type) {
         pushBookingView("pregnancyCalc", { type });
         renderPregnancyCalc();
     } else {
-        pushBookingView("form", { type });
+        currentBookingCode = makeClientBookingCode(type);
+        pushBookingView("form", { type, bookingCode: currentBookingCode });
         renderBookingForm();
     }
 }
@@ -786,6 +795,7 @@ function getBookingIdPrefix(type) {
 }
 
 function renderBookingForm() {
+    if (!currentBookingCode) currentBookingCode = makeClientBookingCode(currentBookingType);
     const isBirth = currentBookingType === "birth";
     const isConsult = currentBookingType === "consult";
     const isLabs = currentBookingType === "labs";
@@ -881,7 +891,14 @@ function renderPregnancyCalc(selectedDate = "") {
             <div class="form-grid">
                 <div class="form-field full">
                     <label>${t("pregDate")}</label>
-                    <input type="date" id="lastPeriodDate" max="${today}" value="${selectedDate}">
+                    <div class="pregnancy-date-picker">
+                        <input type="date" id="lastPeriodDate" max="${today}" value="${selectedDate}" aria-describedby="pregnancyDateHint">
+                        <button class="pregnancy-date-hint" type="button" onclick="openPregnancyDatePicker()" aria-label="${currentLang === "ar" ? "اضغطي لاختيار التاريخ" : "Open the date picker"}">
+                            <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                            <span id="pregnancyDateHint">${currentLang === "ar" ? "اضغطي هنا لاختيار تاريخ أول يوم في آخر دورة" : "Tap here to choose the first day of your last period"}</span>
+                            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -897,6 +914,13 @@ function renderPregnancyCalc(selectedDate = "") {
         </div>
     `;
     document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function openPregnancyDatePicker() {
+    const input = document.getElementById("lastPeriodDate");
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    try { input.showPicker?.(); } catch (error) { input.click(); }
 }
 
 function calculatePregnancy() {
@@ -929,8 +953,7 @@ function calculatePregnancyForDate(d, addHistory = true) {
         const current = history.state && typeof history.state === "object" ? history.state : {};
         const calcState = { ...current, clinicSite: true, clinicSection: "booking", clinicBookingView: "pregnancyCalc" };
         history.replaceState(calcState, "", location.href);
-        history.pushState({ ...calcState, clinicBookingView: "pregnancyResult" }, "", location.href);
-        currentBookingView = "pregnancyResult";
+        currentBookingView = "pregnancyCalc";
     }
 
     document.getElementById("pregnancyResult").innerHTML = `
@@ -1187,6 +1210,7 @@ async function submitBooking() {
     const hasAttachment = !!attachment.attachmentName;
     const progressTimer = showProcessing();
     const payload = {
+        bookingCode: currentBookingCode || (currentBookingCode = makeClientBookingCode(currentBookingType, valid.date)),
         name: valid.name,
         phone: valid.phone,
         type: currentBookingType,
@@ -1237,8 +1261,8 @@ async function submitBooking() {
     } catch (error) {
         clearInterval(progressTimer);
         showSoftAlert(currentLang === "ar" ? "تعذر إرسال الطلب" : "Unable to send request", currentLang === "ar"
-            ? "لم يصلنا تأكيد تسجيل الطلب. تحققي من الاتصال وحاولي مرة أخرى، أو تواصلي مع العيادة مباشرة."
-            : "We could not confirm that your request was registered. Check your connection and try again, or contact the clinic directly.");
+            ? "انقطع الاتصال قبل وصول تأكيد التسجيل. قد يكون الطلب قد وصل بالفعل؛ لا تعيدي إرساله الآن لتجنب التكرار. تواصلي مع العيادة للتحقق."
+            : "The connection ended before registration was confirmed. The request may already have arrived; do not submit it again yet. Contact the clinic to verify.");
     }
 }
 
@@ -1253,6 +1277,7 @@ async function submitBirth() {
     const message = currentLang === "ar" ? "متبقي تقريباً " + Math.max(0, daysLeft) + " يوم" : "Approximately " + Math.max(0, daysLeft) + " days remaining";
     const progressTimer = showProcessing();
     const payload = {
+        bookingCode: currentBookingCode || (currentBookingCode = makeClientBookingCode("birth", valid.date)),
         name: valid.name,
         phone: valid.phone,
         type: "birth",
@@ -1295,8 +1320,8 @@ async function submitBirth() {
     } catch (error) {
         clearInterval(progressTimer);
         showSoftAlert(currentLang === "ar" ? "تعذر إرسال الطلب" : "Unable to send request", currentLang === "ar"
-            ? "لم يصلنا تأكيد تسجيل الطلب. تحققي من الاتصال وحاولي مرة أخرى، أو تواصلي مع العيادة مباشرة."
-            : "We could not confirm that your request was registered. Check your connection and try again, or contact the clinic directly.");
+            ? "انقطع الاتصال قبل وصول تأكيد التسجيل. قد يكون الطلب قد وصل بالفعل؛ لا تعيدي إرساله الآن لتجنب التكرار. تواصلي مع العيادة للتحقق."
+            : "The connection ended before registration was confirmed. The request may already have arrived; do not submit it again yet. Contact the clinic to verify.");
     }
 }
 
