@@ -1,5 +1,5 @@
 (() => {
-  async function call(action, payload = {}, accessToken = '') {
+  async function call(action, payload = {}, accessToken = '', functionOverride = '') {
     const config = window.CLINIC_SUPABASE || {};
     const baseUrl = String(config.url || '').replace(/\/+$/, '');
     const apiKey = String(config.anonKey || '');
@@ -13,7 +13,7 @@
 
     let response;
     try {
-      const functionName = String(window.CLINIC_BOOKING_FUNCTION || 'clinic-db-booking');
+      const functionName = String(functionOverride || window.CLINIC_BOOKING_FUNCTION || 'clinic-db-booking');
       response = await fetch(`${baseUrl}/functions/v1/${functionName}`, {
         method: 'POST',
         headers,

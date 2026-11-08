@@ -13,7 +13,8 @@ const CLINIC_SHEETS = {
   settings: 'Clinic Settings',
   notes: 'Clinic Private Notes',
   expenses: 'Clinic Expenses',
-  alerts: 'Clinic Alerts'
+  alerts: 'Clinic Alerts',
+  closedArchive: 'Admin Closed Archive'
 };
 const ACTIVE_STATUSES = new Set(['new', 'contacted', 'confirmed', 'rescheduled', 'follow_up']);
 const DEFAULT_SETTINGS = { clinic_name: 'عيادة د. دعاء شعبان', max_daily_slots: 20, work_start: '16:00', work_end: '22:00', closed_weekdays: [1,4,5], closed_dates: [], service_prices: {}, finance_enabled: false, finance_start_date: '' };
@@ -244,6 +245,7 @@ function handleStaffAction_(request, staff) {
   if (action === 'attachment.get') return readAttachment_(body, staff);
   if (action === 'admin.reconcile.preview') { requireRole_(staff, 'doctor'); return runHistoricalReconciliationDryRun_(); }
   if (action === 'admin.reconcile.link') { requireRole_(staff, 'doctor'); return linkHistoricalMatch_(body, staff); }
+  if (action === 'admin.archive.closed') return processClosedCaseArchive_(body, staff);
   return fail_('unsupported_action', 'الإجراء غير مدعوم.');
 }
 
@@ -574,10 +576,109 @@ function retryPendingSyncs() {
   lock.waitLock(20000);
   try {
     const sh = workbook_().getSheetByName(CLINIC_SHEETS.outbox);
-    if (!sh || sh.getLastRow() < 2) return;
-    const rows = sh.getRange(2, 1, sh.getLastRow() - 1, 8).getValues();
-    rows.forEach(function (row) { if (row[5] === 'pending' || row[5] === 'staged') processOutbox_(String(row[0])); });
+    if (sh && sh.getLastRow() >= 2) {
+      const rows = sh.getRange(2, 1, sh.getLastRow() - 1, 8).getValues();
+      rows.forEach(function (row) { if (row[5] === 'pending' || row[5] === 'staged') processOutbox_(String(row[0])); });
+    }
+    retryPendingClosedCaseArchives_();
   } finally { lock.releaseLock(); }
+}
+
+const CLOSED_ARCHIVE_HEADERS = [
+  'معرف الحجز','كود الحجز','الاسم','الهاتف','نوع الحجز','تاريخ الحجز','الساعة',
+  'آخر زيارة','وقت التسجيل','آخر تحديث','المصدر','رسالة المريضة','اسم المرفق','نوع المرفق','قائمة انتظار','الحالة النهائية',
+  'سبب الإغلاق','تفاصيل الإغلاق','ملاحظة التواصل','ملاحظات العيادة',
+  'المبلغ المطلوب','المبلغ المدفوع','وسيلة الدفع','ملاحظة الدفع',
+  'تاريخ تسجيل الدفع','تمت الولادة بالعيادة','تاريخ الإغلاق'
+];
+
+function archivePayloadRow_(payload) {
+  const typeLabels = { first:'كشف أول مرة', follow:'متابعة', consult:'استشارة متابعة', aesthetic:'تجميل نسائي', birth:'حجز ولادة', labs:'تحاليل أو أشعة' };
+  const statusLabels = { completed:'تمت الزيارة', cancelled:'ملغي' };
+  const paymentLabels = { cash:'نقدًا', visa:'فيزا', instapay:'إنستا باي', vodafone_cash:'فودافون كاش', other:'أخرى' };
+  const fields = [
+    'appointment_id','booking_code','full_name','phone','request_type','requested_date','requested_time',
+    'last_visit_date','created_at','updated_at','source','message','attachment_name','attachment_type','is_waitlist','status','outcome_reason','outcome_note',
+    'contact_note','staff_note','amount_due','amount_paid','payment_method','payment_note',
+    'payment_recorded_at','clinic_birth_recorded','closed_at'
+  ];
+  const values = [
+    payload.appointment_id, payload.booking_code, payload.full_name, payload.phone,
+    typeLabels[payload.request_type] || payload.request_type, payload.requested_date,
+    payload.requested_time, payload.last_visit_date, payload.created_at, payload.updated_at, payload.source,
+    payload.message, payload.attachment_name, payload.attachment_type,
+    payload.is_waitlist === true ? 'نعم' : payload.is_waitlist === false ? 'لا' : '',
+    statusLabels[payload.status] || payload.status, payload.outcome_reason,
+    payload.outcome_note, payload.contact_note, payload.staff_note, payload.amount_due,
+    payload.amount_paid, paymentLabels[payload.payment_method] || payload.payment_method,
+    payload.payment_note, payload.payment_recorded_at,
+    payload.clinic_birth_recorded === true ? 'نعم' : payload.clinic_birth_recorded === false ? 'لا' : '',
+    payload.closed_at
+  ];
+  return values.map(function (value, index) { return sheetSafeValue_(fields[index], value); });
+}
+
+function writeClosedCaseArchive_(payload) {
+  if (!payload || !['completed','cancelled'].includes(String(payload.status))) throw new Error('Closed appointment snapshot is invalid.');
+  const sheet = getOrCreate_(CLINIC_SHEETS.closedArchive, CLOSED_ARCHIVE_HEADERS);
+  const idCol = findHeader_(sheet, ['معرف الحجز']);
+  if (!idCol) throw new Error('Archive identity header is missing.');
+  const row = rowByValue_(sheet, idCol, String(payload.appointment_id));
+  const values = [archivePayloadRow_(payload)];
+  const targetRow = row || sheet.getLastRow() + 1;
+  sheet.getRange(targetRow, 1, 1, CLOSED_ARCHIVE_HEADERS.length).setValues(values);
+  if (!row) {
+    sheet.setFrozenRows(1);
+    sheet.getRange(1, 1, 1, CLOSED_ARCHIVE_HEADERS.length).setFontWeight('bold');
+  }
+}
+
+function syncClosedCaseArchiveRow_(record) {
+  const id = Number(record && record.appointment_id);
+  if (!Number.isSafeInteger(id) || id < 1) throw new Error('Archive appointment id is invalid.');
+  const payload = record.payload || {};
+  writeClosedCaseArchive_(payload);
+  supabaseFetch_('/rest/v1/clinic_closed_case_archive?appointment_id=eq.' + encodeURIComponent(id), 'patch', {
+    sync_status:'synced', attempts:Number(record.attempts || 0) + 1, last_error:null, synced_at:new Date().toISOString()
+  }, '', true, 'return=minimal');
+}
+
+function processClosedCaseArchive_(payload, staff) {
+  if (!staff || !['doctor','secretary'].includes(staff.role)) return fail_('unauthorized', 'انتهت الجلسة أو لا توجد صلاحية.');
+  const id = Number(payload.appointmentId);
+  if (!Number.isSafeInteger(id) || id < 1) return fail_('invalid_appointment', 'معرف الحجز غير صحيح.');
+  try {
+    const rows = supabaseFetch_('/rest/v1/clinic_closed_case_archive?appointment_id=eq.' + encodeURIComponent(id) + '&select=appointment_id,booking_code,payload,attempts,sync_status', 'get', null, '', true);
+    if (!Array.isArray(rows) || !rows.length) return fail_('archive_not_queued', 'لم يظهر سجل الأرشفة بعد. حدّثي اللوحة ثم أعيدي المحاولة.');
+    if (rows[0].sync_status === 'synced') return { status:'success', syncStatus:'synced', alreadyArchived:true };
+    syncClosedCaseArchiveRow_(rows[0]);
+    return { status:'success', syncStatus:'synced' };
+  } catch (err) {
+    try {
+      supabaseFetch_('/rest/v1/clinic_closed_case_archive?appointment_id=eq.' + encodeURIComponent(id), 'patch', {
+        attempts:1, last_error:'sheet_export_failed'
+      }, '', true, 'return=minimal');
+    } catch (_) {}
+    return fail_('archive_pending', 'تم حفظ الحالة في قاعدة الإدارة، لكن أرشفتها في الشيت معلّقة وستُعاد تلقائيًا.');
+  }
+}
+
+function retryPendingClosedCaseArchives_() {
+  let rows = [];
+  try {
+    rows = supabaseFetch_('/rest/v1/clinic_closed_case_archive?sync_status=eq.pending&select=appointment_id,booking_code,payload,attempts&order=created_at.asc&limit=20', 'get', null, '', true);
+  } catch (_) { return; }
+  if (!Array.isArray(rows)) return;
+  rows.forEach(function (record) {
+    try { syncClosedCaseArchiveRow_(record); }
+    catch (_) {
+      try {
+        supabaseFetch_('/rest/v1/clinic_closed_case_archive?appointment_id=eq.' + encodeURIComponent(record.appointment_id), 'patch', {
+          attempts:Number(record.attempts || 0) + 1, last_error:'sheet_export_failed'
+        }, '', true, 'return=minimal');
+      } catch (_) {}
+    }
+  });
 }
 
 function runHistoricalReconciliationDryRun_() {

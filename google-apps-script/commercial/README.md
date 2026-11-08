@@ -13,6 +13,8 @@
 - Keeps the visitor counter on short-lived random IDs in Apps Script properties; it does not record visitor names or IP addresses.
 - Stamps payment recorder identity and time on the server from the authenticated staff profile; client-supplied attribution fields are ignored.
 - The public health endpoint returns readiness booleans only; it confirms required Script Properties and the retry trigger without returning property values.
+- For the Supabase-admin edition only, `admin.archive.closed` reads a trigger-created closed-case snapshot, then idempotently upserts it into `Admin Closed Archive`. The existing `Sheet1` booking rows are untouched. The 10-minute retry trigger also retries pending archive rows.
+- The archive contains booking/contact/closure/payment fields only. It excludes attachment contents and the doctor's private clinical note. It does not import historical closed cases.
 
 ## Script Properties
 
@@ -56,3 +58,4 @@ Only the project owner should be an Apps Script editor. The Drive folder should 
 - Deployment v4 was published on 2026-11-08 and keeps the existing `/exec` Web App URL. Health is ready. The dashboard bridge client update is prepared for the `with-admin` release; no doctor preview result or patient-row change has been confirmed after the transport fix.
 - Applied Supabase migrations include Monday closure, function privilege hardening, and Sheet-canonical lockdown. The Sheet is the source of truth and Supabase is a projection, not a second writable source.
 - The production Apps Script deployment URL is configured in `js/config.js`; credentials remain private in Script Properties.
+- The admin closed-case archive source is prepared locally but is not live until the new `Code.gs` is saved and the current Web App deployment is updated to a new version. Keep the existing `/exec` URL so the Supabase proxy continues to route correctly; do not change the no-admin site's JavaScript or booking flow.

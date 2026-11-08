@@ -5,6 +5,7 @@ const ALLOWED_ORIGINS = new Set([
   "https://dokyy2.github.io",
   "http://127.0.0.1:5500",
   "http://localhost:5500",
+  "http://127.0.0.1:5501",
 ]);
 const ALLOWED_ACTIONS = new Set([
   "booking.create",
@@ -17,6 +18,7 @@ const ALLOWED_ACTIONS = new Set([
   "admin.alert.resolve",
   "admin.reconcile.preview",
   "admin.reconcile.link",
+  "admin.archive.closed",
 ]);
 const MAX_REQUEST_BYTES = 8_000_000;
 
