@@ -20,7 +20,9 @@ async function callSheetBridge(action, payload = {}) {
     if (!data || data.status === 'error') return { data, error:{ message:data?.message || 'تعذر حفظ التغيير في الشيت.' } };
     return { data, error:null };
   } catch (error) {
-    return { data:null, error:{ message:'تعذر الاتصال ببوابة الشيت. راجعي الاتصال قبل إعادة المحاولة.' } };
+    const message = String(error?.message || 'تعذر الاتصال ببوابة الشيت. راجعي الاتصال قبل إعادة المحاولة.').slice(0, 240);
+    console.warn('[ClinicBridge] Dashboard request failed:', error?.name || 'Error', message);
+    return { data:null, error:{ message } };
   }
 }
 async function fetchAllRows(buildQuery, pageSize = 1000, maxPages = 100) {
@@ -54,9 +56,11 @@ function auditForAppointment(id) { return paymentAudits.filter(row => Number(row
 function formatDate(date, short = false) { return date ? new Date(`${date}T12:00:00`).toLocaleDateString('ar-EG', short ? { day:'numeric', month:'short' } : { weekday:'long', year:'numeric', month:'long', day:'numeric' }) : 'لم يُحدد موعد'; }
 function requestDate(a) { return a.requested_date ? formatDate(a.requested_date) : (a.request_type === 'contacts' ? 'تسجيل بيانات للتواصل' : 'بانتظار تحديد موعد'); }
 function wa(a) { const phone = safePhone(a.patients?.phone).replace(/^0/, '20'); const text = `مرحباً ${a.patients?.full_name || ''}، بخصوص ${typeText(a.request_type)}${a.requested_date ? ` بتاريخ ${a.requested_date}` : ''} في عيادة د. دعاء شعبان.`; return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`; }
-function pending(a) { return ['new', 'contacted', 'rescheduled'].includes(a.status); }
-function activeBooking(a) { return ['new', 'contacted', 'confirmed', 'rescheduled', 'follow_up'].includes(a.status); }
-function followUpNeeded(a) { return ['new', 'contacted', 'rescheduled', 'follow_up'].includes(a.status); }
+function clinicToday() { const parts = new Intl.DateTimeFormat('en', { timeZone:'Africa/Cairo', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date()); const part = type => parts.find(item => item.type === type)?.value || ''; return `${part('year')}-${part('month')}-${part('day')}`; }
+function currentWorkflow(a, statuses) { return statuses.includes(a.status) && (!a.requested_date || a.requested_date >= clinicToday()); }
+function pending(a) { return currentWorkflow(a, ['new', 'contacted', 'rescheduled']); }
+function activeBooking(a) { return currentWorkflow(a, ['new', 'contacted', 'confirmed', 'rescheduled', 'follow_up']); }
+function followUpNeeded(a) { return currentWorkflow(a, ['new', 'contacted', 'rescheduled', 'follow_up']); }
 function patientList() { return patients; }
 function birthCount(patientId) { return Number(patientList().find(p => p.id === patientId)?.clinic_births || 0); }
 function patientBadges(patientId) { const visits = completedVisits(patientId); const births = birthCount(patientId); return `${visits ? `<em class="visit-badge"><i class="fa-solid fa-heart-pulse"></i> ${visits} زيارة</em>` : ''}${isVipPatient(patientId) ? ` <em class="vip-badge"><i class="fa-solid fa-crown"></i> عضوة مميزة</em>` : ''}${births ? ` <em class="birth-badge"><i class="fa-solid fa-baby"></i> ولدت معنا ×${births}</em>` : ''}`; }

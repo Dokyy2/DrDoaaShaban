@@ -30,12 +30,39 @@ function sheetWithRows(rows) {
     getLastColumn: () => Math.max(...rows.map(row => row.length)),
     getRange(row, column, rowCount = 1, columnCount = 1) {
       return {
+        getValue: () => rows[row - 1]?.[column - 1] ?? '',
+        getDisplayValue: () => String(rows[row - 1]?.[column - 1] ?? ''),
         getDisplayValues: () => rows.slice(row - 1, row - 1 + rowCount)
           .map(line => line.slice(column - 1, column - 1 + columnCount).map(value => String(value ?? '')))
       };
     }
   };
 }
+
+test('past active bookings are historical and do not block a new booking', () => {
+  const bridge = loadBridge({
+    Utilities: {
+      getUuid: () => 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+      formatDate: () => '2026-11-08'
+    }
+  });
+  const past = sheetWithRows([
+    ['ID', 'Name', 'Phone', 'Booking Date', 'Status'],
+    ['BK-OLD', 'Synthetic Patient', '01000000000', '2026-11-07', 'confirmed']
+  ]);
+  const today = sheetWithRows([
+    ['ID', 'Name', 'Phone', 'Booking Date', 'Status'],
+    ['BK-TODAY', 'Synthetic Patient', '01000000000', '2026-11-08', 'confirmed']
+  ]);
+  const future = sheetWithRows([
+    ['ID', 'Name', 'Phone', 'Booking Date', 'Status'],
+    ['BK-FUTURE', 'Synthetic Patient', '01000000000', '2026-11-09', 'confirmed']
+  ]);
+
+  assert.equal(bridge.findActiveDuplicate_(past, '01000000000'), null);
+  assert.equal(bridge.findActiveDuplicate_(today, '01000000000').bookingCode, 'BK-TODAY');
+  assert.equal(bridge.findActiveDuplicate_(future, '01000000000').bookingCode, 'BK-FUTURE');
+});
 
 test('detects booking headers in row 1 and row 2 layouts', () => {
   const bridge = loadBridge();
@@ -236,6 +263,15 @@ test('shared dashboard settings read omits unused finance start date', () => {
   assert.doesNotMatch(dashboardSource, /from\('clinic_settings'\)\.select\([^)]*finance_start_date/);
   const settingsGrants = lockdownSource.match(/grant select[\s\S]*?on public\.clinic_settings to authenticated/gi) || [];
   assert.equal(settingsGrants.some(grant => grant.includes('finance_start_date')), false);
+});
+
+test('past active workflow records stay in history but leave current follow-up queues', () => {
+  assert.match(dashboardSource, /function clinicToday\(\).*timeZone:'Africa\/Cairo'/);
+  assert.match(dashboardSource, /function currentWorkflow\(a, statuses\).*a\.requested_date >= clinicToday\(\)/);
+  assert.match(dashboardSource, /function activeBooking\(a\) \{ return currentWorkflow\(/);
+  assert.match(dashboardSource, /function followUpNeeded\(a\) \{ return currentWorkflow\(/);
+  // The all-bookings filter remains history-inclusive; it filters only by the user's criteria.
+  assert.match(dashboardSource, /const matches = appointments\.filter\(a =>/);
 });
 
 test('cutover keeps role helpers out of public RPCs and fetches attachments through the bridge', () => {

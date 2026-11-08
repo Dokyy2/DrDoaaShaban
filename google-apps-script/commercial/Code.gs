@@ -855,7 +855,11 @@ function findActiveDuplicate_(sh, phone) {
     if (!statusCol || ACTIVE_STATUSES.has(status)) {
       const nameCol = findHeader_(sh, FIELD_ALIASES.full_name);
       const dateCol = findHeader_(sh, FIELD_ALIASES.requested_date);
-      return { bookingCode: String(sh.getRange(row, idCol).getDisplayValue()), fullName: nameCol ? String(sh.getRange(row, nameCol).getDisplayValue()) : '', phone: phone, requestedDate: dateCol ? sheetDateIso_(sh.getRange(row, dateCol).getValue()) : '', needsReview: !statusCol };
+      const requestedDate = dateCol ? sheetDateIso_(sh.getRange(row, dateCol).getValue()) : '';
+      // Historical active labels must not block a new booking. Keep the source row
+      // unchanged for audit/history; treat only today and future appointments as active.
+      if (requestedDate && requestedDate < Utilities.formatDate(new Date(), CLINIC_TZ, 'yyyy-MM-dd')) continue;
+      return { bookingCode: String(sh.getRange(row, idCol).getDisplayValue()), fullName: nameCol ? String(sh.getRange(row, nameCol).getDisplayValue()) : '', phone: phone, requestedDate: requestedDate, needsReview: !statusCol };
     }
   }
   return null;
