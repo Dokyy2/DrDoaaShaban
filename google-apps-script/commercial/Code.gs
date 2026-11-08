@@ -567,13 +567,36 @@ function runHistoricalReconciliationDryRun_() {
   [CLINIC_SHEETS.appointment, CLINIC_SHEETS.birth].forEach(function (sheetName) {
     const sh = ss.getSheetByName(sheetName);
     if (!sh || sh.getLastRow() < 2) return;
-    const codeCol = findHeader_(sh, FIELD_ALIASES.booking_code);
-    if (!codeCol) return;
-    const firstDataRow = headerRow_(sh) + 1;
-    for (let rowNum = firstDataRow; rowNum <= sh.getLastRow(); rowNum++) {
-      const code = String(sh.getRange(rowNum, codeCol).getDisplayValue() || '').trim();
+    // Read each source sheet in two batch calls. Per-cell Spreadsheet service
+    // calls made the read-only preview take minutes on a full clinic history.
+    const lastRow = sh.getLastRow();
+    const lastColumn = sh.getLastColumn();
+    if (!lastColumn) return;
+    const displayRows = sh.getRange(1, 1, lastRow, lastColumn).getDisplayValues();
+    const rawRows = sh.getRange(1, 1, lastRow, lastColumn).getValues();
+    const headerIndex = headerRowFromDisplayValues_(displayRows);
+    const headers = displayRows[headerIndex - 1] || [];
+    const columns = {};
+    Object.keys(FIELD_ALIASES).forEach(function (field) {
+      const wanted = new Set(FIELD_ALIASES[field].map(normalizeHeader_));
+      columns[field] = headers.findIndex(function (value) { return wanted.has(normalizeHeader_(value)); });
+    });
+    const codeCol = columns.booking_code;
+    if (codeCol < 0) return;
+    const firstDataRow = headerIndex + 1;
+    for (let rowNum = firstDataRow; rowNum <= lastRow; rowNum++) {
+      const displayRow = displayRows[rowNum - 1] || [];
+      const code = String(displayRow[codeCol] || '').trim();
       if (!code) continue;
-      const row = readMapped_(sh, rowNum);
+      const rawRow = rawRows[rowNum - 1] || [];
+      const row = {};
+      Object.keys(columns).forEach(function (field) {
+        const col = columns[field];
+        if (col >= 0) {
+          const value = rawRow[col];
+          row[field] = field === 'requested_date' ? sheetDateIso_(value) : value;
+        }
+      });
       counts.sheetRows++;
       const base = { sheetName:sheetName, rowNumber:rowNum, bookingCode:code, fullName:cleanText_(row.full_name, 120), phone:digits_(row.phone), requestedDate:String(row.requested_date || ''), requestType:normalizeRequestType_(row.request_type) };
       if (seenCodes.has(code)) { counts.duplicateSheetCodes++; continue; }
@@ -597,6 +620,20 @@ function runHistoricalReconciliationDryRun_() {
     }
   });
   return { status:'success', mode:'dry_run_only', counts:counts, details:details, note:'No Sheet or Supabase rows were changed. Unique candidates require explicit doctor approval; ambiguous and unmatched rows are never linked automatically.' };
+}
+
+function headerRowFromDisplayValues_(values) {
+  const keyFields = [FIELD_ALIASES.booking_code, FIELD_ALIASES.full_name, FIELD_ALIASES.phone];
+  let bestRow = 1;
+  let bestScore = 0;
+  values.slice(0, 5).forEach(function (row, index) {
+    const present = new Set(row.map(normalizeHeader_));
+    const score = keyFields.filter(function (aliases) {
+      return aliases.some(function (alias) { return present.has(normalizeHeader_(alias)); });
+    }).length;
+    if (score > bestScore) { bestScore = score; bestRow = index + 1; }
+  });
+  return bestScore >= 2 ? bestRow : 1;
 }
 
 function loadReconciliationRows_() {
