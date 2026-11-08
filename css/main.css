@@ -700,6 +700,17 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 0 0 3px rgba(56,189,248,0.08), var(--shadow-soft);
 }
 .processing-card { border-width: 2px; animation: processingGlow 1.4s infinite alternate; }
+.processing-notice {
+    max-width: 680px;
+    margin: 14px auto 0;
+    padding: 12px 16px;
+    border: 1px solid rgba(190, 126, 0, 0.28);
+    border-radius: 16px;
+    background: rgba(255, 248, 224, 0.9);
+    color: #72520b;
+    font-weight: 800;
+    line-height: 1.8;
+}
 @keyframes processingGlow {
     from { box-shadow: 0 0 0 3px rgba(56,189,248,0.08), var(--shadow-soft); }
     to { box-shadow: 0 0 0 6px rgba(56,189,248,0.16), 0 24px 70px rgba(56,189,248,0.2); }
@@ -2238,6 +2249,7 @@ body { background-image: radial-gradient(ellipse at 8% 14%, rgba(244,190,204,0.1
 @keyframes petalDrift { 0% { opacity: 0; transform: translate3d(0,0,0) rotate(0) scale(.75); } 12% { opacity: .62; } 100% { opacity: 0; transform: translate3d(var(--drift),75vh,0) rotate(240deg) scale(1.12); } }
 .local-preview-banner { position: fixed; z-index: 1100; inset-inline: 14px; bottom: max(12px, env(safe-area-inset-bottom)); width: fit-content; max-width: min(620px, calc(100% - 28px)); margin-inline: auto; padding: 10px 16px; border: 1px solid rgba(183,110,121,.24); border-radius: 999px; color: #63354b; background: rgba(255,250,247,.96); box-shadow: 0 10px 32px rgba(111,47,79,.16); font-size: .82rem; font-weight: 900; text-align: center; backdrop-filter: blur(12px); }
 .local-preview-banner[hidden] { display: none; }
+.local-live-banner { border-color: rgba(189, 117, 0, .45); color: #744b00; background: rgba(255, 246, 218, .97); box-shadow: 0 10px 32px rgba(140, 91, 0, .2); }
 .local-preview-result { border: 1px solid rgba(183,110,121,.25); border-radius: 18px; background: linear-gradient(135deg,#fffaf7,#fff1f5); color: #63354b; padding: 15px 18px; margin: 16px 0; line-height: 1.9; font-weight: 800; }
 .booking-privacy-note { width: fit-content; max-width: 680px; margin: 14px auto 0; padding: 8px 14px; border-radius: 14px; color: #755466; background: rgba(255,241,245,.8); font-size: .82rem; font-weight: 800; line-height: 1.8; }
 .booking-privacy-note i { color: var(--accent-pink); margin-inline-end: 5px; }

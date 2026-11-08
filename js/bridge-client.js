@@ -13,15 +13,20 @@
 
     let response;
     try {
-      response = await fetch(`${baseUrl}/functions/v1/clinic-sheet-bridge`, {
+      const functionName = String(window.CLINIC_BOOKING_FUNCTION || 'clinic-db-booking');
+      response = await fetch(`${baseUrl}/functions/v1/${functionName}`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ action, payload }),
         cache: 'no-store',
         credentials: 'omit',
+        signal: AbortSignal.timeout(35_000),
       });
-    } catch {
-      throw new Error('تعذر الاتصال ببوابة العيادة. راجعي الاتصال ثم حاولي مرة أخرى.');
+    } catch (error) {
+      if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
+        throw new Error('تأخر رد قاعدة الحجوزات. قد يكون الطلب اتسجل بالفعل؛ لا تعيدي الإرسال قبل مراجعة لوحة الإدارة.');
+      }
+      throw new Error('تعذر الاتصال بقاعدة الحجوزات. راجعي الاتصال ثم حاولي مرة أخرى.');
     }
 
     let result;
@@ -31,7 +36,7 @@
       throw new Error('وصل رد غير مفهوم من بوابة العيادة.');
     }
     if (!response.ok && result?.status !== 'error') {
-      throw new Error('تعذر تنفيذ الطلب عبر بوابة العيادة.');
+      throw new Error('تعذر تنفيذ الطلب عبر قاعدة الحجوزات.');
     }
     return result;
   }

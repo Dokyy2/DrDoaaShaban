@@ -7,8 +7,5 @@ window.CLINIC_SUPABASE = {
     anonKey: "sb_publishable_YZj1fj5qxItnugNHxvSg6Q_0Mr0yxJ1"
 };
 
-// Separate Sheet-first Apps Script bridge (public booking endpoint).
-// Never reuse the v2.7.0 booking endpoint for the commercial build.
-window.CLINIC_BRIDGE = {
-    url: "https://script.google.com/macros/s/AKfycbxhvlJkSnzdRDzON8FleuHSkbRJ03CDrmArHa48w1-kIKVOLkcggXaDj6lFV9zVRlNQ/exec"
-};
+// Local-admin booking uses a Supabase Edge Function; the original Sheet is not used here.
+window.CLINIC_BOOKING_FUNCTION = "clinic-db-booking";

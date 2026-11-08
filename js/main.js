@@ -1,5 +1,6 @@
 const CLINIC_WHATSAPP = "201125337717";
-const IS_LOCAL_PREVIEW = location.protocol === "file:" || ["localhost", "127.0.0.1"].includes(location.hostname);
+const IS_LOCAL_PREVIEW = location.protocol === "file:";
+const IS_LOCAL_LIVE = location.protocol !== "file:" && ["localhost", "127.0.0.1"].includes(location.hostname);
 
 let currentLang = "ar";
 const themes = ["lagoon", "lavender", "peach", "sky", "sage", "berry", "honey"];
@@ -257,6 +258,13 @@ window.addEventListener("load", () => {
 
     if (IS_LOCAL_PREVIEW) {
         document.getElementById("localPreviewBanner").hidden = false;
+    } else if (IS_LOCAL_LIVE) {
+        const banner = document.getElementById("localPreviewBanner");
+        banner.textContent = currentLang === "ar"
+            ? "نسخة محلية متصلة بقاعدة Supabase التجريبية: الحجوزات وإجراءات الإدارة تُحفظ هناك، ولا تتصل بشيت الإصدار بدون إدارة."
+            : "Local admin copy connected to the Supabase trial database. Bookings and admin changes are stored there; this copy does not write to the no-admin Sheet.";
+        banner.hidden = false;
+        banner.classList.add("local-live-banner");
     }
     initScrollDecorations();
     initAssistantFloat();
@@ -370,6 +378,23 @@ function makeClientBookingCode(type, date = "") {
     return `BK-${day}-${random.slice(0, 8)}`;
 }
 
+function ensureClientBookingCode(type, date = "") {
+    const isContacts = type === "contacts";
+    const expectedPattern = isContacts
+        ? /^C-[A-F0-9]{12}$/
+        : new RegExp(`^BK-${String(date || todayISO()).replace(/-/g, "")}-[A-F0-9]{8}$`);
+    if (!expectedPattern.test(String(currentBookingCode || ""))) {
+        currentBookingCode = makeClientBookingCode(type, date);
+    }
+
+    // Keep browser back/forward restoration aligned with the idempotency key sent to the DB.
+    const state = history.state && typeof history.state === "object" ? history.state : {};
+    if (state.clinicBookingView === "form") {
+        history.replaceState({ ...state, bookingCode: currentBookingCode }, "", location.href);
+    }
+    return currentBookingCode;
+}
+
 function pushBookingResult(view) {
     const current = history.state && typeof history.state === "object" ? history.state : {};
     const startState = { ...current, clinicSite: true, clinicSection: "booking", clinicBookingView: "start" };
@@ -383,8 +408,6 @@ function goBackInSite() {
         history.back();
         return;
     }
-    const bridgeUrl = String(window.CLINIC_BRIDGE?.url || "").trim();
-    if (!bridgeUrl) return;
     renderBookingStart();
     document.getElementById("bookingArea")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -518,6 +541,13 @@ function initPresenceCounter() {
     }
     const bridgeUrl = String(window.CLINIC_BRIDGE?.url || "").trim();
     if (!bridgeUrl) {
+        if (IS_LOCAL_LIVE) {
+            copy.textContent = currentLang === "ar" ? "عداد الزائرات غير مفعّل في النسخة المحلية" : "Visitor count is not enabled in this local copy";
+            pips.replaceChildren();
+            pill.hidden = false;
+            pill.classList.add("is-preview");
+            return;
+        }
         pill.hidden = true;
         return;
     }
@@ -1153,23 +1183,43 @@ function showProcessing() {
         <div class="processing-card">
             <div class="spinner"></div>
             <p id="progressText" style="font-weight:900;color:var(--dark-pink);">${steps[0]}</p>
+            <p id="progressNotice" class="processing-notice" hidden></p>
         </div>
     `;
 
     // النزول التلقائي لمنتصف الشاشة لتكون علامة التحميل واضحة للمستخدم
     document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "center" });
 
-    const timer = setInterval(() => {
+    const ticker = setInterval(() => {
         const el = document.getElementById("progressText");
         if (!el) {
-            clearInterval(timer);
+            clearInterval(ticker);
             return;
         }
         index = (index + 1) % steps.length;
         el.innerText = steps[index];
     }, 600);
 
-    return timer;
+    // Keep the request alive, but explain the uncertain state if the bridge is slow.
+    const warning = IS_LOCAL_PREVIEW ? null : setTimeout(() => {
+        const text = document.getElementById("progressText");
+        const notice = document.getElementById("progressNotice");
+        if (!text || !notice) return;
+        clearInterval(ticker);
+        text.innerText = currentLang === "ar" ? "الاتصال يتأخر عن المعتاد..." : "The connection is taking longer than usual...";
+        notice.hidden = false;
+        notice.innerText = currentLang === "ar"
+            ? "سيبي الصفحة مفتوحة وما تعيديش إرسال الطلب؛ ممكن يكون اتسجل بالفعل. هنستنى تأكيد النظام."
+            : "Keep this page open and do not submit again; the request may already be recorded. Waiting for confirmation.";
+    }, 20000);
+
+    return { ticker, warning };
+}
+
+function clearProcessing(timers) {
+    if (!timers) return;
+    clearInterval(timers.ticker);
+    clearTimeout(timers.warning);
 }
 
 function isSupabaseConfigured() {
@@ -1210,7 +1260,7 @@ async function submitBooking() {
     const hasAttachment = !!attachment.attachmentName;
     const progressTimer = showProcessing();
     const payload = {
-        bookingCode: currentBookingCode || (currentBookingCode = makeClientBookingCode(currentBookingType, valid.date)),
+        bookingCode: ensureClientBookingCode(currentBookingType, valid.date),
         name: valid.name,
         phone: valid.phone,
         type: currentBookingType,
@@ -1224,14 +1274,14 @@ async function submitBooking() {
     };
 
     if (IS_LOCAL_PREVIEW) {
-        clearInterval(progressTimer);
+        clearProcessing(progressTimer);
         showSuccess(valid, `LOCAL-${Math.floor(1000 + Math.random() * 9000)}`, visitLabel(currentBookingType), message, hasAttachment);
         return;
     }
 
     try {
         const response = await sendBooking(payload);
-        clearInterval(progressTimer);
+        clearProcessing(progressTimer);
         if (response.status === "holiday" || response.status === "invalid" || response.status === "error") {
             showSoftAlert(currentLang === "ar" ? "تعذر تسجيل الطلب" : "Request not registered", response.message || t("errData"));
             return;
@@ -1259,10 +1309,10 @@ async function submitBooking() {
         }
         showSuccess(valid, finalId, visitLabel(currentBookingType), message, hasAttachment);
     } catch (error) {
-        clearInterval(progressTimer);
+        clearProcessing(progressTimer);
         showSoftAlert(currentLang === "ar" ? "تعذر إرسال الطلب" : "Unable to send request", currentLang === "ar"
-            ? "انقطع الاتصال قبل وصول تأكيد التسجيل. قد يكون الطلب قد وصل بالفعل؛ لا تعيدي إرساله الآن لتجنب التكرار. تواصلي مع العيادة للتحقق."
-            : "The connection ended before registration was confirmed. The request may already have arrived; do not submit it again yet. Contact the clinic to verify.");
+            ? (error?.message || "انقطع الاتصال قبل وصول تأكيد التسجيل. قد يكون الطلب قد وصل بالفعل؛ لا تعيدي إرساله الآن لتجنب التكرار. تواصلي مع العيادة للتحقق.")
+            : (error?.message || "The connection ended before registration was confirmed. The request may already have arrived; do not submit it again yet. Contact the clinic to verify."));
     }
 }
 
@@ -1277,7 +1327,7 @@ async function submitBirth() {
     const message = currentLang === "ar" ? "متبقي تقريباً " + Math.max(0, daysLeft) + " يوم" : "Approximately " + Math.max(0, daysLeft) + " days remaining";
     const progressTimer = showProcessing();
     const payload = {
-        bookingCode: currentBookingCode || (currentBookingCode = makeClientBookingCode("birth", valid.date)),
+        bookingCode: ensureClientBookingCode("birth", valid.date),
         name: valid.name,
         phone: valid.phone,
         type: "birth",
@@ -1290,14 +1340,14 @@ async function submitBirth() {
     };
 
     if (IS_LOCAL_PREVIEW) {
-        clearInterval(progressTimer);
+        clearProcessing(progressTimer);
         showBirthSuccess(valid, `LOCAL-${Math.floor(1000 + Math.random() * 9000)}`, message);
         return;
     }
 
     try {
         const response = await sendBooking(payload);
-        clearInterval(progressTimer);
+        clearProcessing(progressTimer);
         if (["holiday", "invalid", "error"].includes(response.status)) {
             showSoftAlert(currentLang === "ar" ? "تعذر تسجيل الطلب" : "Request not registered", response.message || t("errData"));
             return;
@@ -1318,10 +1368,10 @@ async function submitBirth() {
         }
         showBirthSuccess(valid, finalId, message);
     } catch (error) {
-        clearInterval(progressTimer);
+        clearProcessing(progressTimer);
         showSoftAlert(currentLang === "ar" ? "تعذر إرسال الطلب" : "Unable to send request", currentLang === "ar"
-            ? "انقطع الاتصال قبل وصول تأكيد التسجيل. قد يكون الطلب قد وصل بالفعل؛ لا تعيدي إرساله الآن لتجنب التكرار. تواصلي مع العيادة للتحقق."
-            : "The connection ended before registration was confirmed. The request may already have arrived; do not submit it again yet. Contact the clinic to verify.");
+            ? (error?.message || "انقطع الاتصال قبل وصول تأكيد التسجيل. قد يكون الطلب قد وصل بالفعل؛ لا تعيدي إرساله الآن لتجنب التكرار. تواصلي مع العيادة للتحقق.")
+            : (error?.message || "The connection ended before registration was confirmed. The request may already have arrived; do not submit it again yet. Contact the clinic to verify."));
     }
 }
 

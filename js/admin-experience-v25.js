@@ -1,5 +1,5 @@
 (() => {
-    const isLocalPreview = location.protocol === "file:" || ["localhost", "127.0.0.1"].includes(location.hostname);
+    const isLocalPreview = location.protocol === "file:";
     const legacyRenderBookingStart = window.renderBookingStart;
     const legacyRenderBookingForm = window.renderBookingForm;
     const legacyRenderPregnancyCalc = window.renderPregnancyCalc;
