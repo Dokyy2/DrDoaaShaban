@@ -39,29 +39,20 @@ function sheetWithRows(rows) {
   };
 }
 
-test('past active bookings are historical and do not block a new booking', () => {
+test('past active bookings do not block a new booking; today and future still block', () => {
   const bridge = loadBridge({
     Utilities: {
       getUuid: () => 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       formatDate: () => '2026-11-08'
     }
   });
-  const past = sheetWithRows([
+  const makeSheet = date => sheetWithRows([
     ['ID', 'Name', 'Phone', 'Booking Date', 'Status'],
-    ['BK-OLD', 'Synthetic Patient', '01000000000', '2026-11-07', 'confirmed']
+    ['BK-TEST', 'Synthetic Patient', '01000000000', date, 'confirmed']
   ]);
-  const today = sheetWithRows([
-    ['ID', 'Name', 'Phone', 'Booking Date', 'Status'],
-    ['BK-TODAY', 'Synthetic Patient', '01000000000', '2026-11-08', 'confirmed']
-  ]);
-  const future = sheetWithRows([
-    ['ID', 'Name', 'Phone', 'Booking Date', 'Status'],
-    ['BK-FUTURE', 'Synthetic Patient', '01000000000', '2026-11-09', 'confirmed']
-  ]);
-
-  assert.equal(bridge.findActiveDuplicate_(past, '01000000000'), null);
-  assert.equal(bridge.findActiveDuplicate_(today, '01000000000').bookingCode, 'BK-TODAY');
-  assert.equal(bridge.findActiveDuplicate_(future, '01000000000').bookingCode, 'BK-FUTURE');
+  assert.equal(bridge.findActiveDuplicate_(makeSheet('2026-11-07'), '01000000000'), null);
+  assert.equal(bridge.findActiveDuplicate_(makeSheet('2026-11-08'), '01000000000').bookingCode, 'BK-TEST');
+  assert.equal(bridge.findActiveDuplicate_(makeSheet('2026-11-09'), '01000000000').bookingCode, 'BK-TEST');
 });
 
 test('detects booking headers in row 1 and row 2 layouts', () => {
@@ -265,12 +256,11 @@ test('shared dashboard settings read omits unused finance start date', () => {
   assert.equal(settingsGrants.some(grant => grant.includes('finance_start_date')), false);
 });
 
-test('past active workflow records stay in history but leave current follow-up queues', () => {
+test('past active workflow records leave current queues but remain in the all-bookings history', () => {
   assert.match(dashboardSource, /function clinicToday\(\).*timeZone:'Africa\/Cairo'/);
   assert.match(dashboardSource, /function currentWorkflow\(a, statuses\).*a\.requested_date >= clinicToday\(\)/);
   assert.match(dashboardSource, /function activeBooking\(a\) \{ return currentWorkflow\(/);
   assert.match(dashboardSource, /function followUpNeeded\(a\) \{ return currentWorkflow\(/);
-  // The all-bookings filter remains history-inclusive; it filters only by the user's criteria.
   assert.match(dashboardSource, /const matches = appointments\.filter\(a =>/);
 });
 
@@ -443,3 +433,4 @@ test('historical projection link preserves fields absent from the canonical Shee
   assert.equal(update.body.amount_paid, undefined);
   assert.equal(calls.some(call => call.url.includes('/patients?on_conflict=phone')), true);
 });
+

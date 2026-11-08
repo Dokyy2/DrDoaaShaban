@@ -1108,3 +1108,4 @@ function updateActiveVisitors_(visitorId) {
     return { status:'success', activeUsers:Math.min(count, 5), moreThanFive:count > 5 };
   } finally { lock.releaseLock(); }
 }
+
