@@ -75,7 +75,7 @@ const dict = {
         groupMedical: "الكشوفات الطبية",
         groupServices: "الخدمات الإضافية",
         groupSpecial: "أقسام مميزة",
-        
+
     },
     en: {
         brandName: "Dr. Doaa Shaban",
@@ -91,7 +91,7 @@ const dict = {
         bookNow: "Book Now",
         whatsappNow: "WhatsApp",
         statExperience: "Medical experience",
-        statBirth: "Delivery operations",
+        statBirth: "Deliveries",
         statVisits: "Visits and follow-ups",
         statAesthetic: "Aesthetic cases",
         aboutTitle1: "About",
@@ -139,7 +139,7 @@ const dict = {
         groupMedical: "Medical Visits",
         groupServices: "Extra Services",
         groupSpecial: "Special Sections",
-        
+
     }
 };
 
@@ -248,6 +248,13 @@ const visitDesc = {
 window.addEventListener("load", () => {
     applyRandomTheme();
 
+    // Schedule the splash transition before optional integrations run.
+    const splash = document.getElementById("splash");
+    if (splash) {
+        splash.classList.add("loading");
+        window.setTimeout(startExperience, 3000);
+    }
+
     if (IS_LOCAL_PREVIEW) {
         document.getElementById("localPreviewBanner").hidden = false;
     }
@@ -265,9 +272,6 @@ window.addEventListener("load", () => {
 
     updateBackToTop();
     window.addEventListener("scroll", updateBackToTop, { passive: true });
-    const splash = document.getElementById("splash");
-    splash.classList.add("loading");
-    window.setTimeout(startExperience, 3000);
 });
 
 function initInSiteNavigation() {
@@ -632,19 +636,41 @@ function updateClock() {
 }
 
 function animateStats() {
-    document.querySelectorAll(".stat-number").forEach(el => {
-        const target = parseInt(el.dataset.target, 10);
-        let current = 0;
-        const step = Math.max(1, Math.ceil(target / 90));
-        const timer = setInterval(() => {
-            current += step;
-            if (current >= target) {
-                current = target;
-                clearInterval(timer);
-            }
-            el.innerText = "+" + current.toLocaleString(currentLang === "ar" ? "ar-EG" : "en-US");
-        }, 24);
-    });
+    const counters = [...document.querySelectorAll(".stat-number")];
+    const cairoParts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Africa/Cairo", year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts(new Date());
+    const cairoPart = type => Number(cairoParts.find(part => part.type === type)?.value || 0);
+    const todayCairo = Date.UTC(cairoPart("year"), cairoPart("month") - 1, cairoPart("day")) / 86400000;
+    const baselineCairo = Date.UTC(2026, 10, 13) / 86400000;
+    const elapsedDays = Math.max(0, todayCairo - baselineCairo);
+    const renderCounter = el => {
+        if (el.dataset.counted === "true") return;
+        el.dataset.counted = "true";
+        const initial = Math.max(0, Number.parseInt(el.dataset.target, 10) || 0);
+        const weeklyIncrease = Math.max(0, Number.parseInt(el.dataset.weeklyIncrease, 10) || 0);
+        const target = initial + Math.floor(elapsedDays * weeklyIncrease / 7);
+        const start = performance.now();
+        const duration = 1050;
+        const frame = now => {
+            const progress = Math.min(1, (now - start) / duration);
+            const eased = 1 - Math.pow(1 - progress, 4);
+            el.textContent = Math.round(target * eased).toLocaleString(currentLang === "ar" ? "ar-EG" : "en-US");
+            if (progress < 1) requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+    };
+    if (!("IntersectionObserver" in window)) {
+        counters.forEach(renderCounter);
+        return;
+    }
+    const observer = new IntersectionObserver(entries => {
+        entries.filter(entry => entry.isIntersecting).forEach(entry => {
+            renderCounter(entry.target);
+            observer.unobserve(entry.target);
+        });
+    }, { threshold: 0.3 });
+    counters.forEach(el => observer.observe(el));
 }
 
 function todayISO() {
@@ -729,7 +755,7 @@ function renderBookingStart() {
 function visitCard(type, icon, label, special = false) {
     const familyClass = type === "contacts" ? "family-card" : "";
     const desc = visitDesc[currentLang][type];
-    
+
     return `
         <button class="visit-option ${special ? "special" : ""} ${familyClass}" type="button" onclick="selectVisit('${type}')">
             <span class="visit-option-icon ${type === "pregnancy" ? "pregnancy-option-icon" : ""}">${type === "pregnancy" ? pregnancyMascotArt() : `<i class="fa-solid ${icon}" aria-hidden="true"></i>`}</span>
@@ -860,7 +886,7 @@ function renderBookingForm() {
 
 function renderPregnancyCalc(selectedDate = "") {
     const today = todayISO();
-    
+
     document.getElementById("bookingArea").innerHTML = `
         <div class="booking-panel">
             <div class="booking-head">
@@ -871,7 +897,14 @@ function renderPregnancyCalc(selectedDate = "") {
             <div class="form-grid">
                 <div class="form-field full">
                     <label>${t("pregDate")}</label>
-                    <input type="date" id="lastPeriodDate" max="${today}" value="${selectedDate}">
+                    <div class="pregnancy-date-picker">
+                        <input type="date" id="lastPeriodDate" max="${today}" value="${selectedDate}" aria-describedby="pregnancyDateHint">
+                        <button class="pregnancy-date-hint" type="button" onclick="openPregnancyDatePicker()" aria-label="${currentLang === "ar" ? "اضغطي لاختيار التاريخ" : "Open the date picker"}">
+                            <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                            <span id="pregnancyDateHint">${currentLang === "ar" ? "اضغطي هنا لاختيار تاريخ أول يوم في آخر دورة" : "Tap here to choose the first day of your last period"}</span>
+                            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -889,6 +922,13 @@ function renderPregnancyCalc(selectedDate = "") {
     document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function openPregnancyDatePicker() {
+    const input = document.getElementById("lastPeriodDate");
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    try { input.showPicker?.(); } catch (error) { input.click(); }
+}
+
 function calculatePregnancy() {
     const d = document.getElementById("lastPeriodDate").value;
     calculatePregnancyForDate(d, true);
@@ -902,7 +942,7 @@ function calculatePregnancyForDate(d, addHistory = true) {
 
     const start = new Date(d);
     const totalDays = Math.floor((new Date() - start) / (1000 * 60 * 60 * 24));
-    
+
     if (totalDays > 296) {
         showSoftAlert(t("alertTitle"), currentLang === "ar" ? "التاريخ غير منطقي، المدة تجاوزت أقصى مدة للحمل (42 أسبوعاً)." : "Date exceeds maximum pregnancy duration (42 weeks).");
         return;
@@ -942,7 +982,7 @@ function calculatePregnancyForDate(d, addHistory = true) {
         const resultText = currentLang === "ar"
             ? `أنتِ في الشهر <strong>${month}</strong> وموعد الولادة المتوقع هو <strong style="color:#dc2626;">${dueText}</strong>`
             : `Month: <strong>${month}</strong> | Due Date: <strong style="color:#dc2626;">${dueText}</strong>`;
-            
+
         const neonWeeks = `<div class="neon-text">${weeks} ${currentLang === "ar" ? "أسبوع" : "Weeks"} ${days > 0 ? (currentLang === "ar" ? "و " + days + " يوم" : "and " + days + " Days") : ""}</div>`;
         const journeyPercent = Math.min(100, Math.round(totalDays / 280 * 100));
         const trimesterIndex = weeks < 14 ? 0 : weeks < 28 ? 1 : 2;
@@ -1121,7 +1161,7 @@ function showProcessing() {
             <p id="progressText" style="font-weight:900;color:var(--dark-pink);">${steps[0]}</p>
         </div>
     `;
-    
+
     // النزول التلقائي لمنتصف الشاشة لتكون علامة التحميل واضحة للمستخدم
     document.getElementById("bookingArea").scrollIntoView({ behavior: "smooth", block: "center" });
 
@@ -1222,7 +1262,7 @@ async function submitBirth() {
     const today = localDateFromISO(todayISO());
     const daysLeft = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
     const message = currentLang === "ar" ? "متبقي تقريباً " + Math.max(0, daysLeft) + " يوم" : "Approximately " + Math.max(0, daysLeft) + " days remaining";
-    
+
     const progressTimer = showProcessing();
 
     const payload = {
@@ -1279,7 +1319,7 @@ async function submitBirth() {
             showDuplicated(oldData, prefix + oldCleanId, response.message || (currentLang === "ar" ? "يوجد حجز مسبق بهذا الرقم." : "There is already a booking for this number."), false, message);
             return;
         }
-        
+
         showBirthSuccess(valid, finalId, message);
     } catch (e) {
         clearInterval(progressTimer);
@@ -1368,11 +1408,11 @@ function showSuccess(valid, finalId, typeAr, message, hasAttachment) {
     };
 
     const waUrl = `https://wa.me/${CLINIC_WHATSAPP}?text=${encodeURIComponent(buildWhatsappText(data))}`;
-    
+
     let noticeBoardHtml = "";
     if (typeAr === formText.ar.contacts || typeAr === formText.en.contacts) {
-        noticeBoardHtml = currentLang === "ar" 
-            ? "تم تسجيل بياناتك بنجاح. شكراً لانضمامك لعائلة عيادة د. دعاء شعبان، ستصلك أهم نصائحنا وعروضنا قريباً." 
+        noticeBoardHtml = currentLang === "ar"
+            ? "تم تسجيل بياناتك بنجاح. شكراً لانضمامك لعائلة عيادة د. دعاء شعبان، ستصلك أهم نصائحنا وعروضنا قريباً."
             : "Your details have been successfully registered. Thank you for joining Dr. Doaa Shaban's clinic family.";
     } else {
         noticeBoardHtml = currentLang === "ar"
@@ -1430,7 +1470,7 @@ function showDuplicated(oldData, finalId, msg, hasAttachment, message) {
             <div class="result-icon" style="background:linear-gradient(135deg,#ef4444,#be123c);"><i class="fa-solid fa-circle-exclamation"></i></div>
             <h2 style="color:var(--error-red); margin-bottom: 5px;">${currentLang === "ar" ? "يوجد حجز مسبق بالفعل" : "Existing booking found"}</h2>
             <p style="font-weight:800;line-height:1.8; color:var(--text-main); margin-bottom: 20px;">${escapeHtml(msg)}</p>
-            
+
             <div class="details-box">
                 <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "رقم الكشف" : "Visit ID"}</span><span class="detail-value highlight-value">${finalId}</span></div>
                 <div class="detail-item"><span class="detail-label">${currentLang === "ar" ? "تاريخ التسجيل المسبق" : "Previous Registration"}</span><span class="detail-value">${oldData.date}</span></div>

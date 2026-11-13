@@ -15,7 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/main.css?v=20261113-booking-v2.8.0">
 <link rel="stylesheet" href="css/gallery.css">
 </head>
 
@@ -117,7 +117,7 @@
 <main>
     <section class="hero" id="home">
         <div class="hero-content">
-        
+
             <div class="hero-actions">
                 <a href="#booking" class="btn btn-primary"><i class="fa-solid fa-calendar-check"></i> <span data-i18n="bookNow">احجزي موعدك الآن</span></a>
                 <a href="https://wa.me/201125337717" target="_blank" class="btn btn-ghost"><i class="fa-brands fa-whatsapp"></i> <span data-i18n="whatsappNow">تواصلي واتساب</span></a>
@@ -137,25 +137,25 @@
     <section class="section stats-bar">
         <div class="stat-card">
             <div>
-                <div class="stat-number" data-target="20">+0</div>
+                <div class="stat-number" data-target="20">0</div>
                 <div class="stat-label" data-i18n="statExperience">خبرة طبية</div>
             </div>
         </div>
         <div class="stat-card">
             <div>
-                <div class="stat-number" data-target="2000">+0</div>
+                <div class="stat-number" data-target="10800" data-weekly-increase="4">0</div>
                 <div class="stat-label" data-i18n="statBirth">عملية ولادة</div>
             </div>
         </div>
         <div class="stat-card">
             <div>
-                <div class="stat-number" data-target="50000">+0</div>
+                <div class="stat-number" data-target="30240" data-weekly-increase="60">0</div>
                 <div class="stat-label" data-i18n="statVisits">كشف ومتابعة</div>
             </div>
         </div>
         <div class="stat-card">
             <div>
-                <div class="stat-number" data-target="350">+0</div>
+                <div class="stat-number" data-target="1250" data-weekly-increase="80">0</div>
                 <div class="stat-label" data-i18n="statAesthetic">تجميل نسائي</div>
             </div>
         </div>
@@ -328,7 +328,7 @@
             <div class="contact-line"><i class="fa-solid fa-location-dot"></i><div><b data-i18n="addressLabel">العنوان:</b><br><span data-i18n="addressText">اللبيني – الهرم، بجوار أولاد رجب</span></div></div>
             <div class="contact-line"><i class="fa-solid fa-phone"></i><div><b data-i18n="phoneLabel">للاستفسار أو التعديل:</b><br>01125337717</div></div>
             <div class="contact-line"><i class="fa-solid fa-clock"></i><div><b data-i18n="hoursLabel">مواعيد العمل:</b><br><span data-i18n="hoursText">من 4 مساءً إلى 10 مساءً</span><br><span data-i18n="holidayFooter">الإجازة الأسبوعية: الاثنين والخميس والجمعة</span></div></div>
-            
+
             <div class="social-links">
                 <a href="https://www.facebook.com/share/1BvSArkpXk/" target="_blank" class="social-icon fb" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
                 <a href="https://www.instagram.com/dr.doaa.shaban?igsh=MTNjNjJ1end3bzczeQ==" target="_blank" class="social-icon ig" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
@@ -361,21 +361,21 @@
             <i class="fa-solid fa-arrow-up-right-from-square footer-signature-arrow" aria-hidden="true"></i>
         </a>
         <div class="footer-meta" aria-label="معلومات الإصدار والتحديث">
-            <span class="footer-version"><i class="fa-solid fa-code-branch" aria-hidden="true"></i> الإصدار V2.7.0</span>
-            <span class="footer-updated"><i class="fa-regular fa-calendar" aria-hidden="true"></i> آخر تحديث: 6 نوفمبر 2026</span>
+            <span class="footer-version"><i class="fa-solid fa-code-branch" aria-hidden="true"></i> الإصدار V2.8.0</span>
+            <span class="footer-updated"><i class="fa-regular fa-calendar" aria-hidden="true"></i> آخر تحديث: 13 نوفمبر 2026</span>
         </div>
     </div>
 </footer>
 
-<a href="https://wa.me/201125337717" target="_blank" class="whatsapp-float" onclick="handleVibrate()">
-    <i class="fa-brands fa-whatsapp"></i>
+<a href="https://wa.me/201125337717" target="_blank" rel="noopener noreferrer" class="whatsapp-float" aria-label="التواصل مع العيادة عبر واتساب" onclick="handleVibrate()">
+    <i class="fa-brands fa-whatsapp" aria-hidden="true"></i><span class="whatsapp-float-hint">للتواصل</span>
 </a>
 
 <button class="back-to-top" id="backToTop" type="button" aria-label="العودة إلى أعلى الصفحة" title="العودة إلى أعلى الصفحة" onclick="window.scrollTo({top:0,behavior:'smooth'})">
     <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
 </button>
 
-<script src="js/main.js"></script>
+<script src="js/main.js?v=20261113-booking-v2.8.0"></script>
 <script src="js/gallery.js"></script>
 
 </body>
