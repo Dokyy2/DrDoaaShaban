@@ -1,4 +1,5 @@
 const CLINIC_WHATSAPP = "201125337717";
+const MAX_BOOKING_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 const IS_LOCAL_PREVIEW = location.protocol === "file:";
 const IS_LOCAL_LIVE = location.protocol !== "file:" && ["localhost", "127.0.0.1"].includes(location.hostname);
 
@@ -92,7 +93,7 @@ const dict = {
         bookNow: "Book Now",
         whatsappNow: "WhatsApp",
         statExperience: "Medical experience",
-        statBirth: "Delivery operations",
+        statBirth: "Deliveries",
         statVisits: "Visits and follow-ups",
         statAesthetic: "Aesthetic cases",
         aboutTitle1: "About",
@@ -166,7 +167,7 @@ const formText = {
         message: "رسالة مختصرة أو الأعراض",
         messagePlaceholder: "اكتبي رسالة مختصرة أو الأعراض / اليوم المناسب...",
         uploadCheck: "أريد إرسال روشتة / تحليل / أشعة",
-        uploadNote: "سيتم توضيح وجود المرفقات في بيانات الحجز.",
+        uploadNote: "صورة أو PDF بحد أقصى 5 ميجابايت. تأكدي من اكتمال رفع الملف قبل إرسال الطلب.",
         confirm: "تأكيد الحجز",
         send: "إرسال",
         birthBtn: "حجز الولادة",
@@ -204,7 +205,7 @@ const formText = {
         message: "Short message or symptoms",
         messagePlaceholder: "Write a short message, symptoms, or suitable day...",
         uploadCheck: "I want to send a prescription / lab / scan",
-        uploadNote: "Attachment availability will be shown in booking details.",
+        uploadNote: "Image or PDF up to 5 MB. Make sure the file finishes loading before submitting.",
         confirm: "Confirm Booking",
         send: "Send",
         birthBtn: "Book Delivery",
@@ -322,6 +323,7 @@ function initInSiteNavigation() {
         history.pushState(nextState, "", `#${id}`);
         if (id === "booking") renderBookingStart();
         target.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (event.detail > 0) link.blur();
     });
 
     window.addEventListener("popstate", event => {
@@ -680,19 +682,32 @@ function updateClock() {
 }
 
 function animateStats() {
-    document.querySelectorAll(".stat-number").forEach(el => {
-        const target = parseInt(el.dataset.target, 10);
-        let current = 0;
-        const step = Math.max(1, Math.ceil(target / 90));
-        const timer = setInterval(() => {
-            current += step;
-            if (current >= target) {
-                current = target;
-                clearInterval(timer);
-            }
-            el.innerText = "+" + current.toLocaleString(currentLang === "ar" ? "ar-EG" : "en-US");
-        }, 24);
-    });
+    const counters = [...document.querySelectorAll(".stat-number")];
+    const renderCounter = el => {
+        if (el.dataset.counted === "true") return;
+        el.dataset.counted = "true";
+        const target = Math.max(0, Number.parseInt(el.dataset.target, 10) || 0);
+        const start = performance.now();
+        const duration = 1050;
+        const frame = now => {
+            const progress = Math.min(1, (now - start) / duration);
+            const eased = 1 - Math.pow(1 - progress, 4);
+            el.textContent = Math.round(target * eased).toLocaleString(currentLang === "ar" ? "ar-EG" : "en-US");
+            if (progress < 1) requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+    };
+    if (!("IntersectionObserver" in window)) {
+        counters.forEach(renderCounter);
+        return;
+    }
+    const observer = new IntersectionObserver(entries => {
+        entries.filter(entry => entry.isIntersecting).forEach(entry => {
+            renderCounter(entry.target);
+            observer.unobserve(entry.target);
+        });
+    }, { threshold: 0.3 });
+    counters.forEach(el => observer.observe(el));
 }
 
 function todayISO() {
@@ -776,10 +791,11 @@ function renderBookingStart() {
 
 function visitCard(type, icon, label, special = false) {
     const familyClass = type === "contacts" ? "family-card" : "";
+    const pregnancyClass = type === "pregnancy" ? "pregnancy-option" : "";
     const desc = visitDesc[currentLang][type];
 
     return `
-        <button class="visit-option ${special ? "special" : ""} ${familyClass}" type="button" onclick="selectVisit('${type}')">
+        <button class="visit-option ${special ? "special" : ""} ${familyClass} ${pregnancyClass}" type="button" onclick="selectVisit('${type}')">
             <span class="visit-option-icon ${type === "pregnancy" ? "pregnancy-option-icon" : ""}">${type === "pregnancy" ? pregnancyMascotArt() : `<i class="fa-solid ${icon}" aria-hidden="true"></i>`}</span>
             <span class="visit-option-copy"><strong>${label}</strong><span>${desc}</span></span>
             <span class="visit-option-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-left"></i></span>
@@ -883,7 +899,7 @@ function renderBookingForm() {
                             ${t("uploadCheck")}
                         </label>
                         <div id="uploadBox" class="upload-box">
-                            <input type="file" id="pAttachment" accept="image/*,.pdf">
+                            <input type="file" id="pAttachment" accept=".pdf,application/pdf,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/x-ms-bmp,image/tiff,image/avif,image/heic,image/heif">
                             <div style="font-size:0.75rem;color:var(--text-soft);font-weight:800;margin-top:5px;">${t("uploadNote")}</div>
                         </div>
                     </div>
@@ -1155,15 +1171,27 @@ function validateRequired(isBirth = false) {
 }
 
 function fileToBase64(file) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
         if (!file) return resolve({ attachmentName: "", attachmentBase64: "" });
+        if (file.size > MAX_BOOKING_ATTACHMENT_BYTES) {
+            return reject(new Error(currentLang === "ar"
+                ? "حجم الملف أكبر من 5 ميجابايت. اختاري ملفًا أصغر ثم حاولي مرة أخرى."
+                : "The file is larger than 5 MB. Choose a smaller file and try again."));
+        }
         const reader = new FileReader();
-        reader.onload = () => resolve({
-            attachmentName: file.name,
-            attachmentType: file.type,
-            attachmentBase64: String(reader.result).split(",")[1] || ""
-        });
-        reader.onerror = () => resolve({ attachmentName: file.name, attachmentType: file.type, attachmentBase64: "" });
+        reader.onload = () => {
+            const attachmentBase64 = typeof reader.result === "string" ? reader.result.split(",")[1] || "" : "";
+            if (!attachmentBase64) {
+                reject(new Error(currentLang === "ar"
+                    ? "تعذر قراءة الملف كاملًا. لم يتم إرسال الطلب؛ أعيدي اختيار الملف وحاولي مرة أخرى."
+                    : "The file could not be read completely. Nothing was submitted; choose the file again and retry."));
+                return;
+            }
+            resolve({ attachmentName: file.name, attachmentType: file.type, attachmentBase64 });
+        };
+        reader.onerror = () => reject(new Error(currentLang === "ar"
+            ? "تعذر قراءة الملف. لم يتم إرسال الطلب؛ تحققي من الملف ثم حاولي مرة أخرى."
+            : "The file could not be read. Nothing was submitted; check the file and try again."));
         reader.readAsDataURL(file);
     });
 }
@@ -1256,7 +1284,13 @@ async function submitBooking() {
 
     const message = document.getElementById("pMessage").value.trim();
     const file = document.getElementById("pAttachment") ? document.getElementById("pAttachment").files[0] : null;
-    const attachment = await fileToBase64(file);
+    let attachment;
+    try {
+        attachment = await fileToBase64(file);
+    } catch (error) {
+        showSoftAlert(currentLang === "ar" ? "تعذر تجهيز المرفق" : "Unable to prepare attachment", error?.message || t("errData"));
+        return;
+    }
     const hasAttachment = !!attachment.attachmentName;
     const progressTimer = showProcessing();
     const payload = {

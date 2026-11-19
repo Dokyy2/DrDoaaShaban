@@ -3,8 +3,8 @@
  * عند تطبيق سياسات RLS الموجودة في supabase/schema.sql.
  */
 window.CLINIC_SUPABASE = {
-    url: "https://ccuharkcusmsjdxfuamq.supabase.co",
-    anonKey: "sb_publishable_YZj1fj5qxItnugNHxvSg6Q_0Mr0yxJ1"
+    url: "https://gtpmzbjakfvjpvpliwnj.supabase.co",
+    anonKey: "sb_publishable_1A87lubP-CsDOCC_RSVRfw_FkrYWnS6"
 };
 
 // Local-admin booking uses a Supabase Edge Function; the original Sheet is not used here.

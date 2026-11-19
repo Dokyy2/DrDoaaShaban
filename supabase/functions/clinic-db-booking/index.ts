@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { validateBookingAttachment } from "./attachment-validation.mjs";
 
 const ALLOWED_ORIGINS = new Set([
   "https://dokyy2.github.io",
@@ -76,6 +77,11 @@ Deno.serve(async (request: Request) => {
     return json({ status: "error", message: "عملية الحجز غير مكتملة." }, 400, origin);
   }
 
+  const attachmentCheck = validateBookingAttachment(body.payload as Record<string, unknown>);
+  if (!attachmentCheck.ok) {
+    return json({ status: "error", message: attachmentCheck.message }, 400, origin);
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !serviceRoleKey) {
@@ -83,6 +89,19 @@ Deno.serve(async (request: Request) => {
   }
 
   try {
+    // Derive an opaque throttle key on the server; HMAC prevents guessing phone numbers
+    // from a plain unsalted digest if the private throttle table is ever inspected.
+    const phone = String(attachmentCheck.payload.phone ?? "").replace(/[^0-9]/g, "");
+    const hmacKey = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(serviceRoleKey),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const digest = await crypto.subtle.sign("HMAC", hmacKey, new TextEncoder().encode(phone));
+    const rateLimitKey = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+    const rpcPayload = { ...attachmentCheck.payload, _rateLimitKey: rateLimitKey };
     const response = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/rest/v1/rpc/create_booking`, {
       method: "POST",
       headers: {
@@ -92,7 +111,7 @@ Deno.serve(async (request: Request) => {
         "Accept-Profile": "public",
         "Content-Profile": "public",
       },
-      body: JSON.stringify({ payload: body.payload }),
+      body: JSON.stringify({ payload: rpcPayload }),
       signal: AbortSignal.timeout(20_000),
     });
     const text = await response.text();

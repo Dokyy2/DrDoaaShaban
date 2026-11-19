@@ -5,7 +5,7 @@
 - Supabase هو المصدر الأساسي والوحيد في نسخة الإدارة.
 - حجز الموقع يمر عبر Edge Function `clinic-db-booking` ثم RPC `public.create_booking`.
 - لوحة الإدارة تتصل بـSupabase بعد تسجيل الدخول، مع صلاحيات مختلفة للدكتورة والسكرتارية.
-- لا تستخدم هذه النسخة الشيت الأصلي أو Apps Script. الشيت الأصلي محفوظ لإصدار الحجز من دون إدارة.
+- الحجز والإدارة في هذه النسخة يعتمدان على Supabase. Apps Script يُستخدم فقط لكتابة أرشيف الحالات المغلقة في تبويب منفصل؛ لا يشارك في استقبال الحجز أو إدارة الحالة. إصدار `main` والشيت الخاص به يظلان مستقلين.
 
 ## تشغيل الموقع محليًا
 
@@ -13,6 +13,7 @@
 
 - الموقع: `http://127.0.0.1:5501/`
 - لوحة الإدارة: `http://127.0.0.1:5501/dashboard/`
+- دعوات الفريق تعود إلى لوحة الإدارة على المنفذ نفسه. أضيفي إلى Authentication → URL Configuration عناوين العودة المحلية التي ستستخدمينها: `http://127.0.0.1:5501/dashboard/` و`http://localhost:5501/dashboard/` (وأضيفي المنفذ 5500 فقط عند تشغيل النسخة عليه). يجب أن يطابق عنوان العودة المُرسل أحد العناوين المسموح بها في Supabase Auth.
 
 لا تفتحي الملفات مباشرة عبر `file://`. لوحة الإدارة تقرأ قاعدة التجربة الحية، لذلك لا تختبري تغييرات كتابية على مرضى حقيقيين.
 
@@ -36,3 +37,7 @@
 7. أغلقي سجلات الاختبار من لوحة الإدارة بعد الفحص، واحتفظي بسجلها التدقيقي.
 
 لا تنقلي هذا الإصدار إلى حساب مرضى حقيقي أو تشغيل تجاري قبل إتمام اختبار الحجز الاصطناعي والتأكد من النسخ الاحتياطي وإعداد حماية كلمات المرور.
+
+### Local SQL migration boundary
+
+The repository's historical SQL scripts remain at the root of `supabase/`; they have not yet been reconciled one-to-one with the hosted migration ledger. Files in `supabase/migrations/` are local candidates only and are not a complete blank-project schema. Do not use `supabase db reset` or `supabase db push` until the baseline and migration history are reconciled. See `supabase/migrations/README.md` for the local-only validation gate and current booking-hardening/backup status.

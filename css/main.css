@@ -2572,3 +2572,153 @@ body.pregnancy-nudge-open { overflow:hidden; }
 .admin-nav-link { display:inline-flex; align-items:center; gap:7px; padding:8px 12px; border:1px solid var(--border-soft); border-radius:999px; background:linear-gradient(135deg,var(--primary-soft),color-mix(in srgb,var(--medical-blue) 14%,transparent)); color:var(--dark-pink)!important; font-weight:950; }
 .mobile-admin-link { display:none; }
 @media (max-width:900px) { .admin-nav-link { display:none!important; }.mobile-admin-link { display:flex!important; align-items:center; gap:9px; } }
+
+/* Local UX review pass: clearer focus, calmer motion, and consistent service cards. */
+:where(a,button,[role="button"],input,select,textarea):focus:not(:focus-visible) { outline:none!important; box-shadow:none; }
+:where(a,button,[role="button"]):focus-visible { outline:3px solid color-mix(in srgb,var(--accent-pink) 72%,white); outline-offset:3px; }
+.nav a:active { transform:scale(.98); }
+.stat-number { font-variant-numeric:tabular-nums; }
+.stat-label[data-i18n="statBirth"],.stat-label[data-i18n="statVisits"] { line-height:1.45; }
+
+.story-album { border-color:color-mix(in srgb,var(--medical-blue) 22%,var(--border-soft)); box-shadow:0 18px 48px color-mix(in srgb,var(--medical-blue) 7%,transparent); }
+.story-album::before { background:linear-gradient(110deg,color-mix(in srgb,var(--medical-blue) 66%,white),color-mix(in srgb,var(--primary-color) 50%,white),color-mix(in srgb,var(--medical-blue) 66%,white)); opacity:.52; }
+
+.service-card { position:relative; isolation:isolate; overflow:hidden; border:1px solid color-mix(in srgb,var(--primary-color) 20%,var(--border-soft)); transition:transform .32s cubic-bezier(.2,.8,.2,1),border-color .32s ease,box-shadow .32s ease; }
+.service-card::before { height:3px; opacity:.72; background-size:220% 100%; animation:serviceGlow 6s ease-in-out infinite; }
+.service-card:hover { transform:translateY(-6px); border-color:color-mix(in srgb,var(--accent-pink) 58%,var(--primary-color)); box-shadow:0 18px 42px color-mix(in srgb,var(--accent-pink) 16%,transparent),0 0 22px color-mix(in srgb,var(--primary-color) 13%,transparent); }
+.service-card i { transition:transform .32s ease,filter .32s ease; }
+.service-card:hover i { transform:translateY(-3px) scale(1.08); filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent-pink) 44%,transparent)); }
+@keyframes serviceGlow { 0%,100% { background-position:0% 50%; } 50% { background-position:100% 50%; } }
+
+.booking-head h2 { display:table; width:max-content; max-width:100%; margin-inline:auto; white-space:nowrap; font-size:clamp(1.45rem,3.1vw,2.8rem)!important; line-height:1.35; }
+#activeForm .booking-head h2 { font-size:clamp(1.35rem,2.6vw,2.25rem)!important; padding-inline:clamp(12px,2.6vw,24px)!important; }
+.visit-option { border-color:color-mix(in srgb,var(--primary-color) 23%,var(--border-soft)); box-shadow:0 9px 25px color-mix(in srgb,var(--medical-blue) 9%,transparent); transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s ease,box-shadow .3s ease; }
+.visit-option:hover { border-color:color-mix(in srgb,var(--accent-pink) 63%,var(--primary-color)); box-shadow:0 15px 34px color-mix(in srgb,var(--accent-pink) 15%,transparent),0 0 20px color-mix(in srgb,var(--medical-blue) 12%,transparent); }
+.visit-option.pregnancy-option { border-color:color-mix(in srgb,var(--accent-pink) 46%,var(--border-soft)); background:radial-gradient(circle at 50% 0%,color-mix(in srgb,var(--accent-pink) 16%,transparent),transparent 62%),linear-gradient(145deg,color-mix(in srgb,var(--card-bg) 92%,#fff0f6),color-mix(in srgb,var(--medical-blue) 9%,var(--card-bg))); }
+.visit-option.pregnancy-option .pregnancy-option-icon { border:2px solid color-mix(in srgb,var(--accent-pink) 58%,white); box-shadow:0 0 0 5px color-mix(in srgb,var(--accent-pink) 10%,transparent),0 8px 20px color-mix(in srgb,var(--accent-pink) 27%,transparent); }
+
+.contact-wrap { align-items:center; }
+.map-frame { align-self:center; transform:translateY(12px); box-sizing:border-box; padding:7px; border:1px solid color-mix(in srgb,var(--medical-blue) 32%,var(--border-soft)); border-radius:28px; background:var(--card-bg); box-shadow:0 18px 44px color-mix(in srgb,var(--medical-blue) 16%,transparent),0 0 0 5px color-mix(in srgb,var(--primary-color) 5%,transparent); }
+.whatsapp-float { isolation:isolate; }
+.whatsapp-float-hint { position:absolute; inset-inline-start:calc(100% + 11px); top:50%; padding:8px 13px; border:1px solid color-mix(in srgb,var(--medical-blue) 28%,white); border-radius:999px; background:color-mix(in srgb,var(--card-bg) 94%,white); color:var(--text-main); font-family:inherit; font-size:.79rem; font-weight:900; white-space:nowrap; box-shadow:0 7px 22px color-mix(in srgb,var(--medical-blue) 14%,transparent); transform:translateY(-50%); animation:whatsappHintIn .55s .4s both; }
+.whatsapp-float-hint::before { content:""; position:absolute; inset-inline-end:100%; top:50%; width:8px; height:8px; border-top:1px solid color-mix(in srgb,var(--medical-blue) 28%,white); border-inline-start:1px solid color-mix(in srgb,var(--medical-blue) 28%,white); background:inherit; transform:translate(4px,-50%) rotate(-45deg); }
+@keyframes whatsappHintIn { from { opacity:0; translate:-5px 0; } to { opacity:1; translate:0 0; } }
+@media (max-width:700px) { .booking-head h2 { font-size:clamp(1.25rem,5.3vw,1.85rem)!important; }.map-frame { transform:translateY(6px); min-height:300px; }.whatsapp-float-hint { font-size:.72rem; padding:7px 11px; } }
+@media (prefers-reduced-motion:reduce) { .service-card,.service-card i,.visit-option,.service-card::before,.whatsapp-float-hint { animation:none!important; transition:none!important; } }
+
+/* UX review 2: make the requested visual distinctions clear at rest. */
+.story-album {
+  border: 2px solid color-mix(in srgb,var(--accent-pink) 42%,var(--medical-blue)) !important;
+  box-shadow: 0 0 0 5px color-mix(in srgb,var(--accent-pink) 8%,transparent),
+              0 20px 48px color-mix(in srgb,var(--medical-blue) 12%,transparent),
+              inset 0 0 0 1px color-mix(in srgb,var(--accent-pink) 16%,transparent) !important;
+}
+.story-album::before { opacity:.82 !important; }
+
+.service-card {
+  border:1px solid color-mix(in srgb,var(--medical-blue) 35%,var(--border-soft)) !important;
+  background:linear-gradient(145deg,
+    color-mix(in srgb,var(--card-bg) 88%,var(--medical-blue) 12%),
+    color-mix(in srgb,var(--card-bg) 94%,var(--accent-pink) 6%)) !important;
+  box-shadow:0 12px 28px color-mix(in srgb,var(--medical-blue) 12%,transparent),
+             inset 0 1px 0 color-mix(in srgb,#fff 82%,transparent) !important;
+}
+.service-card::before {
+  inset-block:18px !important;
+  inset-inline-start:0 !important;
+  width:5px !important;
+  height:auto !important;
+  border-radius:0 8px 8px 0;
+  opacity:1 !important;
+  background:linear-gradient(180deg,var(--accent-pink),var(--medical-blue),var(--primary-color)) !important;
+  background-size:100% 220% !important;
+  animation:serviceEdgeGlow 5s ease-in-out infinite !important;
+}
+.service-card i {
+  display:grid;
+  place-items:center;
+  width:58px;
+  height:58px;
+  margin:0 auto 18px !important;
+  border:1px solid color-mix(in srgb,#fff 45%,transparent);
+  border-radius:19px;
+  background:linear-gradient(145deg,var(--medical-blue),var(--primary-color));
+  color:#fff !important;
+  box-shadow:0 9px 22px color-mix(in srgb,var(--medical-blue) 27%,transparent),
+             inset 0 1px 0 rgba(255,255,255,.45);
+}
+.service-card:hover,.service-card:focus-within {
+  border-color:color-mix(in srgb,var(--accent-pink) 55%,var(--medical-blue)) !important;
+  box-shadow:0 18px 38px color-mix(in srgb,var(--accent-pink) 17%,transparent),
+             0 0 0 3px color-mix(in srgb,var(--medical-blue) 10%,transparent) !important;
+}
+@keyframes serviceEdgeGlow { 0%,100% { background-position:0 0; } 50% { background-position:0 100%; } }
+
+.visit-option {
+  position:relative;
+  overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--medical-blue) 38%,var(--border-soft)) !important;
+  background:linear-gradient(145deg,
+    color-mix(in srgb,var(--card-bg) 92%,var(--medical-blue) 8%),
+    color-mix(in srgb,var(--card-bg) 96%,var(--accent-pink) 4%)) !important;
+  box-shadow:0 10px 25px color-mix(in srgb,var(--medical-blue) 12%,transparent),
+             inset 0 1px 0 rgba(255,255,255,.75) !important;
+}
+.visit-option::before {
+  content:"";
+  position:absolute;
+  inset-block:15px;
+  inset-inline-start:0;
+  width:4px;
+  border-radius:0 8px 8px 0;
+  background:linear-gradient(180deg,var(--accent-pink),var(--medical-blue));
+  opacity:.9;
+  pointer-events:none;
+}
+.visit-option-icon:not(.pregnancy-option-icon) {
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.55);
+  background:linear-gradient(145deg,var(--medical-blue),var(--primary-color)) !important;
+  color:#fff !important;
+  box-shadow:0 8px 20px color-mix(in srgb,var(--medical-blue) 25%,transparent);
+}
+.visit-option:hover,.visit-option:focus-visible {
+  transform:translateY(-4px);
+  border-color:color-mix(in srgb,var(--medical-blue) 58%,var(--accent-pink)) !important;
+  box-shadow:0 15px 32px color-mix(in srgb,var(--medical-blue) 18%,transparent),
+             0 0 0 3px color-mix(in srgb,var(--accent-pink) 10%,transparent) !important;
+}
+#bookingArea .visit-option.pregnancy-option {
+  border:2px solid #e879ad !important;
+  background:radial-gradient(circle at 92% 8%,rgba(255,255,255,.9),transparent 32%),
+             linear-gradient(135deg,#fff0f7 0%,#ffe2ef 50%,#f7e9ff 100%) !important;
+  box-shadow:0 14px 32px rgba(207,56,133,.2),
+             0 0 0 4px rgba(232,121,173,.12),
+             inset 0 1px 0 rgba(255,255,255,.95) !important;
+}
+#bookingArea .visit-option.pregnancy-option::before {
+  width:6px;
+  background:linear-gradient(180deg,#ff8dbb,#ca3d8b,#9666d6);
+}
+#bookingArea .visit-option.pregnancy-option .pregnancy-option-icon {
+  border:2px solid #f19ac3 !important;
+  background:linear-gradient(145deg,#fff,#ffe1ef) !important;
+  box-shadow:0 0 0 6px rgba(232,121,173,.16),0 10px 24px rgba(207,56,133,.24) !important;
+}
+#bookingArea .visit-option.pregnancy-option:hover,
+#bookingArea .visit-option.pregnancy-option:focus-visible {
+  border-color:#d94b94 !important;
+  box-shadow:0 18px 38px rgba(207,56,133,.27),0 0 0 5px rgba(232,121,173,.16) !important;
+}
+.booking-reassurance {
+  justify-content:center !important;
+  align-items:center !important;
+  text-align:center !important;
+}
+.booking-reassurance > span { flex:0 0 auto; }
+@media (max-width:700px) {
+  .service-card::before { inset-block:14px !important; }
+  .service-card i { width:52px; height:52px; border-radius:17px; }
+  .visit-option::before { inset-block:12px; }
+}

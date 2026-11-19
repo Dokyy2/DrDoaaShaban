@@ -594,7 +594,7 @@ const CLOSED_ARCHIVE_HEADERS = [
 
 function archivePayloadRow_(payload) {
   const typeLabels = { first:'كشف أول مرة', follow:'متابعة', consult:'استشارة متابعة', aesthetic:'تجميل نسائي', birth:'حجز ولادة', labs:'تحاليل أو أشعة' };
-  const statusLabels = { completed:'تمت الزيارة', cancelled:'ملغي' };
+    const statusLabels = { completed:'تمت الزيارة', cancelled:'ملغي', no_show:'لم تحضر' };
   const paymentLabels = { cash:'نقدًا', visa:'فيزا', instapay:'إنستا باي', vodafone_cash:'فودافون كاش', other:'أخرى' };
   const fields = [
     'appointment_id','booking_code','full_name','phone','request_type','requested_date','requested_time',
@@ -619,7 +619,7 @@ function archivePayloadRow_(payload) {
 }
 
 function writeClosedCaseArchive_(payload) {
-  if (!payload || !['completed','cancelled'].includes(String(payload.status))) throw new Error('Closed appointment snapshot is invalid.');
+    if (!payload || !['completed','cancelled','no_show'].includes(String(payload.status))) throw new Error('Closed appointment snapshot is invalid.');
   const sheet = getOrCreate_(CLINIC_SHEETS.closedArchive, CLOSED_ARCHIVE_HEADERS);
   const idCol = findHeader_(sheet, ['معرف الحجز']);
   if (!idCol) throw new Error('Archive identity header is missing.');
@@ -637,6 +637,9 @@ function syncClosedCaseArchiveRow_(record) {
   const id = Number(record && record.appointment_id);
   if (!Number.isSafeInteger(id) || id < 1) throw new Error('Archive appointment id is invalid.');
   const payload = record.payload || {};
+  if (Number(payload.appointment_id) !== id || String(payload.booking_code || '') !== String(record.booking_code || '')) {
+    throw new Error('Archive snapshot identity does not match its queue record.');
+  }
   writeClosedCaseArchive_(payload);
   supabaseFetch_('/rest/v1/clinic_closed_case_archive?appointment_id=eq.' + encodeURIComponent(id), 'patch', {
     sync_status:'synced', attempts:Number(record.attempts || 0) + 1, last_error:null, synced_at:new Date().toISOString()
@@ -829,7 +832,13 @@ function applyHistoricalProjectionLink_(payload) {
   const codeAlreadyLinked = String(verified.candidate.booking_code || '') === verified.bookingCode;
   const projection = { booking_code:verified.bookingCode };
   const textFields = ['last_visit_date','message','attachment_name','attachment_type','source','staff_note','requested_time','outcome_reason','outcome_note','contact_note','payment_method','payment_note'];
-  textFields.forEach(function (field) { if (Object.prototype.hasOwnProperty.call(values, field)) projection[field] = values[field] === '' ? null : values[field]; });
+  textFields.forEach(function (field) {
+    if (!Object.prototype.hasOwnProperty.call(values, field)) return;
+    // staff_note is NOT NULL in Supabase; an empty Sheet cell must stay an empty string.
+    projection[field] = field === 'staff_note'
+      ? (values[field] == null || values[field] === '' ? '' : values[field])
+      : (values[field] === '' ? null : values[field]);
+  });
   if (Object.prototype.hasOwnProperty.call(values, 'request_type')) projection.request_type = normalizeRequestType_(values.request_type);
   if (Object.prototype.hasOwnProperty.call(values, 'requested_date')) projection.requested_date = values.requested_date || null;
   if (Object.prototype.hasOwnProperty.call(values, 'status') && String(values.status || '').trim()) projection.status = statusCode_(values.status);

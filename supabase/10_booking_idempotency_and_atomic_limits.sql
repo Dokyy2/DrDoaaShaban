@@ -1,5 +1,16 @@
 -- Make public booking idempotent and serialize duplicate/capacity checks.
 -- Admin-enabled edition uses Supabase as its only booking data source.
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated;
+create table if not exists private.booking_request_limits (
+  phone_key text primary key check (phone_key ~ '^[0-9a-f]{64}$'),
+  window_started_at timestamptz not null default clock_timestamp(),
+  attempt_count integer not null default 1 check (attempt_count > 0)
+);
+create index if not exists booking_request_limits_window_idx
+  on private.booking_request_limits (window_started_at);
+revoke all on private.booking_request_limits from public, anon, authenticated;
+
 create or replace function public.create_booking(payload jsonb) returns jsonb
 language plpgsql
 security definer
@@ -13,6 +24,7 @@ declare
   v_date date := nullif(payload ->> 'bookingDate', '')::date;
   v_clinic_today date := (now() at time zone 'Africa/Cairo')::date;
   v_booking_code text := upper(trim(coalesce(payload ->> 'bookingCode', '')));
+  v_rate_limit_key text := trim(coalesce(payload ->> '_rateLimitKey', ''));
   v_patient uuid;
   v_appointment public.appointments;
   v_settings public.clinic_settings;
@@ -34,6 +46,9 @@ begin
   end if;
   if v_phone !~ '^01[0-9]{9}$' then
     return jsonb_build_object('status', 'error', 'message', 'رقم الهاتف يجب أن يكون 11 رقمًا صحيحًا.');
+  end if;
+  if v_rate_limit_key !~ '^[0-9a-f]{64}$' then
+    return jsonb_build_object('status', 'error', 'message', 'تعذر التحقق من طلب الحجز. حدّثي الصفحة وحاولي مرة أخرى.');
   end if;
 
   if v_type = 'contacts' then
@@ -74,6 +89,27 @@ begin
   end if;
 
   perform pg_advisory_xact_lock(hashtextextended('clinic-booking-phone:' || v_phone, 0));
+  -- A bounded per-phone throttle limits repeated new booking attempts while
+  -- allowing idempotent retries above to return their original result.
+  perform pg_advisory_xact_lock(hashtextextended('clinic-booking-throttle:' || v_rate_limit_key, 0));
+  delete from private.booking_request_limits
+  where window_started_at < clock_timestamp() - interval '1 day';
+  insert into private.booking_request_limits (phone_key, window_started_at, attempt_count)
+  values (v_rate_limit_key, clock_timestamp(), 1)
+  on conflict (phone_key) do update set
+    attempt_count = case
+      when private.booking_request_limits.window_started_at <= clock_timestamp() - interval '15 minutes' then 1
+      else private.booking_request_limits.attempt_count + 1
+    end,
+    window_started_at = case
+      when private.booking_request_limits.window_started_at <= clock_timestamp() - interval '15 minutes' then clock_timestamp()
+      else private.booking_request_limits.window_started_at
+    end
+  returning attempt_count into v_count;
+  if v_count > 8 then
+    return jsonb_build_object('status', 'error', 'message', 'تم تجاوز عدد محاولات الحجز مؤقتًا. انتظري 15 دقيقة أو تواصلي مع العيادة.');
+  end if;
+
   select a.id, a.booking_code into v_existing_appointment, v_existing_booking_code
   from public.appointments a join public.patients p on p.id = a.patient_id
   where p.phone = v_phone and a.status in ('new', 'contacted', 'confirmed', 'rescheduled', 'follow_up')
@@ -86,10 +122,18 @@ begin
       'message', 'تم إيقاف الطلب لأنه حجز مكرر بنفس رقم الهاتف. من فضلكِ تواصلي مع العيادة باستخدام رقم الكشف الظاهر أمامك.');
   end if;
 
-  v_name_normalized := lower(regexp_replace(v_name, '[[:space:]]+', ' ', 'g'));
+  -- Normalize common Arabic spelling variants before comparing patient names.
+  v_name_normalized := regexp_replace(
+    translate(regexp_replace(lower(v_name), '[ًٌٍَُِّْـ]', '', 'g'), 'أإآٱىي', 'اااايي'),
+    '[[:space:]]+', ' ', 'g'
+  );
+  perform pg_advisory_xact_lock(hashtextextended('clinic-booking-name:' || v_name_normalized, 0));
   select p.id, a.id, a.booking_code into v_name_match_patient, v_existing_appointment, v_existing_booking_code
   from public.patients p join public.appointments a on a.patient_id = p.id
-  where lower(regexp_replace(trim(p.full_name), '[[:space:]]+', ' ', 'g')) = v_name_normalized
+  where regexp_replace(
+          translate(regexp_replace(lower(trim(p.full_name)), '[ًٌٍَُِّْـ]', '', 'g'), 'أإآٱىي', 'اااايي'),
+          '[[:space:]]+', ' ', 'g'
+        ) = v_name_normalized
     and p.phone <> v_phone
     and a.status in ('new', 'contacted', 'confirmed', 'rescheduled', 'follow_up')
     and a.request_type <> 'contacts' and a.requested_date >= v_clinic_today
@@ -120,7 +164,10 @@ begin
   end if;
 
   insert into public.patients (full_name, phone) values (v_name, v_phone)
-    on conflict (phone) do update set full_name = excluded.full_name returning id into v_patient;
+    on conflict (phone) do nothing returning id into v_patient;
+  if v_patient is null then
+    select id into v_patient from public.patients where phone = v_phone;
+  end if;
   insert into public.appointments (
     booking_code, patient_id, request_type, requested_date, last_visit_date, message,
     attachment_name, attachment_type, attachment_base64, source

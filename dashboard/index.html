@@ -7,19 +7,21 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="dashboard.css?v=20260830-cards">
   <link rel="stylesheet" href="dashboard-enhancements.css?v=20261107-dashboard-polish">
+  <link rel="stylesheet" href="dashboard-team.css?v=20261109-team-local">
+  <link rel="stylesheet" href="dashboard-premium.css?v=20261113-owner-nav-modal">
 </head>
 <body>
   <main id="app"><div class="loading-screen"><i class="fa-solid fa-heart-pulse"></i><p>جارٍ تجهيز لوحة الإدارة…</p></div></main>
-  <script src="../js/config.js?v=20261108-close-archive"></script>
-  <script src="../js/bridge-client.js?v=20261108-close-archive"></script>
-  <script type="module" src="dashboard.js?v=20261108-close-archive"></script>
+  <script>window.CLINIC_FINANCE_TRIAL = true;</script>
+  <script src="../js/config.js?v=20261109-local-admin"></script>
+  <script src="../js/bridge-client.js?v=20261109-local-admin"></script>
+  <script type="module" src="dashboard.js?v=20261113-owner-nav-modal"></script>
   <script>
     setTimeout(() => {
       if (!window.CLINIC_DASHBOARD_READY) {
-        document.getElementById('app').innerHTML = '<section class="login-page"><div class="login-card"><div class="clinic-mark"><i class="fa-solid fa-triangle-exclamation"></i></div><h1>ملفات لوحة الإدارة غير مكتملة</h1><p>ارفعي مجلد <b>dashboard</b> كاملًا، ومعه ملف <b>js/config.js</b>، ثم أعيدي فتح الصفحة.</p></div></section>';
+        document.getElementById('app').innerHTML = '<section class="login-page"><div class="login-card"><div class="clinic-mark"><i class="fa-solid fa-triangle-exclamation"></i></div><h1>تعذر بدء لوحة الإدارة</h1><p>لم يبدأ ملف اللوحة خلال المهلة. تأكدي من اتصال الإنترنت وتحميل ملفات <b>dashboard</b> و<b>js/config.js</b>، ثم أعيدي المحاولة.</p><button class="primary-btn" type="button" onclick="location.reload()">إعادة المحاولة</button></div></section>';
       }
-    }, 7000);
+    }, 15000);
   </script>
 </body>
 </html>
-

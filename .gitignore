@@ -20,3 +20,6 @@ exports/
 .DS_Store
 Thumbs.db
 *.log
+
+# Supabase CLI local version/cache metadata; never part of the application.
+supabase/.temp/

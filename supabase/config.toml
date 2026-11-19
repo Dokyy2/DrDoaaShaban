@@ -1,2 +1,8 @@
 [functions.clinic-sheet-bridge]
 verify_jwt = false
+
+[functions.clinic-db-booking]
+verify_jwt = false
+
+[functions.clinic-team-admin]
+verify_jwt = false
