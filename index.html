@@ -1,382 +1,151 @@
-<!DOCTYPE html>
-<html lang="ar" data-mode="light">
+<!doctype html>
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-
-<meta property="og:title" content="الدكتورة دعاء شعبان - أخصائية النساء والتوليد والتجميل النسائي">
-<meta property="og:description" content="نظام الحجز الإلكتروني لعيادة دكتورة دعاء شعبان. رعاية طبية متكاملة، احجزي موعدك الآن.">
-<meta property="og:image" content="assets/images/doctor.png">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary_large_image">
-
-<title>عيادة دكتورة دعاء شعبان - الحجز الإلكتروني</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-<link rel="stylesheet" href="css/main.css?v=20261113-booking-v2.8.0">
-<link rel="stylesheet" href="css/gallery.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f3">
+  <meta name="description" content="العيادة مغلقة مؤقتًا للتطوير. نعمل على تحسين تجربتك، انتظرونا قريبًا.">
+  <title>مغلق مؤقتًا للتطوير | عيادة د. دعاء شعبان</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #173b3b;
+      --muted: #617675;
+      --teal: #3d7771;
+      --teal-soft: #dceae5;
+      --gold: #b89760;
+      --paper: #f5f6f3;
+      --white: #fff;
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--paper); }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: clamp(18px, 5vw, 64px);
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background:
+        radial-gradient(ellipse at 12% 12%, rgba(220,234,229,.72), transparent 35%),
+        radial-gradient(ellipse at 90% 92%, rgba(184,151,96,.10), transparent 32%),
+        var(--paper);
+    }
+    main {
+      position: relative;
+      isolation: isolate;
+      width: min(100%, 860px);
+      min-height: min(620px, calc(100vh - 40px));
+      padding: clamp(38px, 8vw, 86px) clamp(24px, 9vw, 96px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      text-align: center;
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(23,59,59,.10);
+      border-radius: 30px;
+      box-shadow: 0 28px 90px rgba(23,59,59,.10), 0 2px 10px rgba(23,59,59,.035);
+    }
+    main::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 12px;
+      border: 1px solid rgba(184,151,96,.35);
+      border-radius: 22px;
+      pointer-events: none;
+    }
+    .brand {
+      margin: 0 0 30px;
+      color: var(--teal);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    .ornament {
+      width: 76px;
+      height: 76px;
+      margin-bottom: 27px;
+      position: relative;
+      border: 1px solid rgba(61,119,113,.28);
+      border-radius: 50%;
+      background: linear-gradient(145deg, #fff, #eaf2ee);
+      box-shadow: 0 10px 28px rgba(61,119,113,.12);
+    }
+    .ornament::before, .ornament::after {
+      content: "";
+      position: absolute;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      inset: 11px;
+    }
+    .ornament::after { inset: 23px; border-color: rgba(61,119,113,.55); }
+    .eyebrow {
+      margin: 0 0 13px;
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .14em;
+    }
+    h1 {
+      max-width: 650px;
+      margin: 0;
+      font-size: clamp(35px, 7vw, 66px);
+      line-height: 1.25;
+      font-weight: 750;
+      letter-spacing: -.035em;
+    }
+    .rule {
+      width: 76px;
+      height: 2px;
+      margin: 28px auto 24px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .message {
+      max-width: 520px;
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2.7vw, 21px);
+      line-height: 1.9;
+    }
+    .wait {
+      margin: 34px 0 0;
+      padding: 11px 22px;
+      color: var(--teal);
+      border: 1px solid rgba(61,119,113,.2);
+      border-radius: 999px;
+      background: rgba(220,234,229,.48);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    footer {
+      margin-top: 46px;
+      color: #869491;
+      font-size: 12px;
+      letter-spacing: .02em;
+    }
+    @media (max-width: 520px) {
+      main { min-height: min(600px, calc(100svh - 36px)); border-radius: 24px; }
+      main::before { inset: 9px; border-radius: 17px; }
+      .brand { margin-bottom: 26px; }
+      footer { margin-top: 34px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
+  </style>
 </head>
-
 <body>
-
-<div class="local-preview-banner" id="localPreviewBanner" role="status" hidden>
-    نسخة تجربة محلية — لن يتم إرسال الحجوزات أو حفظها في الشيت
-</div>
-<div id="scrollDecorations" class="scroll-decorations" aria-hidden="true"></div>
-<div id="bookingCelebration" class="booking-celebration" aria-hidden="true"></div>
-
-<div id="splash" aria-label="واجهة ترحيب عيادة د. دعاء شعبان">
-    <div class="splash-content">
-        <div class="splash-title">الدكتورة</div>
-        <div class="splash-title">دعاء شعبان</div>
-        <div class="splash-sub">أخصائية النساء والتوليد</div>
-        <div class="splash-sub">والتجميل النسائي</div>
-        <div class="splash-line"></div>
-        <div class="splash-loader" role="status" aria-live="polite">
-            <span class="splash-loading-text" data-i18n="clickToStart">جاري تجهيز الموقع</span>
-            <div class="splash-progress-track" aria-hidden="true">
-                <div class="splash-progress-fill"></div>
-                <span class="splash-progress-pattern">♡　✿　♡　✿　♡　✿　♡</span>
-                <span class="splash-progress-runner">🌸</span>
-            </div>
-            <span class="splash-loader-caption" data-i18n="splashWait">لحظات ونبدأ معكِ</span>
-        </div>
-    </div>
-</div>
-
-<div id="fridayAlert" class="friday-modal">
-    <div class="fri-card">
-        <i class="fa-solid fa-calendar-xmark"></i>
-        <h3 data-i18n="holidayTitle">تنبيه المواعيد</h3>
-        <p data-i18n="holidayMsg">الإجازة الأسبوعية للعيادة أيام الاثنين والخميس والجمعة. من فضلكِ اختاري يوماً آخر للحجز.</p>
-        <button class="btn btn-primary" onclick="closeFri()" data-i18n="understood">فهمت</button>
-    </div>
-</div>
-
-<div id="softAlert" class="soft-alert-modal">
-    <div class="soft-alert-card">
-        <i class="fa-solid fa-circle-exclamation"></i>
-        <h3 id="softAlertTitle">تنبيه بسيط</h3>
-        <p id="softAlertMsg">من فضلك أكملي البيانات المطلوبة.</p>
-        <button class="btn btn-primary" onclick="closeSoftAlert()">تمام</button>
-    </div>
-</div>
-
-<div class="pregnancy-nudge" id="pregnancyNudge" hidden>
-    <button class="pregnancy-nudge-backdrop" type="button" data-close-pregnancy-nudge aria-label="إغلاق البطاقة"></button>
-    <section class="pregnancy-nudge-card" role="dialog" aria-modal="true" aria-labelledby="pregnancyNudgeTitle" aria-describedby="pregnancyNudgeText">
-        <button class="pregnancy-nudge-close" type="button" data-close-pregnancy-nudge aria-label="إغلاق"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-        <div class="pregnancy-nudge-confetti" aria-hidden="true">✦　♡　✿　✧</div>
-        <div class="pregnancy-nudge-art" aria-hidden="true"></div>
-        <span class="pregnancy-nudge-kicker" data-i18n="pregnancyNudgeKicker">هدية صغيرة لكِ</span>
-        <h2 id="pregnancyNudgeTitle" data-i18n="pregnancyNudgeTitle">رحلتك للأمومة 💗</h2>
-        <p id="pregnancyNudgeText" data-i18n="pregnancyNudgeText">احسبي فاضل قد إيه على مقابلة صغيرك، وشوفي رحلتك وصلت لكام في المية.</p>
-        <button class="pregnancy-nudge-cta" id="pregnancyNudgeCta" type="button"><span class="pregnancy-nudge-mini-art" aria-hidden="true"></span><span data-i18n="pregnancyNudgeCta">احسبي رحلتك</span><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
-        <span class="pregnancy-nudge-foot" data-i18n="pregnancyNudgeFoot">حساب تقريبي لعمر الحمل وموعد الولادة</span>
-    </section>
-</div>
-
-<button class="pregnancy-float" id="pregnancyFloat" type="button" aria-label="افتحي حاسبة الحمل" title="احسبي رحلتك" hidden>
-    <span class="pregnancy-float-art" aria-hidden="true"></span><span class="pregnancy-float-label" data-i18n="pregnancyFloatLabel">حاسبة الحمل</span>
-</button>
-
-<header class="topbar">
-    <div class="brand">
-        <strong data-i18n="brandName">د. دعاء شعبان</strong>
-        <span data-i18n="brandSub">أخصائية نساء وتوليد وتجميل نسائي</span>
-    </div>
-
-    <nav class="nav">
-        <a href="#about" data-i18n="navAbout">عن الدكتورة</a>
-        <a href="#gallery">الذكريات</a>
-        <a href="#services" data-i18n="navServices">الخدمات</a>
-        <a href="#booking" data-i18n="navBooking">الحجز</a>
-        <a href="#assistant" class="smart-nav-hint" data-i18n="navAssistant">مساعدك بعد الولادة</a>
-        <a href="#reviews" data-i18n="navReviews">آراء المرضى</a>
-        <a href="#contact" data-i18n="navContact">العنوان</a>
-    </nav>
-
-    <div class="control-group">
-        <button class="text-btn" id="langBtn" onclick="toggleLanguage()">EN</button>
-        <button class="icon-btn mobile-menu-btn" onclick="toggleMobileMenu()" title="Menu"><i class="fa-solid fa-bars"></i></button>
-    </div>
-
-    <div class="mobile-menu" id="mobileMenu">
-        <a href="#about" onclick="toggleMobileMenu()" data-i18n="navAbout">عن الدكتورة</a>
-        <a href="#gallery" onclick="toggleMobileMenu()">الذكريات</a>
-        <a href="#services" onclick="toggleMobileMenu()" data-i18n="navServices">الخدمات</a>
-        <a href="#booking" onclick="toggleMobileMenu()" data-i18n="navBooking">الحجز</a>
-        <a href="#assistant" onclick="toggleMobileMenu()" data-i18n="navAssistant">مساعدك بعد الولادة</a>
-        <a href="#reviews" onclick="toggleMobileMenu()" data-i18n="navReviews">آراء المرضى</a>
-        <a href="#contact" onclick="toggleMobileMenu()" data-i18n="navContact">العنوان</a>
-    </div>
-</header>
-
-<main>
-    <section class="hero" id="home">
-        <div class="hero-content">
-
-            <div class="hero-actions">
-                <a href="#booking" class="btn btn-primary"><i class="fa-solid fa-calendar-check"></i> <span data-i18n="bookNow">احجزي موعدك الآن</span></a>
-                <a href="https://wa.me/201125337717" target="_blank" class="btn btn-ghost"><i class="fa-brands fa-whatsapp"></i> <span data-i18n="whatsappNow">تواصلي واتساب</span></a>
-            </div>
-            <div class="hero-note" data-i18n="heroTitle">حجزك مع د. دعاء شعبان أصبح أسهل</div>
-        </div>
-    </section>
-
-    <section class="section clock-section">
-        <div class="clock-card-wide">
-            <div class="clock-ring"><i class="fa-regular fa-clock"></i></div>
-            <div id="clockNow">--:--</div>
-            <div id="todayText">--</div>
-        </div>
-    </section>
-
-    <section class="section stats-bar">
-        <div class="stat-card">
-            <div>
-                <div class="stat-number" data-target="20">0</div>
-                <div class="stat-label" data-i18n="statExperience">خبرة طبية</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div>
-                <div class="stat-number" data-target="10800" data-weekly-increase="4">0</div>
-                <div class="stat-label" data-i18n="statBirth">عملية ولادة</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div>
-                <div class="stat-number" data-target="30240" data-weekly-increase="60">0</div>
-                <div class="stat-label" data-i18n="statVisits">كشف ومتابعة</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div>
-                <div class="stat-number" data-target="1250" data-weekly-increase="80">0</div>
-                <div class="stat-label" data-i18n="statAesthetic">تجميل نسائي</div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section about-wrap" id="about">
-        <div class="doctor-photo">
-            <img src="assets/images/doctor.png" alt="دكتورة دعاء شعبان">
-        </div>
-        <div class="info-card">
-            <h2 class="section-title about-title"><span data-i18n="aboutTitle1">نبذة عن</span><span data-i18n="aboutTitle2">د. دعاء شعبان</span></h2>
-            <p class="section-lead" data-i18n="aboutText1">
-                د/ دعاء شعبان هي أخصائية النساء والتوليد والتجميل النسائي، حاصلة على ماجستير النساء والتوليد من جامعة الأزهر،
-                وبكالوريوس الطب والجراحة. تقدم خدمات طبية متكاملة تهدف إلى الحفاظ على صحة المرأة في مختلف مراحل حياتها.
-            </p>
-            <p class="section-lead" data-i18n="aboutText2">
-                تؤمن د/ دعاء بأن الراحة النفسية للمريضة جزء أساسي من العلاج، لذلك تحرص على تقديم شرح واضح ومتابعة دقيقة لكل حالة.
-            </p>
-        </div>
-    </section>
-
-
-    <section class="section story-album" id="gallery" aria-labelledby="galleryTitle">
-        <div class="album-intro reveal-on-scroll">
-            <span class="album-kicker"><i class="fa-solid fa-sparkles" aria-hidden="true"></i> 18 عامًا من الرعاية والذكريات</span>
-            <h2 class="section-title" id="galleryTitle">حكايات بدأت بنبضة</h2>
-            <p class="section-lead">لحظات دافئة من رحلة د. دعاء شعبان مع الأمهات وأطفالهن. اختاري حكاية لتشاهديها.</p>
-        </div>
-        <div class="story-rail-shell reveal-on-scroll">
-            <div class="story-rail" role="group" aria-label="قصص وذكريات العيادة">
-                <button class="clinic-story" type="button" data-image="assets/images/gallery/memory-01.jpg" data-alt="لحظة من رحلة الرعاية" data-kicker="لحظة البداية" data-title="البداية دائمًا نبضة" data-caption="من أول لحظة اطمئنان، تبدأ حكاية جديدة مليئة بالأمل والرعاية.">
-                    <span class="clinic-story-ring"><img src="assets/images/gallery/memory-01.jpg" alt="" loading="lazy"></span><span class="clinic-story-label">لحظة البداية</span>
-                </button>
-                <button class="clinic-story" type="button" data-image="assets/images/gallery/memory-02.png" data-alt="لحظة سعادة مع مولود جديد" data-kicker="لحظة وصول" data-title="أول لقاء" data-caption="لحظة لا تتكرر، وابتسامة تختصر رحلة كاملة من الانتظار.">
-                    <span class="clinic-story-ring"><img src="assets/images/gallery/memory-02.png" alt="" loading="lazy"></span><span class="clinic-story-label">أول لقاء</span>
-                </button>
-                <button class="clinic-story" type="button" data-image="assets/images/gallery/memory-03.jpg" data-alt="ذكرى من المتابعة والرعاية" data-kicker="ثقة تمتد" data-title="معكِ خطوة بخطوة" data-caption="متابعة هادئة وشرح واضح، لأن الاطمئنان جزء أساسي من الرعاية.">
-                    <span class="clinic-story-ring"><img src="assets/images/gallery/memory-03.jpg" alt="" loading="lazy"></span><span class="clinic-story-label">ثقة تمتد</span>
-                </button>
-                <button class="clinic-story" type="button" data-image="assets/images/gallery/memory-04.png" data-alt="ذكرى سعيدة مع الأسرة" data-kicker="عائلة العيادة" data-title="ذكريات تكبر معنا" data-caption="أطفال كبروا، وأسر ما زالت الثقة تجمعنا بها عامًا بعد عام.">
-                    <span class="clinic-story-ring"><img src="assets/images/gallery/memory-04.png" alt="" loading="lazy"></span><span class="clinic-story-label">عائلة العيادة</span>
-                </button>
-                <button class="clinic-story" type="button" data-image="assets/images/gallery/memory-05.png" data-alt="ذكرى من سنوات الرعاية" data-kicker="18 عامًا" data-title="رحلة من القلب" data-caption="سنوات من الخبرة، وآلاف الحكايات التي بدأت كلها بنبضة.">
-                    <span class="clinic-story-ring"><img src="assets/images/gallery/memory-05.png" alt="" loading="lazy"></span><span class="clinic-story-label">رحلة من القلب</span>
-                </button>
-            </div>
-            <span class="story-rail-hint"><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i> اسحبي لاستكشاف الذكريات</span>
-        </div>
-    </section>
-
-    <div class="story-viewer" id="storyViewer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="عرض قصة من ذكريات العيادة">
-        <button class="story-backdrop" type="button" tabindex="-1" data-story-close aria-label="إغلاق القصص"></button>
-        <div class="story-dialog">
-            <div class="story-progress" id="storyProgress" aria-hidden="true"></div>
-            <button class="story-viewer-close" type="button" data-story-close aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
-            <button class="story-viewer-pause" type="button" id="storyPause" aria-label="إيقاف عرض القصص مؤقتًا" aria-pressed="false"><i class="fa-solid fa-pause"></i></button>
-            <img class="story-viewer-image" id="storyViewerImage" src="" alt="">
-            <div class="story-viewer-shade"></div>
-            <button class="story-viewer-nav story-viewer-prev" type="button" id="storyPrev" aria-label="القصة السابقة"><i class="fa-solid fa-chevron-right"></i></button>
-            <button class="story-viewer-nav story-viewer-next" type="button" id="storyNext" aria-label="القصة التالية"><i class="fa-solid fa-chevron-left"></i></button>
-            <div class="story-viewer-copy" aria-live="polite">
-                <span class="story-viewer-kicker" id="storyViewerKicker"></span>
-                <h3 id="storyViewerTitle"></h3>
-                <p id="storyViewerCaption"></p>
-            </div>
-            <span class="story-viewer-count" id="storyViewerCount" aria-live="polite"></span>
-        </div>
-    </div>
-
-    <section class="section" id="services">
-        <div style="text-align:center; margin-bottom:22px;">
-            <h2 class="section-title" data-i18n="servicesTitle">خدمات العيادة المتكاملة</h2>
-            <p class="section-lead" style="max-width:720px; margin:auto;" data-i18n="servicesLead">رعاية متخصصة للمرأة في كل مرحلة، من الكشف والمتابعة وحتى التجميل النسائي ورعاية الحمل.</p>
-        </div>
-
-        <div class="services-grid">
-            <div class="service-card">
-                <i class="fa-solid fa-baby"></i>
-                <h3 data-i18n="service1Title">متابعة الحمل</h3>
-                <p data-i18n="service1Text">متابعة دورية دقيقة لصحة الأم والجنين مع إرشادات طبية مناسبة لكل مرحلة.</p>
-            </div>
-            <div class="service-card">
-                <i class="fa-solid fa-stethoscope"></i>
-                <h3 data-i18n="service2Title">كشف نساء وتوليد</h3>
-                <p data-i18n="service2Text">تشخيص ومتابعة مشاكل النساء والتوليد بأمان وخصوصية وشرح واضح للحالة.</p>
-            </div>
-            <div class="service-card">
-                <i class="fa-solid fa-spa"></i>
-                <h3 data-i18n="service3Title">التجميل النسائي</h3>
-                <p data-i18n="service3Text">خدمات تجميل نسائي باهتمام طبي دقيق وتجربة مريحة وآمنة.</p>
-            </div>
-            <div class="service-card">
-                <i class="fa-solid fa-vial-circle-check"></i>
-                <h3 data-i18n="service4Title">مراجعة التحاليل</h3>
-                <p data-i18n="service4Text">إرسال التحاليل أو الأشعة لعرضها على الدكتورة ومراجعتها حسب الحالة.</p>
-            </div>
-            <div class="service-card">
-                <i class="fa-solid fa-comments"></i>
-                <h3 data-i18n="service5Title">استشارة خلال المتابعة</h3>
-                <p data-i18n="service5Text">استشارة منظمة خلال مدة المتابعة المسموح بها لضمان أفضل استفادة.</p>
-            </div>
-            <div class="service-card">
-                <i class="fa-solid fa-heart"></i>
-                <h3 data-i18n="service6Title">رعاية قبل وبعد الولادة</h3>
-                <p data-i18n="service6Text">تنظيم حجز الولادة والتواصل مع العيادة لترتيب التفاصيل المناسبة.</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="section booking-section" id="booking">
-        <div class="visitor-presence" id="visitorPresence" role="status" aria-live="polite" hidden>
-            <span class="presence-pips" aria-hidden="true"></span><span class="presence-copy"></span>
-        </div>
-        <div id="bookingArea"></div>
-    </section>
-
-    <section class="section" id="assistant">
-        <div class="assistant-card">
-            <div class="assistant-icon"><i class="fa-solid fa-hands-holding-child"></i></div>
-            <div>
-                <h2 data-i18n="assistantTitle">بعد الولادة مش هنسيبك</h2>
-                <p data-i18n="assistantText">
-                    المساعد الذكي هيساعدك تعرفي خطوات تسجيل شهادة الميلاد، متابعة التطعيمات، ورعاية صحتك وصحة طفلك بطريقة سهلة وواضحة.
-                </p>
-                <a href="https://dokyy2.github.io/smart-assistant/" target="_blank" rel="noopener noreferrer" class="btn assistant-launch-link">
-                    <img src="https://dokyy2.github.io/smart-assistant/assets/images/assistant-logo.png" alt="" loading="lazy"> <span data-i18n="assistantBtn">افتحي المساعد الذكي</span>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <div class="assistant-float" id="assistantFloat" hidden>
-        <p class="assistant-hint" id="assistantHint" role="status" hidden>اسأليني 💬</p>
-        <button class="assistant-orb" id="assistantOpen" type="button" aria-label="فتح المساعد الذكي" aria-expanded="false">
-            <img src="https://dokyy2.github.io/smart-assistant/assets/images/assistant-logo.png" alt="">
-        </button>
-    </div>
-
-    <div class="assistant-modal" id="assistantModal" hidden>
-        <button class="assistant-modal-backdrop" type="button" data-close-assistant aria-label="إغلاق نافذة المساعد"></button>
-        <section class="assistant-dialog" role="dialog" aria-modal="true" aria-label="المساعد الذكي بعد الولادة">
-            <div class="assistant-dialog-head"><span><img src="https://dokyy2.github.io/smart-assistant/assets/images/assistant-logo.png" alt=""> المساعد الذكي</span><button type="button" data-close-assistant aria-label="إغلاق">×</button></div>
-            <iframe class="assistant-frame" title="المساعد الذكي للأم والطفل" data-src="https://dokyy2.github.io/smart-assistant/" loading="lazy"></iframe>
-        </section>
-    </div>
-
-    <section class="section" id="reviews">
-        <div style="text-align:center; margin-bottom:22px;">
-            <h2 class="section-title" data-i18n="reviewsTitle">آراء المرضى</h2>
-            <p class="section-lead" data-i18n="reviewsLead">كلمات لطيفة من تجارب حقيقية مع العيادة.</p>
-        </div>
-        <div class="reviews-scroll">
-            <div class="review-card"><p>الدكتورة عندها كاريزما ومريحة بشكل غير طبيعى وانصح كل البنات تروحلها انا معاها بقالى 5 سنين وولدت معاها مرتين احسن دكتورة حرفيا ً.</p><div class="review-person"><div class="avatar">إ</div><div><strong>إيمان سعيد</strong><span>متابعة وولادة</span></div></div></div>
-            <div class="review-card"><p>دكتورة محترمة ومريحة جداً في التعامل، بتسمع كويس وبتطمن المريضة قبل أي خطوة.</p><div class="review-person"><div class="avatar">س</div><div><strong>سارة م.</strong><span>متابعة حمل</span></div></div></div>
-            <div class="review-card"><p>ربنا يبارك فيكي يا دكتورة، شرحك واضح واهتمامك بالتفاصيل فرق معايا جداً.</p><div class="review-person"><div class="avatar">ه</div><div><strong>هبة أ.</strong><span>كشف نساء</span></div></div></div>
-            <div class="review-card"><p>العيادة منظمة والدكتورة شاطرة وبتتعامل بذوق. تجربة مريحة من أول الحجز.</p><div class="review-person"><div class="avatar">م</div><div><strong>مريم ع.</strong><span>متابعة بالعيادة</span></div></div></div>
-            <div class="review-card"><p>دكتورة دعاء من أحسن الدكاترة، ربنا يبارك فيها ويجعل تعبها في ميزان حسناتها.</p><div class="review-person"><div class="avatar">أ</div><div><strong>أمل ج.</strong><span>متابعة نساء</span></div></div></div>
-            <div class="review-card"><p>كنت قلقة جداً، لكن طريقة شرح الدكتورة وهدوءها خلوني أطمن بسرعة.</p><div class="review-person"><div class="avatar">ن</div><div><strong>ندى ر.</strong><span>كشف أول مرة</span></div></div></div>
-            <div class="review-card"><p>متابعة الحمل كانت ممتازة، وكل زيارة كنت بخرج فاهمة كل حاجة ومطمئنة.</p><div class="review-person"><div class="avatar">ي</div><div><strong>ياسمين ع.</strong><span>متابعة حمل</span></div></div></div>
-            <div class="review-card"><p>احترام وذوق واهتمام بالتفاصيل، شكراً دكتورة دعاء على تعبك معانا.</p><div class="review-person"><div class="avatar">ر</div><div><strong>رحاب س.</strong><span>استشارة متابعة</span></div></div></div>
-            <div class="review-card"><p>النظام سهل والحجز واضح، والعيادة تواصلت معايا بسرعة لتأكيد المعاد.</p><div class="review-person"><div class="avatar">د</div><div><strong>دعاء ك.</strong><span>حجز أونلاين</span></div></div></div>
-        </div>
-    </section>
-
-    <div class="neon-divider"></div>
-
-    <section class="section contact-wrap" id="contact">
-        <div class="contact-card">
-            <h2 class="section-title" style="font-size:2.2rem;" data-i18n="contactTitle">بيانات العيادة</h2>
-            <div class="contact-line"><i class="fa-solid fa-location-dot"></i><div><b data-i18n="addressLabel">العنوان:</b><br><span data-i18n="addressText">اللبيني – الهرم، بجوار أولاد رجب</span></div></div>
-            <div class="contact-line"><i class="fa-solid fa-phone"></i><div><b data-i18n="phoneLabel">للاستفسار أو التعديل:</b><br>01125337717</div></div>
-            <div class="contact-line"><i class="fa-solid fa-clock"></i><div><b data-i18n="hoursLabel">مواعيد العمل:</b><br><span data-i18n="hoursText">من 4 مساءً إلى 10 مساءً</span><br><span data-i18n="holidayFooter">الإجازة الأسبوعية: الاثنين والخميس والجمعة</span></div></div>
-
-            <div class="social-links">
-                <a href="https://www.facebook.com/share/1BvSArkpXk/" target="_blank" class="social-icon fb" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-                <a href="https://www.instagram.com/dr.doaa.shaban?igsh=MTNjNjJ1end3bzczeQ==" target="_blank" class="social-icon ig" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                <a href="https://www.tiktok.com/@doaaobgyn?_r=1&_t=ZS-96BMLWSyNdY" target="_blank" class="social-icon tt" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-            </div>
-
-            <a href="https://maps.app.goo.gl/Dn6sKp86cdJ2K5k79?g_st=ic" target="_blank" class="btn btn-primary"><i class="fa-solid fa-map-location-dot"></i> <span data-i18n="mapBtn">افتحي الموقع على الخريطة</span></a>
-        </div>
-
-        <iframe
-            class="map-frame"
-            loading="lazy"
-            allowfullscreen
-            referrerpolicy="no-referrer-when-downgrade"
-            src="https://www.google.com/maps?q=%D8%A7%D9%84%D9%84%D8%A8%D9%8A%D9%86%D9%8A%20%D8%A7%D9%84%D9%87%D8%B1%D9%85%20%D8%A8%D8%AC%D9%88%D8%A7%D8%B1%20%D8%A3%D9%88%D9%84%D8%A7%D8%AF%20%D8%B1%D8%AC%D8%A8&output=embed">
-        </iframe>
-    </section>
-</main>
-
-<footer class="footer">
-    <div class="footer-signature">
-        <a class="footer-credit" href="https://wa.me/201021708011" target="_blank" rel="noopener noreferrer" aria-label="التواصل مع المهندس باسم أشرف عبر واتساب">
-            <span class="footer-whatsapp-mark" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false">
-                    <path d="M12 2.4a9.6 9.6 0 0 0-8.18 14.63L2.7 21.6l4.72-1.08A9.6 9.6 0 1 0 12 2.4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                    <path d="M8.5 7.85c.16-.38.33-.39.61-.39h.52c.17 0 .36.03.44.27l.62 1.54c.08.2.05.39-.08.53l-.4.47c-.12.13-.25.26-.1.5.15.26.67 1.1 1.44 1.78.99.88 1.82 1.15 2.08 1.29.26.13.41.11.56-.07l.7-.82c.16-.19.34-.16.57-.08l1.45.68c.24.12.4.17.45.27.06.1.06.59-.14 1.16-.19.57-1.1 1.09-1.52 1.15-.4.06-.9.09-1.46-.09-.34-.11-.78-.26-1.34-.5-2.36-1.02-3.9-3.42-4.02-3.59-.12-.17-.96-1.27-.96-2.42 0-1.16.6-1.72.81-1.96Z" fill="currentColor"/>
-                </svg>
-            </span>
-            <span class="footer-signature-copy"><small>DESIGNED &amp; DEVELOPED BY</small><strong>Bassem Ashraf</strong><span>WHATSAPP · DIRECT CONTACT</span></span>
-            <i class="fa-solid fa-arrow-up-right-from-square footer-signature-arrow" aria-hidden="true"></i>
-        </a>
-        <div class="footer-meta" aria-label="معلومات الإصدار والتحديث">
-            <span class="footer-version"><i class="fa-solid fa-code-branch" aria-hidden="true"></i> الإصدار V2.8.0</span>
-            <span class="footer-updated"><i class="fa-regular fa-calendar" aria-hidden="true"></i> آخر تحديث: 13 نوفمبر 2026</span>
-        </div>
-    </div>
-</footer>
-
-<a href="https://wa.me/201125337717" target="_blank" rel="noopener noreferrer" class="whatsapp-float" aria-label="التواصل مع العيادة عبر واتساب" onclick="handleVibrate()">
-    <i class="fa-brands fa-whatsapp" aria-hidden="true"></i><span class="whatsapp-float-hint">للتواصل</span>
-</a>
-
-<button class="back-to-top" id="backToTop" type="button" aria-label="العودة إلى أعلى الصفحة" title="العودة إلى أعلى الصفحة" onclick="window.scrollTo({top:0,behavior:'smooth'})">
-    <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
-</button>
-
-<script src="js/main.js?v=20261113-booking-v2.8.0"></script>
-<script src="js/gallery.js"></script>
-
+  <main aria-labelledby="notice-title">
+    <p class="brand">عيادة د. دعاء شعبان</p>
+    <div class="ornament" aria-hidden="true"></div>
+    <p class="eyebrow">إشعار للزائرات</p>
+    <h1 id="notice-title">مغلق مؤقتًا للتطوير</h1>
+    <div class="rule" aria-hidden="true"></div>
+    <p class="message">نعمل على تطوير الموقع لنقدم لكِ تجربة أفضل. نعتذر عن توقف الخدمة مؤقتًا.</p>
+    <p class="wait">انتظرونا قريبًا</p>
+    <footer>شكرًا لثقتكِ وتفهمكِ</footer>
+  </main>
 </body>
 </html>
